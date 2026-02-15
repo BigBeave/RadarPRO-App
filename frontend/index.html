@@ -6,25 +6,26 @@
 
 <style>
 body {
-  font-family: Arial;
-  background:#0b1833;
-  color:white;
+  font-family: Arial, sans-serif;
+  background:#0b1c3a;
+  color:#fff;
   padding:20px;
 }
 
 table {
   width:100%;
-  border-collapse: collapse;
+  border-collapse:collapse;
+  margin-top:20px;
 }
 
 th, td {
-  padding:8px;
-  border-bottom:1px solid #333;
+  border-bottom:1px solid rgba(255,255,255,.1);
+  padding:10px;
   text-align:left;
 }
 
-h1 {
-  margin-bottom:10px;
+th {
+  color:#9cc3ff;
 }
 </style>
 </head>
@@ -33,11 +34,9 @@ h1 {
 
 <h1>Prospect {{{Radar}}} LIVE Dashboard</h1>
 
-<div id="stats">
-Total Prospects: 0 | High Priority: 0
-</div>
+<h3 id="stats">Loading...</h3>
 
-<h3>High Priority Prospects</h3>
+<h2>High Priority Prospects</h2>
 
 <table>
 <thead>
@@ -57,38 +56,49 @@ Total Prospects: 0 | High Priority: 0
 
 <script>
 
-// 🚨 THIS IS THE IMPORTANT FIX
-// We now point to your LIVE RENDER BACKEND
-const API = "https://radarpro-dashboard.onrender.com/data";
+const API_URL = "https://radarpro-api.onrender.com/data";
 
-async function loadData(){
+async function loadData() {
 
-    const res = await fetch(API);
+  try {
+
+    const res = await fetch(API_URL);
     const data = await res.json();
 
+    // ✅ NEW STRUCTURE
+    const rows = data.rows || [];
+
     document.getElementById("stats").innerText =
-      "Total Prospects: " + data.total +
-      " | High Priority: " + data.high;
+      `Total Prospects: ${data.total} | High Priority: ${data.highPriority}`;
 
-    const body = document.getElementById("tableBody");
-    body.innerHTML = "";
+    const tableBody = document.getElementById("tableBody");
+    tableBody.innerHTML = "";
 
-    data.rows.forEach(r => {
+    rows.forEach(row => {
 
-        const tr = document.createElement("tr");
+      const tr = document.createElement("tr");
 
-        tr.innerHTML = `
-        <td>${r.Company}</td>
-        <td>${r.City}</td>
-        <td>${r.State}</td>
-        <td>${r.Score}</td>
-        <td>${r["Industry Match"]}</td>
-        <td>${r["Pkg Sales"]}</td>
-        <td>${r.Phone}</td>
-        `;
+      tr.innerHTML = `
+        <td>${row["Business Description"] || ""}</td>
+        <td>${row.City || ""}</td>
+        <td>${row.State || ""}</td>
+        <td>${row.Score || ""}</td>
+        <td>${row["Industry Match "] || ""}</td>
+        <td>${row["Match for Pkg Sales "] || ""}</td>
+        <td>${row.Phone || ""}</td>
+      `;
 
-        body.appendChild(tr);
+      tableBody.appendChild(tr);
+
     });
+
+  } catch (err) {
+
+    document.getElementById("stats").innerText =
+      "API ERROR — Backend not reachable";
+
+    console.error(err);
+  }
 }
 
 loadData();
