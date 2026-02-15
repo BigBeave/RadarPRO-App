@@ -1,17 +1,39 @@
 /**
  * Radar PRO Backend - LIVE DATA ENGINE
- * Prospect {{{Radar}}} v3 → v4
  */
 
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
+const path = require("path");
 const { parse } = require("csv-parse/sync");
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
-const CSV_PATH = "D:\\RadarPRO-App\\data\\Radar_PRO_GOOGLE_MYMAPS_READY.csv";
+/*
+==================================================
+SMART CSV PATH (LOCAL + CLOUD AUTO DETECT)
+==================================================
+*/
+
+// Render runs inside /opt/render/project/src
+// Local runs on Windows D:\
+// We detect automatically.
+
+const LOCAL_PATH =
+  "D:\\RadarPRO-App\\data\\Radar_PRO_GOOGLE_MYMAPS_READY.csv";
+
+const CLOUD_PATH = path.join(
+  __dirname,
+  "..",
+  "data",
+  "Radar_PRO_GOOGLE_MYMAPS_READY.csv"
+);
+
+const CSV_PATH = fs.existsSync(LOCAL_PATH)
+  ? LOCAL_PATH
+  : CLOUD_PATH;
 
 app.use(express.json());
 app.use(cors({ origin: ["http://localhost:3000"] }));
@@ -63,8 +85,6 @@ function loadCSV(){
       row.__state = safeTrim(row["State"]);
       row.__zip = safeTrim(row["Zip"]);
 
-      // ===== REAL HIGH PRIORITY LOGIC =====
-      // ANY SCORE > 0 counts as active priority
       row.__highPriority = (score !== null && score > 0);
 
       return row;
@@ -76,6 +96,7 @@ function loadCSV(){
     CACHE.loadError = null;
 
     console.log("Radar CSV Loaded:",CACHE.rowCount,"records");
+    console.log("CSV PATH USED:",CSV_PATH);
 
   }catch(err){
 
@@ -88,7 +109,7 @@ function loadCSV(){
 
 loadCSV();
 
-// ================= API =================
+/* ================= API ================= */
 
 app.get("/api/health",(req,res)=>{
   res.json({
@@ -100,7 +121,6 @@ app.get("/api/health",(req,res)=>{
 });
 
 app.get("/api/stats",(req,res)=>{
-
   const total = CACHE.prospects.length;
   const highPriority = CACHE.prospects.filter(r=>r.__highPriority).length;
 
@@ -115,7 +135,8 @@ app.get("/api/prospects",(req,res)=>{
 
   let rows = CACHE.prospects;
 
-  const highPriorityOnly = String(req.query.highPriorityOnly || "false") === "true";
+  const highPriorityOnly =
+    String(req.query.highPriorityOnly || "false") === "true";
 
   if(highPriorityOnly){
     rows = rows.filter(r=>r.__highPriority);
@@ -134,9 +155,8 @@ app.get("/api/prospects",(req,res)=>{
   });
 });
 
-// ================= START SERVER =================
+/* ================= START SERVER ================= */
 
 app.listen(PORT,()=>{
-  console.log("Radar PRO backend running on http://localhost:"+PORT);
-  console.log("CSV:",CSV_PATH);
+  console.log("Radar PRO backend running on port",PORT);
 });
