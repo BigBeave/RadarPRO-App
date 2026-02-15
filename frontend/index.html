@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Prospect {{{Radar}}} LIVE Dashboard</title>
+
+<style>
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    background:#0f172a;
+    color:white;
+    margin:0;
+    padding:20px;
+}
+
+h1{
+    margin-bottom:10px;
+}
+
+.card{
+    background:#111827;
+    padding:15px;
+    border-radius:8px;
+    margin-bottom:20px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,td{
+    padding:8px;
+    border-bottom:1px solid #1f2937;
+    text-align:left;
+}
+
+th{
+    background:#020617;
+}
+
+.counter{
+    font-size:22px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>Prospect {{{Radar}}} LIVE Dashboard</h1>
+
+<div class="card">
+    Total Prospects: <span id="totalCount" class="counter">0</span>
+    &nbsp;&nbsp; | &nbsp;&nbsp;
+    High Priority: <span id="highPriorityCount" class="counter">0</span>
+</div>
+
+<div class="card">
+    <h3>High Priority Prospects</h3>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Company</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Score</th>
+                <th>Industry Match</th>
+                <th>Pkg Sales</th>
+                <th>Phone</th>
+            </tr>
+        </thead>
+        <tbody id="highPriorityTableBody">
+        </tbody>
+    </table>
+</div>
+
+<script>
+const API_BASE = "http://localhost:5000/api";
+
+async function loadDashboard(){
+
+    console.log("Loading Radar PRO data...");
+
+    try{
+
+        // ===== LOAD TABLE DATA =====
+        const res = await fetch(API_BASE + "/prospects?page=1&pageSize=200&highPriorityOnly=true");
+        const data = await res.json();
+
+        if(!data.ok){
+            console.error("API returned error",data);
+            return;
+        }
+
+        renderTable(data.rows || []);
+
+        // ===== LOAD STATS =====
+        const statsRes = await fetch(API_BASE + "/stats");
+        const stats = await statsRes.json();
+
+        if(stats.ok){
+            document.getElementById("totalCount").textContent = stats.total || 0;
+            document.getElementById("highPriorityCount").textContent = stats.highPriority || 0;
+        }
+
+    }catch(err){
+        console.error("Dashboard load failed:",err);
+    }
+}
+
+function renderTable(rows){
+
+    const body = document.getElementById("highPriorityTableBody");
+    body.innerHTML="";
+
+    rows.forEach(r=>{
+
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${r.Company || ""}</td>
+            <td>${r.City || ""}</td>
+            <td>${r.State || ""}</td>
+            <td>${r.Score || ""}</td>
+            <td>${r["Industry Match"] || ""}</td>
+            <td>${r["Match for Pkg Sales"] || ""}</td>
+            <td>${r.Phone || ""}</td>
+        `;
+
+        body.appendChild(tr);
+    });
+
+    console.log("Rendered rows:",rows.length);
+}
+
+document.addEventListener("DOMContentLoaded",loadDashboard);
+</script>
+
+</body>
+</html>
