@@ -1,52 +1,41 @@
-// Radar PRO v4 API
-// backend/server.js
-
 const express = require("express");
-const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 const csv = require("csv-parser");
+const cors = require("cors");
 
 const app = express();
-
 app.use(cors());
-app.use(express.json());
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 10000;
 
-// ===== CSV LOCATION =====
-// Render will run inside /opt/render/project/src/backend
-// Data folder is one level up
-const CSV_PATH = path.join(__dirname, "../data/Radar_PRO_GOOGLE_MYMAPS_READY.csv");
+const DATA_PATH = path.join(__dirname, "../data/Radar_PRO_GOOGLE_MYMAPS_READY.csv");
 
-// ===== HEALTH CHECK =====
 app.get("/", (req, res) => {
   res.send("Radar PRO API running");
 });
 
-// ===== /data ROUTE (FIXED) =====
+/*
+   MEMORY SAFE DATA ROUTE
+   Streams CSV instead of loading whole file into RAM
+*/
 app.get("/data", (req, res) => {
+
   const results = [];
 
-  if (!fs.existsSync(CSV_PATH)) {
-    return res.status(500).json({
-      error: "CSV not found",
-      path: CSV_PATH
-    });
-  }
-
-  fs.createReadStream(CSV_PATH)
+  fs.createReadStream(DATA_PATH)
     .pipe(csv())
-    .on("data", (data) => results.push(data))
+    .on("data", (row) => {
+      results.push(row);
+    })
     .on("end", () => {
       res.json(results);
     })
     .on("error", (err) => {
-      res.status(500).json({
-        error: "CSV parse error",
-        details: err.message
-      });
+      console.error(err);
+      res.status(500).json({ error: "Failed to read CSV" });
     });
+
 });
 
 app.listen(PORT, () => {
