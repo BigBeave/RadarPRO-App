@@ -1,230 +1,500 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>RADAR PRO v6.2</title>
+<title>{{{PROSPECT•RADAR}}}</title>
 
 <style>
 :root{
- --bg:#0b1220;
- --panel:#0f1a2f;
- --text:#e9eefc;
- --muted:#aab6d6;
- --line:rgba(255,255,255,.12);
- --accent:#4da3ff;
- --safeTop: env(safe-area-inset-top);
- --safeBottom: env(safe-area-inset-bottom);
+  --bg0:#07101f;
+  --bg1:#0b1220;
+  --panel:#0f1a2f;
+  --panel2:#0c1629;
+  --card:#101f3a;
+  --text:#e9eefc;
+  --muted:#aab6d6;
+  --line:rgba(255,255,255,.12);
+  --line2:rgba(255,255,255,.08);
+  --accent:#4da3ff;
+  --good:#4ade80;
+  --warn:#fbbf24;
+  --bad:#fb7185;
+
+  --safeTop: env(safe-area-inset-top);
+  --safeBottom: env(safe-area-inset-bottom);
+
+  --r12:12px;
+  --r14:14px;
+  --r16:16px;
+  --tap:46px;
 }
 
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto;overflow:hidden}
+html,body{height:100%}
+body{
+  margin:0;
+  color:var(--text);
+  font-family:-apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+  overflow:hidden;
 
+  /* “fancier” background without being loud */
+  background:
+    radial-gradient(900px 650px at 15% -10%, rgba(77,163,255,.18), transparent 55%),
+    radial-gradient(850px 650px at 95% 0%, rgba(74,222,128,.10), transparent 50%),
+    radial-gradient(700px 550px at 50% 110%, rgba(251,191,36,.08), transparent 55%),
+    linear-gradient(180deg, var(--bg0), var(--bg1));
+}
+
+/* ===== Layout ===== */
 .app{
- display:grid;
- grid-template-columns:420px 1fr;
- height:100vh;
- gap:12px;
- padding:12px;
+  display:grid;
+  grid-template-columns:420px 1fr;
+  height:100vh;
+  gap:12px;
+  padding:12px;
+  padding-top:calc(12px + var(--safeTop));
+  padding-bottom:calc(12px + var(--safeBottom));
 }
 
-/* Panels */
 .panel{
- background:var(--panel);
- border-radius:14px;
- border:1px solid var(--line);
- display:flex;
- flex-direction:column;
- overflow:hidden;
- min-height:0;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border:1px solid var(--line2);
+  border-radius:var(--r16);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  min-height:0;
+  box-shadow: 0 18px 70px rgba(0,0,0,.35);
 }
 
+/* ===== Header ===== */
 .topbar{
- padding:12px 14px;
- border-bottom:1px solid var(--line);
- font-weight:800;
- display:flex;
- justify-content:space-between;
- align-items:center;
- background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  padding:12px 14px;
+  border-bottom:1px solid var(--line2);
+  font-weight:900;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background: linear-gradient(180deg, rgba(0,0,0,.25), transparent);
 }
 
-.badge{font-weight:800;color:#7cf3a6}
-
-/* Search */
-.search{
- margin:10px;
- padding:12px;
- border-radius:12px;
- border:1px solid var(--line);
- background:#0c1629;
- color:white;
- outline:none;
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.brandMark{
+  width:12px;height:12px;border-radius:999px;
+  background: radial-gradient(circle at 30% 30%, #fff, var(--accent));
+  box-shadow: 0 0 0 6px rgba(77,163,255,.14);
+}
+.brandText{
+  min-width:0;
+  line-height:1.05;
+}
+.brandTitle{
+  font-size:14px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.brandName{
+  margin-top:4px;
+  font-size:18px;
+  font-weight:950;
+  letter-spacing:.02em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.live{
+  font-weight:950;
+  color:rgba(74,222,128,.95);
+  border:1px solid rgba(74,222,128,.22);
+  padding:6px 10px;
+  border-radius:999px;
+  background: rgba(74,222,128,.08);
 }
 
-/* List */
+/* ===== Controls ===== */
+.controls{
+  padding:10px;
+  border-bottom:1px solid var(--line2);
+  background: rgba(0,0,0,.10);
+}
+
+.rowLine{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+
+.input{
+  flex:1 1 220px;
+  min-width: 200px;
+  padding:12px 12px;
+  border-radius:var(--r12);
+  border:1px solid var(--line);
+  background: var(--panel2);
+  color:var(--text);
+  outline:none;
+}
+.input::placeholder{color:rgba(170,182,214,.75)}
+
+.mini{
+  flex:0 0 auto;
+  padding:10px 12px;
+  border-radius:var(--r12);
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.04);
+  color:var(--text);
+  font-weight:850;
+  cursor:pointer;
+  user-select:none;
+  height: var(--tap);
+}
+.mini:active{transform:scale(.98)}
+
+.select{
+  height: var(--tap);
+  padding: 0 12px;
+  border-radius: var(--r12);
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  font-weight:850;
+  outline:none;
+}
+
+/* ===== Mode + Chip Bars ===== */
+.bar{
+  margin-top:10px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.pill{
+  height: 40px;
+  padding: 0 14px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.04);
+  color: var(--muted);
+  font-weight:900;
+  cursor:pointer;
+  user-select:none;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  letter-spacing:.01em;
+}
+.pill:active{transform:scale(.98)}
+.pill.on{
+  background: rgba(77,163,255,.18);
+  border-color: rgba(77,163,255,.50);
+  color: var(--text);
+}
+.pill.mode.on{
+  background: rgba(74,222,128,.14);
+  border-color: rgba(74,222,128,.35);
+}
+
+/* ===== State Picker ===== */
+.stateBox{
+  margin-top:10px;
+  padding:10px;
+  border-radius: var(--r14);
+  border:1px solid var(--line2);
+  background: rgba(0,0,0,.10);
+}
+.stateTitle{
+  font-weight:950;
+  color: rgba(233,238,252,.92);
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.stateGrid{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.statePill{
+  height: 36px;
+  padding:0 12px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.04);
+  color: var(--muted);
+  font-weight:900;
+  cursor:pointer;
+  user-select:none;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.statePill.on{
+  background: rgba(251,191,36,.14);
+  border-color: rgba(251,191,36,.35);
+  color: var(--text);
+}
+.smallLink{
+  height: 34px;
+  padding:0 10px;
+  border-radius:999px;
+  border:1px solid var(--line2);
+  background: rgba(255,255,255,.03);
+  color: var(--muted);
+  font-weight:900;
+  cursor:pointer;
+}
+.smallLink:active{transform:scale(.98)}
+
+/* ===== List ===== */
 .list{
- overflow:auto;
- flex:1;
- -webkit-overflow-scrolling:touch;
- position:relative;
+  overflow:auto;
+  flex:1;
+  -webkit-overflow-scrolling:touch;
+  position:relative;
 }
+.virtualPad{height:0}
+.virtualInner{position:absolute;left:0;right:0;top:0}
 
-.row{
- margin:8px;
- padding:14px;
- border:1px solid var(--line);
- border-radius:12px;
- cursor:pointer;
- background:rgba(0,0,0,.05);
+.card{
+  margin:8px;
+  padding:14px;
+  border:1px solid var(--line2);
+  border-radius: var(--r14);
+  cursor:pointer;
+  background: rgba(0,0,0,.12);
 }
-.row:hover{background:#132246}
-.row b{font-size:16px}
-.row small{color:var(--muted)}
+.card:hover{background: rgba(255,255,255,.05)}
+.card b{font-size:16px}
+.card small{color:var(--muted)}
+.cardTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.score{
+  min-width:52px;
+  height:28px;
+  border-radius:999px;
+  border:1px solid var(--line2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:950;
+  font-size:12px;
+  background: rgba(0,0,0,.18);
+}
+.score.good{color:var(--good); border-color: rgba(74,222,128,.22); background: rgba(74,222,128,.08)}
+.score.warn{color:var(--warn); border-color: rgba(251,191,36,.22); background: rgba(251,191,36,.08)}
+.score.bad{color:var(--bad);  border-color: rgba(251,113,133,.22); background: rgba(251,113,133,.08)}
 
-/* Detail */
+/* ===== Detail ===== */
 .detail{
- padding:14px;
- overflow:auto;
- flex:1;
- -webkit-overflow-scrolling:touch;
- min-height:0;
+  padding:14px;
+  overflow:auto;
+  flex:1;
+  -webkit-overflow-scrolling:touch;
+  min-height:0;
 }
-
 .hero{
- border:1px solid var(--line);
- border-radius:14px;
- padding:14px;
- margin-bottom:12px;
- background:rgba(0,0,0,.10);
+  border:1px solid var(--line2);
+  border-radius: var(--r16);
+  padding:14px;
+  margin-bottom:12px;
+  background: rgba(0,0,0,.12);
 }
-
 .box{
- border:1px solid var(--line);
- border-radius:12px;
- padding:12px;
- margin-bottom:12px;
- background:rgba(0,0,0,.08);
+  border:1px solid var(--line2);
+  border-radius: var(--r14);
+  padding:12px;
+  margin-bottom:12px;
+  background: rgba(0,0,0,.10);
 }
-
-/* Premium contact bar (desktop + mobile detail) */
 .contactBar{
- display:flex;
- gap:10px;
- flex-wrap:wrap;
- margin-top:10px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:10px;
 }
 .cbtn{
- padding:10px 14px;
- border-radius:999px;
- border:1px solid var(--line);
- background:#132246;
- color:white;
- font-weight:800;
- cursor:pointer;
+  height: 40px;
+  padding: 0 14px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  font-weight:950;
+  cursor:pointer;
+  user-select:none;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  text-decoration:none;
 }
-.cbtn:active{transform:scale(.98)}
+.cbtn.primary{
+  border-color: rgba(77,163,255,.50);
+  background: rgba(77,163,255,.20);
+}
 .cbtn.disabled{opacity:.45;cursor:not-allowed}
-.cbtn.primary{border-color:rgba(77,163,255,.55);background:rgba(77,163,255,.22)}
+.cbtn:active{transform:scale(.98)}
 
 /* ===== MOBILE ===== */
 @media(max-width:980px){
- .app{grid-template-columns:1fr;padding:0;height:100vh}
- .right{display:none}
+  .app{grid-template-columns:1fr;padding:0;height:100vh}
+  .right{display:none}
 }
 
 /* FULLSCREEN MOBILE DETAIL */
 .overlay{
- position:fixed;
- inset:0;
- background:var(--bg);
- display:none;
- flex-direction:column;
- z-index:100;
- padding-top:var(--safeTop);
- padding-bottom:var(--safeBottom);
+  position:fixed;
+  inset:0;
+  background: linear-gradient(180deg, rgba(7,16,31,.98), rgba(11,18,32,.98));
+  display:none;
+  flex-direction:column;
+  z-index:100;
+  padding-top:var(--safeTop);
+  padding-bottom:var(--safeBottom);
 }
-
-/* sticky header on mobile */
-.overlayHeader{
- position:sticky;
- top:0;
- z-index:10;
- background:linear-gradient(180deg, rgba(15,26,47,.98), rgba(15,26,47,.92));
- border-bottom:1px solid var(--line);
- padding:10px 12px;
- display:flex;
- align-items:center;
- justify-content:space-between;
- gap:10px;
-}
-
-.backBtn{
- border:1px solid var(--line);
- background:#132246;
- color:white;
- font-weight:900;
- border-radius:12px;
- padding:10px 12px;
- cursor:pointer;
-}
-
-.overlayTitle{
- font-weight:900;
- white-space:nowrap;
- overflow:hidden;
- text-overflow:ellipsis;
-}
-
-.overlaySub{
- font-size:12px;
- color:var(--muted);
- white-space:nowrap;
- overflow:hidden;
- text-overflow:ellipsis;
-}
-
 .overlay.on{display:flex}
-
-/* Virtual list container */
-.virtualPad{
- height:0; /* set dynamically */
+.overlayHeader{
+  position:sticky;
+  top:0;
+  z-index:10;
+  background: linear-gradient(180deg, rgba(15,26,47,.98), rgba(15,26,47,.90));
+  border-bottom:1px solid var(--line2);
+  padding:10px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
 }
-.virtualInner{
- position:absolute;
- left:0; right:0;
- top:0;
+.backBtn{
+  height: 42px;
+  padding:0 12px;
+  border-radius: 12px;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.04);
+  color: var(--text);
+  font-weight:950;
+  cursor:pointer;
+}
+.backBtn:active{transform:scale(.98)}
+.overlayTitle{
+  font-weight:950;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.overlaySub{
+  font-size:12px;
+  color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 </style>
+
+<link rel="icon" href="data:,">
 </head>
 
 <body>
 
 <div class="app">
 
-<section class="panel">
- <div class="topbar">
-  <div>RADAR PRO v6.2</div>
-  <div class="badge" id="api">LIVE</div>
- </div>
+  <!-- LEFT -->
+  <section class="panel">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brandMark" aria-hidden="true"></div>
+        <div class="brandText">
+          <div class="brandTitle">LIVE PROSPECTING</div>
+          <div class="brandName">{{{PROSPECT•RADAR}}}</div>
+        </div>
+      </div>
+      <div class="live" id="api">LIVE</div>
+    </div>
 
- <input id="search" class="search" placeholder="Search anything… (company, NAICS, exec, notes, city…)">
+    <div class="controls">
 
- <div id="list" class="list">
-   <div id="virtualPad" class="virtualPad"></div>
-   <div id="virtualInner" class="virtualInner"></div>
- </div>
-</section>
+      <!-- MODE BAR (Option 3) -->
+      <div class="bar" aria-label="Radar Modes">
+        <div class="pill mode on" id="modeAll" data-mode="all">ALL</div>
+        <div class="pill mode" id="modeHot" data-mode="hot">HOT</div>
+        <div class="pill mode" id="modeLocal" data-mode="local">LOCAL</div>
+        <div class="pill mode" id="modeDigital" data-mode="digital">DIGITAL</div>
+      </div>
 
-<section class="panel right">
- <div class="topbar" id="detailTitle">Select Prospect</div>
- <div id="detail" class="detail"></div>
-</section>
+      <!-- CHIP BAR (Option 1) -->
+      <div class="bar" aria-label="Filters">
+        <div class="pill" id="chipHigh">High Priority</div>
+        <div class="pill" id="chipWeb">Has Website</div>
+        <div class="pill" id="chipEmail">Has Email</div>
+        <div class="pill" id="chipPhone">Has Phone</div>
+      </div>
+
+      <!-- Search + Industry Keyword (your “industry” keyword search) -->
+      <div class="rowLine" style="margin-top:10px">
+        <input id="search" class="input" placeholder="Global search (any field)…" autocomplete="off">
+        <button class="mini" id="clearBtn">Clear</button>
+      </div>
+
+      <div class="rowLine" style="margin-top:10px">
+        <input id="industry" class="input" placeholder="Industry keyword (e.g., paper, aerospace, medical)…" autocomplete="off">
+        <select id="limit" class="select" title="Max results shown">
+          <option value="25">Show 25</option>
+          <option value="50">Show 50</option>
+          <option value="100" selected>Show 100</option>
+          <option value="1000">Show 1,000</option>
+          <option value="all">Show ALL</option>
+        </select>
+      </div>
+
+      <!-- Score filter -->
+      <div class="stateBox" style="margin-top:10px">
+        <div class="stateTitle">
+          <div>Score Filter</div>
+          <div style="color:var(--muted);font-weight:900">Min: <span id="scoreLabel">0</span></div>
+        </div>
+        <div class="rowLine">
+          <input id="scoreMin" type="range" min="0" max="100" value="0" style="flex:1">
+          <input id="scoreMinBox" class="select" style="width:92px" inputmode="numeric" value="0" title="Minimum score">
+        </div>
+      </div>
+
+      <!-- States (8 states) -->
+      <div class="stateBox">
+        <div class="stateTitle">
+          <div>States</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="smallLink" id="statesAll">All</button>
+            <button class="smallLink" id="statesNone">None</button>
+          </div>
+        </div>
+        <div class="stateGrid" id="stateGrid"></div>
+      </div>
+
+    </div>
+
+    <div id="list" class="list">
+      <div id="virtualPad" class="virtualPad"></div>
+      <div id="virtualInner" class="virtualInner"></div>
+    </div>
+  </section>
+
+  <!-- RIGHT (Desktop Detail) -->
+  <section class="panel right">
+    <div class="topbar" id="detailTitle">Select Prospect</div>
+    <div id="detail" class="detail"></div>
+  </section>
 
 </div>
 
-<!-- MOBILE OVERLAY -->
-<div id="overlay" class="overlay">
+<!-- MOBILE OVERLAY DETAIL -->
+<div id="overlay" class="overlay" aria-hidden="true">
   <div class="overlayHeader">
     <button class="backBtn" onclick="closeOverlay()">← Back</button>
     <div style="min-width:0;flex:1">
@@ -238,86 +508,329 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,S
 
 <script>
 /* ==============================
-   RADAR PRO v6.2
-   + instant contact bar (Call/Email/Route)
-   + sticky header on mobile overlay
-   + scroll virtualization for big lists
+   {{{PROSPECT•RADAR}}} v6.3
+   - Mode presets (ALL/HOT/LOCAL/DIGITAL)
+   - Chip filters (High/Web/Email/Phone)
+   - 8-state multi-select
+   - “Industry keyword” field = search ANY field for that keyword
+   - Score minimum filter
+   - Result limit (25/50/100/1000/ALL)
+   - Virtualized list for performance
    ============================== */
 
 const API="https://radarpro-api.onrender.com/data";
-
 const el=id=>document.getElementById(id);
 const safe=v=>(v??"").toString().trim();
 
-const state={
-  raw:[],
-  index:[],
-  filtered:[],
-  selected:-1,
+const DEFAULT_STATES = ["OH","IN","KY","MI","PA","WV","IL","TN"]; // edit these anytime
+
+const state = {
+  raw: [],
+  index: [],       // one searchable blob per row
+  filtered: [],
+  selected: -1,
+
+  // filters
+  mode: "all",         // all | hot | local | digital
+  chipHigh: false,
+  chipWeb: false,
+  chipEmail: false,
+  chipPhone: false,
+  q: "",
+  industryQ: "",
+  scoreMin: 0,
+  states: new Set(DEFAULT_STATES),
+  limit: 100,
 
   // virtualization
-  rowH: 86,          // approximate row height
-  overscan: 8,
+  rowH: 92,
+  overscan: 10,
   scrollTop: 0
 };
 
+function parseScore(row){
+  const s = row.Score ?? row["Score"] ?? "";
+  const n = Number(String(s).replace(/[^\d.-]/g,""));
+  return Number.isFinite(n) ? n : null;
+}
+function scoreClass(n){
+  if(n === null) return "";
+  if(n >= 80) return "good";
+  if(n >= 55) return "warn";
+  return "bad";
+}
+function hasWebsite(row){
+  const w = safe(row.Website ?? row["Website"] ?? "");
+  return w.length >= 5;
+}
+function hasEmail(row){
+  const e = safe(row["Company Email"] ?? row.Email ?? row["Email"] ?? "");
+  return e.includes("@");
+}
+function hasPhone(row){
+  const p = safe(row.Phone ?? row["Phone"] ?? "");
+  return p.length >= 7;
+}
+function getState(row){
+  return safe(row.State ?? row["State"] ?? row["Mailing State"] ?? "").toUpperCase();
+}
+function highPriority(row){
+  // simple: Score >= 75 OR explicit flags if they exist
+  const s = parseScore(row);
+  if(s !== null && s >= 75) return true;
+
+  const flags = [
+    row["Match for Pkg Sales"],
+    row["Match for my Products - Services"],
+    row["Industry Match"]
+  ].map(v=>safe(v).toLowerCase());
+
+  const yes = (t)=>["yes","y","true","1","high","good","strong"].includes(t);
+  if(flags.some(yes)) return true;
+
+  return false;
+}
+
 function normalizeWeb(w){
-  w=safe(w);
+  w = safe(w);
   if(!w) return "";
-  if(!/^https?:\/\//i.test(w)) w="https://"+w;
+  if(!/^https?:\/\//i.test(w)) w = "https://" + w;
   return w;
 }
 
 function buildIndex(){
-  state.index=state.raw.map(r=>Object.values(r).join(" ").toLowerCase());
+  state.index = state.raw.map(r => Object.values(r).map(v=>safe(v).toLowerCase()).join(" | "));
 }
 
 async function load(){
   try{
-    const r=await fetch(API,{cache:"no-store"});
-    const j=await r.json();
-    state.raw=Array.isArray(j)?j:(j.rows||[]);
+    const r = await fetch(API,{cache:"no-store"});
+    const j = await r.json();
+    state.raw = Array.isArray(j) ? j : (j.rows || []);
     buildIndex();
-    state.filtered=[...state.raw];
-    renderVirtual();
+    applyFilters(true);
   }catch(e){
     el("api").textContent="ERROR";
+    el("api").style.color="rgba(251,113,133,.95)";
   }
 }
 
-/* ===== Search (debounced) ===== */
-let t;
-el("search").addEventListener("input",()=>{
-  clearTimeout(t);
-  t=setTimeout(()=>{
-    const q=safe(el("search").value).toLowerCase();
-    if(!q) state.filtered=[...state.raw];
-    else state.filtered=state.raw.filter((r,i)=>state.index[i].includes(q));
-
-    state.selected=-1;
-    closeOverlay();
-    renderVirtual(true);
-    el("detailTitle").textContent="Select Prospect";
-    el("detail").innerHTML="";
-  },120);
-});
-
-/* ===== Virtualization =====
-   Renders only visible rows for huge datasets.
-*/
+/* ===== UI wiring ===== */
 const listEl = el("list");
 const padEl  = el("virtualPad");
 const innerEl= el("virtualInner");
 
 listEl.addEventListener("scroll",()=>{
-  state.scrollTop=listEl.scrollTop;
+  state.scrollTop = listEl.scrollTop;
   renderVirtual();
 });
 
-function renderVirtual(resetScroll=false){
+function setMode(m){
+  state.mode = m;
+  document.querySelectorAll(".pill.mode").forEach(p=>p.classList.remove("on"));
+  el("mode"+cap(m)).classList.add("on");
+  applyFilters(true);
+}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+el("modeAll").onclick   = ()=>setMode("all");
+el("modeHot").onclick   = ()=>setMode("hot");
+el("modeLocal").onclick = ()=>setMode("local");
+el("modeDigital").onclick=()=>setMode("digital");
+
+function toggleChip(key, id){
+  state[key] = !state[key];
+  el(id).classList.toggle("on", state[key]);
+  applyFilters(true);
+}
+el("chipHigh").onclick = ()=>toggleChip("chipHigh","chipHigh");
+el("chipWeb").onclick  = ()=>toggleChip("chipWeb","chipWeb");
+el("chipEmail").onclick= ()=>toggleChip("chipEmail","chipEmail");
+el("chipPhone").onclick= ()=>toggleChip("chipPhone","chipPhone");
+
+let t1;
+el("search").addEventListener("input",()=>{
+  clearTimeout(t1);
+  t1=setTimeout(()=>{
+    state.q = safe(el("search").value).toLowerCase();
+    applyFilters(true);
+  },120);
+});
+
+let t2;
+el("industry").addEventListener("input",()=>{
+  clearTimeout(t2);
+  t2=setTimeout(()=>{
+    state.industryQ = safe(el("industry").value).toLowerCase();
+    applyFilters(true);
+  },120);
+});
+
+el("limit").addEventListener("change",()=>{
+  const v = el("limit").value;
+  state.limit = (v === "all") ? Infinity : Number(v);
+  applyFilters(false);
+});
+
+function clampInt(x,min,max){
+  x = Number(String(x).replace(/[^\d]/g,""));
+  if(!Number.isFinite(x)) x=min;
+  return Math.min(max, Math.max(min, x));
+}
+
+const scoreMin = el("scoreMin");
+const scoreMinBox = el("scoreMinBox");
+const scoreLabel = el("scoreLabel");
+
+function setScoreMin(val){
+  const v = clampInt(val,0,100);
+  state.scoreMin = v;
+  scoreMin.value = String(v);
+  scoreMinBox.value = String(v);
+  scoreLabel.textContent = String(v);
+  applyFilters(true);
+}
+scoreMin.addEventListener("input",()=>setScoreMin(scoreMin.value));
+scoreMinBox.addEventListener("input",()=>setScoreMin(scoreMinBox.value));
+
+el("clearBtn").onclick=()=>{
+  el("search").value="";
+  el("industry").value="";
+  state.q="";
+  state.industryQ="";
+  setScoreMin(0);
+  state.limit = 100;
+  el("limit").value="100";
+
+  // reset modes + chips
+  setMode("all");
+  ["chipHigh","chipWeb","chipEmail","chipPhone"].forEach(id=>{
+    state[id]=false;
+    el(id).classList.remove("on");
+  });
+
+  // reset states
+  state.states = new Set(DEFAULT_STATES);
+  renderStates();
+  applyFilters(true);
+};
+
+/* ===== States UI ===== */
+const stateGrid = el("stateGrid");
+
+function renderStates(){
+  stateGrid.innerHTML = "";
+  DEFAULT_STATES.forEach(st=>{
+    const b = document.createElement("div");
+    b.className = "statePill" + (state.states.has(st) ? " on" : "");
+    b.textContent = st;
+    b.onclick = ()=>{
+      if(state.states.has(st)) state.states.delete(st);
+      else state.states.add(st);
+      b.classList.toggle("on", state.states.has(st));
+      applyFilters(true);
+    };
+    stateGrid.appendChild(b);
+  });
+}
+el("statesAll").onclick=()=>{
+  state.states = new Set(DEFAULT_STATES);
+  renderStates();
+  applyFilters(true);
+};
+el("statesNone").onclick=()=>{
+  state.states = new Set();
+  renderStates();
+  applyFilters(true);
+};
+renderStates();
+
+/* ===== Filter engine =====
+   Your “industry” field requirement is met by searching the same index blob.
+   If you type “paper”, it matches Company/Description/Brands/etc. because index contains ALL fields.
+*/
+function applyFilters(resetScroll){
+  const q = state.q;
+  const iq = state.industryQ;
+
+  let arr = state.raw;
+
+  // states (if none selected, treat as ALL to avoid “blank by accident”)
+  if(state.states.size > 0){
+    arr = arr.filter(r => state.states.has(getState(r)));
+  }
+
+  // score minimum
+  if(state.scoreMin > 0){
+    arr = arr.filter(r => {
+      const s = parseScore(r);
+      return (s !== null && s >= state.scoreMin);
+    });
+  }
+
+  // mode presets
+  // NOTE: these are “bundles” + still respect chips/search/states/score/limit
+  if(state.mode === "hot"){
+    arr = arr.filter(r => (parseScore(r) ?? -999) >= 75 || highPriority(r));
+  }
+  if(state.mode === "local"){
+    // local = selected states only. already applied; keep as an explicit “mode feel”
+    // no extra filter needed
+  }
+  if(state.mode === "digital"){
+    arr = arr.filter(r => hasWebsite(r) || hasEmail(r));
+  }
+
+  // chip toggles
+  if(state.chipHigh) arr = arr.filter(highPriority);
+  if(state.chipWeb)  arr = arr.filter(hasWebsite);
+  if(state.chipEmail)arr = arr.filter(hasEmail);
+  if(state.chipPhone)arr = arr.filter(hasPhone);
+
+  // text search (global)
+  if(q){
+    arr = arr.filter((r, i) => state.index[i].includes(q));
+  }
+
+  // “industry keyword” (also global, separate input)
+  if(iq){
+    arr = arr.filter((r, i) => state.index[i].includes(iq));
+  }
+
+  // sorting: priority first, then score desc, then company
+  arr = arr.slice().sort((a,b)=>{
+    const ap = highPriority(a) ? 1 : 0;
+    const bp = highPriority(b) ? 1 : 0;
+    if(ap !== bp) return bp - ap;
+
+    const as = parseScore(a) ?? -9999;
+    const bs = parseScore(b) ?? -9999;
+    if(as !== bs) return bs - as;
+
+    const an = safe(a.Company).toLowerCase();
+    const bn = safe(b.Company).toLowerCase();
+    return an.localeCompare(bn);
+  });
+
+  // limit
+  if(Number.isFinite(state.limit) && state.limit !== Infinity){
+    arr = arr.slice(0, state.limit);
+  }
+
+  state.filtered = arr;
+  state.selected = -1;
+  closeOverlay();
+  el("detailTitle").textContent = "Select Prospect";
+  el("detail").innerHTML = "";
+
+  renderVirtual(resetScroll);
+}
+
+/* ===== Virtual list renderer ===== */
+function renderVirtual(resetScroll){
   if(resetScroll){
-    listEl.scrollTop=0;
-    state.scrollTop=0;
+    listEl.scrollTop = 0;
+    state.scrollTop = 0;
   }
 
   const total = state.filtered.length;
@@ -333,111 +846,140 @@ function renderVirtual(resetScroll=false){
 
   for(let i=start;i<end;i++){
     const row = state.filtered[i];
+    const company = safe(row.Company) || "(No Company)";
+    const city = safe(row.City);
+    const st = getState(row);
+    const score = parseScore(row);
+
     const div = document.createElement("div");
-    div.className="row";
+    div.className="card";
     div.innerHTML = `
-      <b>${escapeHtml(row.Company||"")}</b><br>
-      <small>${escapeHtml(row.City||"")} ${escapeHtml(row.State||"")}</small>
+      <div class="cardTop">
+        <div style="min-width:0">
+          <b title="${escapeHtml(company)}">${escapeHtml(company)}</b><br>
+          <small>${escapeHtml([city, st].filter(Boolean).join(", "))}</small>
+        </div>
+        <div class="score ${scoreClass(score)}">${score===null?"—":escapeHtml(String(score))}</div>
+      </div>
     `;
-    div.onclick=()=>select(i);
+    div.onclick = ()=>select(i);
     innerEl.appendChild(div);
+  }
+
+  // small “empty state”
+  if(total === 0){
+    innerEl.innerHTML = `<div style="padding:18px;color:rgba(170,182,214,.85)">No results. Try widening states, lowering score, or clearing filters.</div>`;
+    padEl.style.height = "0px";
   }
 }
 
 /* ===== Detail ===== */
-
 function buildDetailHTML(row){
-  const addr=[row.Address,row.City,row.State,row.Zip].filter(Boolean).join(", ");
+  const addr = [row.Address,row.City,row.State,row.Zip].filter(Boolean).join(", ");
   const maps = addr ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}` : "";
-  const website = normalizeWeb(row.Website);
-  const email = row["Company Email"] || row.Email || "";
-  const phone = row.Phone || "";
+  const website = normalizeWeb(row.Website || row["Website"] || "");
+  const email = safe(row["Company Email"] ?? row.Email ?? row["Email"] ?? "");
+  const phone = safe(row.Phone ?? row["Phone"] ?? "");
 
-  // Instant bar
-  const callHref  = phone ? `tel:${encodeURIComponent(phone)}` : "";
-  const mailHref  = email ? `mailto:${encodeURIComponent(email)}` : "";
+  const callHref = phone ? `tel:${encodeURIComponent(phone)}` : "";
+  const mailHref = email ? `mailto:${encodeURIComponent(email)}` : "";
   const routeHref = maps || "";
 
   const btn = (label, href, cls="")=>{
-    if(!href) return `<button class="cbtn disabled ${cls}" disabled>${label}</button>`;
-    // use window.open for web links; tel/mailto can be normal
-    if(href.startsWith("http")){
-      return `<button class="cbtn ${cls}" onclick="window.open('${href}','_blank')">${label}</button>`;
-    }
-    return `<a class="cbtn ${cls}" href="${href}" style="text-decoration:none;display:inline-block">${label}</a>`;
+    if(!href) return `<span class="cbtn disabled ${cls}">${label}</span>`;
+    if(href.startsWith("http")) return `<a class="cbtn ${cls}" href="${href}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+    return `<a class="cbtn ${cls}" href="${href}">${label}</a>`;
   };
 
+  const score = parseScore(row);
+
   return `
-  <div class="hero">
-    <h2 style="margin:0 0 6px 0">${escapeHtml(row.Company||"")}</h2>
-    <div style="color:rgba(233,238,252,.85)">${escapeHtml(addr)}</div>
+    <div class="hero">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">
+        <div style="min-width:0">
+          <div style="font-weight:950;font-size:20px;line-height:1.15">${escapeHtml(row.Company||"")}</div>
+          <div style="margin-top:6px;color:rgba(233,238,252,.85)">${escapeHtml(addr)}</div>
+          <div style="margin-top:6px;color:rgba(170,182,214,.85);font-weight:850">
+            ${highPriority(row) ? "⚡ High Priority • " : ""}
+            ${score===null ? "" : `Score ${escapeHtml(String(score))} • `}
+            ${escapeHtml([safe(row.City), getState(row)].filter(Boolean).join(", "))}
+          </div>
+        </div>
+        <div class="score ${scoreClass(score)}" style="height:32px;min-width:60px;font-size:13px">${score===null?"—":escapeHtml(String(score))}</div>
+      </div>
 
-    <div class="contactBar">
-      ${btn("📞 Call", callHref, "primary")}
-      ${btn("✉️ Email", mailHref)}
-      ${btn("🧭 Route", routeHref)}
-      ${btn("🌐 Website", website)}
-      ${(email)?`<button class="cbtn" onclick="copyText('${jsEscape(email)}')">Copy Email</button>`:""}
-      ${(phone)?`<button class="cbtn" onclick="copyText('${jsEscape(phone)}')">Copy Phone</button>`:""}
+      <div class="contactBar">
+        ${btn("📞 Call", callHref, "primary")}
+        ${btn("✉️ Email", mailHref)}
+        ${btn("🧭 Route", routeHref)}
+        ${btn("🌐 Website", website)}
+        ${email ? `<button class="cbtn" onclick="copyText('${jsEscape(email)}')">Copy Email</button>` : `<span class="cbtn disabled">Copy Email</span>`}
+        ${phone ? `<button class="cbtn" onclick="copyText('${jsEscape(phone)}')">Copy Phone</button>` : `<span class="cbtn disabled">Copy Phone</span>`}
+      </div>
     </div>
-  </div>
 
-  ${kv("Key Data",{
-    "Score": row.Score,
-    "NAICS": row["NAICS Code"],
-    "SIC": row["Primary SIC Code"],
-    "Annual Sales": row["Annual Sales"],
-    "Employees": row["Employees on Site"]
-  })}
+    ${kv("Key Data",{
+      "Score": score===null?"":String(score),
+      "NAICS": row["NAICS Code"],
+      "Primary SIC": row["Primary SIC Code"],
+      "Annual Sales": row["Annual Sales"],
+      "Employees": row["Employees on Site"],
+      "Website": website
+    })}
 
-  ${kv("Notes",{
-    "Business Description": row["Business Description"],
-    "Brand Names": row["Brand Names"],
-    "Website": website
-  })}
+    ${kv("Notes",{
+      "Business Description": row["Business Description"],
+      "Brand Names": row["Brand Names"],
+      "County": row["County"],
+      "Industry Match": row["Industry Match"],
+      "Company Size": row["Company Size"]
+    })}
   `;
 }
 
 function select(i){
-  state.selected=i;
+  state.selected = i;
   const row = state.filtered[i];
-
   const html = buildDetailHTML(row);
 
-  el("detailTitle").textContent=row.Company||"";
-  el("detail").innerHTML=html;
-  el("detailMobile").innerHTML=html;
+  el("detailTitle").textContent = row.Company || "";
+  el("detail").innerHTML = html;
+  el("detailMobile").innerHTML = html;
 
-  // mobile sticky header title/subtitle
   el("mTitle").textContent = row.Company || "Prospect";
-  el("mSub").textContent = [row.City,row.State].filter(Boolean).join(", ");
+  el("mSub").textContent = [safe(row.City), getState(row)].filter(Boolean).join(", ");
 
-  if(window.innerWidth<980){
-    openOverlay();
-  }
+  if(window.innerWidth < 980) openOverlay();
 }
 
-/* ===== Copy ===== */
+/* ===== Copy / Overlay ===== */
 async function copyText(t){
   try{ await navigator.clipboard.writeText(t); }catch(e){}
 }
 function copyCurrent(){
-  if(state.selected<0) return;
+  if(state.selected < 0) return;
   const row = state.filtered[state.selected];
-  const addr=[row.Address,row.City,row.State,row.Zip].filter(Boolean).join(", ");
-  const payload=[
-    row.Company?`Company: ${row.Company}`:"",
-    addr?`Address: ${addr}`:"",
-    row.Phone?`Phone: ${row.Phone}`:"",
-    (row["Company Email"]||row.Email)?`Email: ${(row["Company Email"]||row.Email)}`:"",
-    row.Website?`Website: ${normalizeWeb(row.Website)}`:""
+  const addr = [row.Address,row.City,row.State,row.Zip].filter(Boolean).join(", ");
+  const email = safe(row["Company Email"] ?? row.Email ?? row["Email"] ?? "");
+  const phone = safe(row.Phone ?? row["Phone"] ?? "");
+  const web = normalizeWeb(row.Website || row["Website"] || "");
+  const payload = [
+    row.Company ? `Company: ${row.Company}` : "",
+    addr ? `Address: ${addr}` : "",
+    phone ? `Phone: ${phone}` : "",
+    email ? `Email: ${email}` : "",
+    web ? `Website: ${web}` : ""
   ].filter(Boolean).join("\n");
   copyText(payload);
 }
-
-/* ===== Overlay ===== */
-function openOverlay(){el("overlay").classList.add("on");}
-function closeOverlay(){el("overlay").classList.remove("on");}
+function openOverlay(){
+  el("overlay").classList.add("on");
+  el("overlay").setAttribute("aria-hidden","false");
+}
+function closeOverlay(){
+  el("overlay").classList.remove("on");
+  el("overlay").setAttribute("aria-hidden","true");
+}
 
 /* ===== Helpers ===== */
 function escapeHtml(s){
@@ -450,12 +992,13 @@ function kv(title,obj){
   let rows="";
   for(const [k,v] of Object.entries(obj)){
     if(!safe(v)) continue;
-    rows += `<div style="margin:6px 0"><b>${escapeHtml(k)}</b>: ${escapeHtml(v)}</div>`;
+    rows += `<div style="margin:6px 0"><b>${escapeHtml(k)}</b>:</b> ${escapeHtml(v)}</div>`;
   }
   if(!rows) return "";
-  return `<div class="box"><div style="font-weight:900;margin-bottom:8px">${escapeHtml(title)}</div>${rows}</div>`;
+  return `<div class="box"><div style="font-weight:950;margin-bottom:8px">${escapeHtml(title)}</div>${rows}</div>`;
 }
 
+/* ===== Boot ===== */
 load();
 </script>
 
