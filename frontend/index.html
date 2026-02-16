@@ -5,149 +5,156 @@
 <title>Prospect {{{Radar}}} LIVE Dashboard</title>
 
 <style>
-body {
-    font-family: Arial;
+body{
     margin:0;
-    background:#0b1e3a;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#0d223f;
     color:white;
 }
 
-/* ===== DESKTOP LAYOUT ===== */
-.container {
+.container{
     display:flex;
     height:100vh;
 }
 
-.list {
-    width:45%;
-    overflow-y:auto;
-    padding:20px;
-}
-
-.details {
+.left{
     width:55%;
-    border-left:1px solid #1c3c6b;
     padding:20px;
-    overflow-y:auto;
+    overflow:auto;
 }
 
-/* ===== MOBILE MODE ===== */
-@media (max-width: 900px){
-
-.container{
-    display:block;
+.right{
+    width:45%;
+    border-left:1px solid #2b4c74;
+    padding:20px;
+    overflow:auto;
 }
 
-.list{
-    width:100%;
-}
-
-.details{
+.mobile-panel{
     position:fixed;
     top:0;
     right:-100%;
     width:100%;
     height:100%;
-    background:#0b1e3a;
-    transition:0.3s;
+    background:#0d223f;
     z-index:999;
+    transition:0.3s;
+    overflow:auto;
+    padding:20px;
 }
 
-.details.show{
+.mobile-panel.open{
     right:0;
 }
 
-.closeBtn{
-    background:#1c3c6b;
-    padding:10px;
-    margin-bottom:15px;
-    border-radius:8px;
-    text-align:center;
-}
-}
-
-.card{
-    padding:15px;
-    border-bottom:1px solid #1c3c6b;
+.company{
+    padding:14px;
+    border-bottom:1px solid #2b4c74;
     cursor:pointer;
 }
 
-.card:hover{
-    background:#122c55;
+.company:hover{
+    background:#17365e;
 }
 
 button{
-    background:#1c3c6b;
-    color:white;
+    background:#17365e;
     border:none;
-    padding:8px 12px;
-    margin:5px 0;
+    padding:10px;
+    margin:6px 0;
+    color:white;
     border-radius:8px;
+    width:100%;
+}
+
+@media(max-width:900px){
+    .container{
+        display:block;
+    }
+    .left{
+        width:100%;
+    }
+    .right{
+        display:none;
+    }
 }
 </style>
 </head>
 
 <body>
 
-<h2 style="padding:20px;">Prospect {{{Radar}}} LIVE Dashboard</h2>
-
 <div class="container">
+    <div class="left">
+        <h2>Prospect {{{Radar}}} LIVE Dashboard</h2>
+        <div id="list"></div>
+    </div>
 
-<div class="list" id="list"></div>
-
-<div class="details" id="details">
-<div class="closeBtn" onclick="closePanel()">⬅ Back</div>
-<div id="detailContent">Select a prospect</div>
+    <div class="right" id="desktopPanel">
+        ← Back<br>Select a prospect
+    </div>
 </div>
 
-</div>
+<div id="mobilePanel" class="mobile-panel"></div>
 
 <script>
 
-let prospects=[];
-
-fetch("/data")
-.then(r=>r.json())
-.then(data=>{
-    prospects=data.rows;
-    renderList(prospects);
-});
+let DATA=[];
 
 function renderList(arr){
-    let html="";
-    arr.forEach((p,i)=>{
-        html+=`
-        <div class="card" onclick="showDetails(${i})">
-            <b>${p.Company}</b><br>
-            ${p.City || ""} ${p.State || ""}
-        </div>`;
+    const list=document.getElementById("list");
+    list.innerHTML="";
+    arr.forEach((c,i)=>{
+        const div=document.createElement("div");
+        div.className="company";
+        div.innerHTML="<b>"+(c.Company||"")+"</b><br>"+(c.City||"");
+        div.onclick=()=>openProspect(i);
+        list.appendChild(div);
     });
-    document.getElementById("list").innerHTML=html;
 }
 
-function showDetails(i){
-    let p=prospects[i];
+function buildPanel(c){
+    return `
+    <div>
+        <b style="font-size:22px">${c.Company||""}</b><br><br>
+        <b>Score:</b> ${c.Score||""}<br>
+        <b>Industry:</b> ${c["Industry Match"]||""}<br>
+        <b>Pkg Match:</b> ${c["Match for Pkg Sales "]||""}<br><br>
 
-    let html=`
-        <h2>${p.Company}</h2>
-        <p><b>Score:</b> ${p.Score}</p>
-        <p><b>Industry:</b> ${p["Industry Match"]}</p>
-        <p><b>Pkg Match:</b> ${p["Match for Pkg Sales"]}</p>
-        <p>${p["Business Description"] || ""}</p>
+        <button onclick="window.open('${c.Website||""}')">Website</button>
+        <button onclick="window.open('mailto:${c["Company Email"]||""}')">Email</button>
+        <button onclick="window.open('https://maps.google.com/?q=${c.Address||""}')">Map</button>
+    </div>
     `;
+}
 
-    document.getElementById("detailContent").innerHTML=html;
+function openProspect(i){
+    const c=DATA[i];
 
-    if(window.innerWidth < 900){
-        document.getElementById("details").classList.add("show");
+    if(window.innerWidth<900){
+        const panel=document.getElementById("mobilePanel");
+        panel.innerHTML="<button onclick='closeMobile()'>← Back</button>"+buildPanel(c);
+        panel.classList.add("open");
+    }else{
+        document.getElementById("desktopPanel").innerHTML=buildPanel(c);
     }
 }
 
-function closePanel(){
-    document.getElementById("details").classList.remove("show");
+function closeMobile(){
+    document.getElementById("mobilePanel").classList.remove("open");
 }
 
-</script>
+async function loadData(){
+    try{
+        const res=await fetch("https://radarpro-api.onrender.com/data");
+        DATA=await res.json();
+        renderList(DATA);
+    }catch(e){
+        console.log("DATA LOAD ERROR",e);
+    }
+}
 
+loadData();
+
+</script>
 </body>
 </html>
