@@ -3,17 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>RADAR PRO v6.1</title>
+<title>RADAR PRO v6.2</title>
 
 <style>
 :root{
  --bg:#0b1220;
  --panel:#0f1a2f;
  --text:#e9eefc;
+ --muted:#aab6d6;
  --line:rgba(255,255,255,.12);
+ --accent:#4da3ff;
+ --safeTop: env(safe-area-inset-top);
+ --safeBottom: env(safe-area-inset-bottom);
 }
 
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto;overflow:hidden}
 
 .app{
  display:grid;
@@ -23,6 +28,7 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,S
  padding:12px;
 }
 
+/* Panels */
 .panel{
  background:var(--panel);
  border-radius:14px;
@@ -30,27 +36,100 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,S
  display:flex;
  flex-direction:column;
  overflow:hidden;
+ min-height:0;
 }
 
-.topbar{padding:12px 14px;border-bottom:1px solid var(--line);font-weight:700;display:flex;justify-content:space-between}
+.topbar{
+ padding:12px 14px;
+ border-bottom:1px solid var(--line);
+ font-weight:800;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+}
 
-.search{margin:10px;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0c1629;color:white}
+.badge{font-weight:800;color:#7cf3a6}
 
-.list{overflow:auto;flex:1}
-.row{margin:8px;padding:14px;border:1px solid var(--line);border-radius:12px;cursor:pointer}
+/* Search */
+.search{
+ margin:10px;
+ padding:12px;
+ border-radius:12px;
+ border:1px solid var(--line);
+ background:#0c1629;
+ color:white;
+ outline:none;
+}
+
+/* List */
+.list{
+ overflow:auto;
+ flex:1;
+ -webkit-overflow-scrolling:touch;
+ position:relative;
+}
+
+.row{
+ margin:8px;
+ padding:14px;
+ border:1px solid var(--line);
+ border-radius:12px;
+ cursor:pointer;
+ background:rgba(0,0,0,.05);
+}
 .row:hover{background:#132246}
+.row b{font-size:16px}
+.row small{color:var(--muted)}
 
-.detail{padding:14px;overflow:auto;flex:1}
+/* Detail */
+.detail{
+ padding:14px;
+ overflow:auto;
+ flex:1;
+ -webkit-overflow-scrolling:touch;
+ min-height:0;
+}
 
-.hero{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.hero{
+ border:1px solid var(--line);
+ border-radius:14px;
+ padding:14px;
+ margin-bottom:12px;
+ background:rgba(0,0,0,.10);
+}
 
-.quick button{margin-right:8px;margin-top:8px;padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:#132246;color:white}
+.box{
+ border:1px solid var(--line);
+ border-radius:12px;
+ padding:12px;
+ margin-bottom:12px;
+ background:rgba(0,0,0,.08);
+}
 
-.box{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+/* Premium contact bar (desktop + mobile detail) */
+.contactBar{
+ display:flex;
+ gap:10px;
+ flex-wrap:wrap;
+ margin-top:10px;
+}
+.cbtn{
+ padding:10px 14px;
+ border-radius:999px;
+ border:1px solid var(--line);
+ background:#132246;
+ color:white;
+ font-weight:800;
+ cursor:pointer;
+}
+.cbtn:active{transform:scale(.98)}
+.cbtn.disabled{opacity:.45;cursor:not-allowed}
+.cbtn.primary{border-color:rgba(77,163,255,.55);background:rgba(77,163,255,.22)}
 
 /* ===== MOBILE ===== */
 @media(max-width:980px){
- .app{grid-template-columns:1fr;padding:0}
+ .app{grid-template-columns:1fr;padding:0;height:100vh}
  .right{display:none}
 }
 
@@ -58,13 +137,64 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,S
 .overlay{
  position:fixed;
  inset:0;
- background:#0b1220;
+ background:var(--bg);
  display:none;
  flex-direction:column;
  z-index:100;
+ padding-top:var(--safeTop);
+ padding-bottom:var(--safeBottom);
 }
+
+/* sticky header on mobile */
+.overlayHeader{
+ position:sticky;
+ top:0;
+ z-index:10;
+ background:linear-gradient(180deg, rgba(15,26,47,.98), rgba(15,26,47,.92));
+ border-bottom:1px solid var(--line);
+ padding:10px 12px;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:10px;
+}
+
+.backBtn{
+ border:1px solid var(--line);
+ background:#132246;
+ color:white;
+ font-weight:900;
+ border-radius:12px;
+ padding:10px 12px;
+ cursor:pointer;
+}
+
+.overlayTitle{
+ font-weight:900;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
+
+.overlaySub{
+ font-size:12px;
+ color:var(--muted);
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
+
 .overlay.on{display:flex}
-.overlayTop{padding:14px;border-bottom:1px solid var(--line);font-weight:700}
+
+/* Virtual list container */
+.virtualPad{
+ height:0; /* set dynamically */
+}
+.virtualInner{
+ position:absolute;
+ left:0; right:0;
+ top:0;
+}
 </style>
 </head>
 
@@ -74,13 +204,16 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,S
 
 <section class="panel">
  <div class="topbar">
-  RADAR PRO v6.1
-  <span id="api">LIVE</span>
+  <div>RADAR PRO v6.2</div>
+  <div class="badge" id="api">LIVE</div>
  </div>
 
- <input id="search" class="search" placeholder="Search anything…">
+ <input id="search" class="search" placeholder="Search anything… (company, NAICS, exec, notes, city…)">
 
- <div id="list" class="list"></div>
+ <div id="list" class="list">
+   <div id="virtualPad" class="virtualPad"></div>
+   <div id="virtualInner" class="virtualInner"></div>
+ </div>
 </section>
 
 <section class="panel right">
@@ -92,98 +225,238 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,S
 
 <!-- MOBILE OVERLAY -->
 <div id="overlay" class="overlay">
- <div class="overlayTop">
-  <button onclick="closeOverlay()">← Back</button>
- </div>
- <div id="detailMobile" class="detail"></div>
+  <div class="overlayHeader">
+    <button class="backBtn" onclick="closeOverlay()">← Back</button>
+    <div style="min-width:0;flex:1">
+      <div class="overlayTitle" id="mTitle">Prospect</div>
+      <div class="overlaySub" id="mSub">Details</div>
+    </div>
+    <button class="backBtn" onclick="copyCurrent()">Copy</button>
+  </div>
+  <div id="detailMobile" class="detail"></div>
 </div>
 
 <script>
-const API="https://radarpro-api.onrender.com/data"
+/* ==============================
+   RADAR PRO v6.2
+   + instant contact bar (Call/Email/Route)
+   + sticky header on mobile overlay
+   + scroll virtualization for big lists
+   ============================== */
 
-const el=id=>document.getElementById(id)
+const API="https://radarpro-api.onrender.com/data";
 
-const state={raw:[],index:[],filtered:[],selected:-1}
+const el=id=>document.getElementById(id);
+const safe=v=>(v??"").toString().trim();
 
-function safe(v){return (v??"").toString().trim()}
+const state={
+  raw:[],
+  index:[],
+  filtered:[],
+  selected:-1,
+
+  // virtualization
+  rowH: 86,          // approximate row height
+  overscan: 8,
+  scrollTop: 0
+};
+
+function normalizeWeb(w){
+  w=safe(w);
+  if(!w) return "";
+  if(!/^https?:\/\//i.test(w)) w="https://"+w;
+  return w;
+}
 
 function buildIndex(){
- state.index=state.raw.map(r=>Object.values(r).join(" ").toLowerCase())
+  state.index=state.raw.map(r=>Object.values(r).join(" ").toLowerCase());
 }
 
 async function load(){
- const r=await fetch(API)
- const j=await r.json()
- state.raw=Array.isArray(j)?j:j.rows
- buildIndex()
- state.filtered=[...state.raw]
- renderList()
+  try{
+    const r=await fetch(API,{cache:"no-store"});
+    const j=await r.json();
+    state.raw=Array.isArray(j)?j:(j.rows||[]);
+    buildIndex();
+    state.filtered=[...state.raw];
+    renderVirtual();
+  }catch(e){
+    el("api").textContent="ERROR";
+  }
 }
 
-el("search").oninput=()=>{
- const q=safe(el("search").value).toLowerCase()
- if(!q) state.filtered=[...state.raw]
- else state.filtered=state.raw.filter((r,i)=>state.index[i].includes(q))
- renderList()
+/* ===== Search (debounced) ===== */
+let t;
+el("search").addEventListener("input",()=>{
+  clearTimeout(t);
+  t=setTimeout(()=>{
+    const q=safe(el("search").value).toLowerCase();
+    if(!q) state.filtered=[...state.raw];
+    else state.filtered=state.raw.filter((r,i)=>state.index[i].includes(q));
+
+    state.selected=-1;
+    closeOverlay();
+    renderVirtual(true);
+    el("detailTitle").textContent="Select Prospect";
+    el("detail").innerHTML="";
+  },120);
+});
+
+/* ===== Virtualization =====
+   Renders only visible rows for huge datasets.
+*/
+const listEl = el("list");
+const padEl  = el("virtualPad");
+const innerEl= el("virtualInner");
+
+listEl.addEventListener("scroll",()=>{
+  state.scrollTop=listEl.scrollTop;
+  renderVirtual();
+});
+
+function renderVirtual(resetScroll=false){
+  if(resetScroll){
+    listEl.scrollTop=0;
+    state.scrollTop=0;
+  }
+
+  const total = state.filtered.length;
+  const fullH = total * state.rowH;
+  padEl.style.height = fullH + "px";
+
+  const viewH = listEl.clientHeight || 600;
+  const start = Math.max(0, Math.floor(state.scrollTop/state.rowH) - state.overscan);
+  const end   = Math.min(total, Math.ceil((state.scrollTop+viewH)/state.rowH) + state.overscan);
+
+  innerEl.style.transform = `translateY(${start*state.rowH}px)`;
+  innerEl.innerHTML = "";
+
+  for(let i=start;i<end;i++){
+    const row = state.filtered[i];
+    const div = document.createElement("div");
+    div.className="row";
+    div.innerHTML = `
+      <b>${escapeHtml(row.Company||"")}</b><br>
+      <small>${escapeHtml(row.City||"")} ${escapeHtml(row.State||"")}</small>
+    `;
+    div.onclick=()=>select(i);
+    innerEl.appendChild(div);
+  }
 }
 
-function renderList(){
- const root=el("list")
- root.innerHTML=""
- state.filtered.forEach((row,i)=>{
-  const d=document.createElement("div")
-  d.className="row"
-  d.innerHTML=`<b>${row.Company||""}</b><br>${row.City||""}`
-  d.onclick=()=>select(i)
-  root.appendChild(d)
- })
+/* ===== Detail ===== */
+
+function buildDetailHTML(row){
+  const addr=[row.Address,row.City,row.State,row.Zip].filter(Boolean).join(", ");
+  const maps = addr ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}` : "";
+  const website = normalizeWeb(row.Website);
+  const email = row["Company Email"] || row.Email || "";
+  const phone = row.Phone || "";
+
+  // Instant bar
+  const callHref  = phone ? `tel:${encodeURIComponent(phone)}` : "";
+  const mailHref  = email ? `mailto:${encodeURIComponent(email)}` : "";
+  const routeHref = maps || "";
+
+  const btn = (label, href, cls="")=>{
+    if(!href) return `<button class="cbtn disabled ${cls}" disabled>${label}</button>`;
+    // use window.open for web links; tel/mailto can be normal
+    if(href.startsWith("http")){
+      return `<button class="cbtn ${cls}" onclick="window.open('${href}','_blank')">${label}</button>`;
+    }
+    return `<a class="cbtn ${cls}" href="${href}" style="text-decoration:none;display:inline-block">${label}</a>`;
+  };
+
+  return `
+  <div class="hero">
+    <h2 style="margin:0 0 6px 0">${escapeHtml(row.Company||"")}</h2>
+    <div style="color:rgba(233,238,252,.85)">${escapeHtml(addr)}</div>
+
+    <div class="contactBar">
+      ${btn("📞 Call", callHref, "primary")}
+      ${btn("✉️ Email", mailHref)}
+      ${btn("🧭 Route", routeHref)}
+      ${btn("🌐 Website", website)}
+      ${(email)?`<button class="cbtn" onclick="copyText('${jsEscape(email)}')">Copy Email</button>`:""}
+      ${(phone)?`<button class="cbtn" onclick="copyText('${jsEscape(phone)}')">Copy Phone</button>`:""}
+    </div>
+  </div>
+
+  ${kv("Key Data",{
+    "Score": row.Score,
+    "NAICS": row["NAICS Code"],
+    "SIC": row["Primary SIC Code"],
+    "Annual Sales": row["Annual Sales"],
+    "Employees": row["Employees on Site"]
+  })}
+
+  ${kv("Notes",{
+    "Business Description": row["Business Description"],
+    "Brand Names": row["Brand Names"],
+    "Website": website
+  })}
+  `;
 }
 
 function select(i){
- state.selected=i
- renderDetail()
+  state.selected=i;
+  const row = state.filtered[i];
 
- if(window.innerWidth<980){
-   openOverlay()
- }
+  const html = buildDetailHTML(row);
+
+  el("detailTitle").textContent=row.Company||"";
+  el("detail").innerHTML=html;
+  el("detailMobile").innerHTML=html;
+
+  // mobile sticky header title/subtitle
+  el("mTitle").textContent = row.Company || "Prospect";
+  el("mSub").textContent = [row.City,row.State].filter(Boolean).join(", ");
+
+  if(window.innerWidth<980){
+    openOverlay();
+  }
 }
 
-function buildDetailHTML(row){
- const addr=[row.Address,row.City,row.State,row.Zip].filter(Boolean).join(", ")
- const maps=addr?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`:""
- const web=row.Website?.startsWith("http")?row.Website:"https://"+(row.Website||"")
-
- return `
- <div class="hero">
-  <h2>${row.Company||""}</h2>
-  <div>${addr}</div>
-  <div class="quick">
-   ${row.Website?`<button onclick="window.open('${web}','_blank')">Website</button>`:`<button disabled>Website</button>`}
-   ${addr?`<button onclick="window.open('${maps}','_blank')">Maps</button>`:`<button disabled>Maps</button>`}
-   ${row["Company Email"]?`<button onclick="navigator.clipboard.writeText('${row["Company Email"]}')">Copy Email</button>`:""}
-   ${row.Phone?`<button onclick="navigator.clipboard.writeText('${row.Phone}')">Copy Phone</button>`:""}
-  </div>
- </div>
-
- <div class="box"><b>NAICS:</b> ${row["NAICS Code"]||""}</div>
- <div class="box"><b>Description:</b> ${row["Business Description"]||""}</div>
- `
+/* ===== Copy ===== */
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); }catch(e){}
+}
+function copyCurrent(){
+  if(state.selected<0) return;
+  const row = state.filtered[state.selected];
+  const addr=[row.Address,row.City,row.State,row.Zip].filter(Boolean).join(", ");
+  const payload=[
+    row.Company?`Company: ${row.Company}`:"",
+    addr?`Address: ${addr}`:"",
+    row.Phone?`Phone: ${row.Phone}`:"",
+    (row["Company Email"]||row.Email)?`Email: ${(row["Company Email"]||row.Email)}`:"",
+    row.Website?`Website: ${normalizeWeb(row.Website)}`:""
+  ].filter(Boolean).join("\n");
+  copyText(payload);
 }
 
-function renderDetail(){
- if(state.selected<0)return
- const row=state.filtered[state.selected]
- const html=buildDetailHTML(row)
+/* ===== Overlay ===== */
+function openOverlay(){el("overlay").classList.add("on");}
+function closeOverlay(){el("overlay").classList.remove("on");}
 
- el("detailTitle").textContent=row.Company||""
- el("detail").innerHTML=html
- el("detailMobile").innerHTML=html
+/* ===== Helpers ===== */
+function escapeHtml(s){
+  return safe(s).replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[c]));
+}
+function jsEscape(s){
+  return safe(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/\n/g," ");
+}
+function kv(title,obj){
+  let rows="";
+  for(const [k,v] of Object.entries(obj)){
+    if(!safe(v)) continue;
+    rows += `<div style="margin:6px 0"><b>${escapeHtml(k)}</b>: ${escapeHtml(v)}</div>`;
+  }
+  if(!rows) return "";
+  return `<div class="box"><div style="font-weight:900;margin-bottom:8px">${escapeHtml(title)}</div>${rows}</div>`;
 }
 
-function openOverlay(){el("overlay").classList.add("on")}
-function closeOverlay(){el("overlay").classList.remove("on")}
-
-load()
+load();
 </script>
 
 </body>
