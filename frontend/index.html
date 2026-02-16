@@ -1,160 +1,318 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prospect {{{Radar}}} LIVE Dashboard</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>RADAR PRO v6 — Stable Build</title>
 
 <style>
+:root{
+  --bg:#0b1220;
+  --panel:#0f1a2f;
+  --card:#101f3a;
+  --text:#e9eefc;
+  --muted:#aab6d6;
+  --line:rgba(255,255,255,.10);
+  --accent:#4da3ff;
+  --good:#4ade80;
+  --warn:#fbbf24;
+  --bad:#fb7185;
+
+  --safe-top:env(safe-area-inset-top);
+  --safe-bottom:env(safe-area-inset-bottom);
+}
+
+*{box-sizing:border-box}
 body{
-    margin:0;
-    font-family:Arial,Helvetica,sans-serif;
-    background:#0d223f;
-    color:white;
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Inter,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  overflow:hidden;
 }
 
-.container{
-    display:flex;
-    height:100vh;
+/* ===== Layout ===== */
+.app{
+  display:grid;
+  grid-template-columns:420px 1fr;
+  height:100vh;
+  gap:14px;
+  padding:14px;
+  padding-top:calc(14px + var(--safe-top));
+  padding-bottom:calc(14px + var(--safe-bottom));
 }
 
-.left{
-    width:55%;
-    padding:20px;
-    overflow:auto;
+.panel{
+  background:var(--panel);
+  border-radius:16px;
+  border:1px solid var(--line);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
 }
 
-.right{
-    width:45%;
-    border-left:1px solid #2b4c74;
-    padding:20px;
-    overflow:auto;
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 14px;
+  border-bottom:1px solid var(--line);
+  font-weight:700;
 }
 
-.mobile-panel{
-    position:fixed;
-    top:0;
-    right:-100%;
-    width:100%;
-    height:100%;
-    background:#0d223f;
-    z-index:999;
-    transition:0.3s;
-    overflow:auto;
-    padding:20px;
+.search{
+  margin:10px;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#0c1629;
+  color:white;
+  width:calc(100% - 20px);
 }
 
-.mobile-panel.open{
-    right:0;
+.list{
+  overflow:auto;
+  flex:1;
 }
 
-.company{
-    padding:14px;
-    border-bottom:1px solid #2b4c74;
-    cursor:pointer;
+.row{
+  padding:14px;
+  margin:8px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  cursor:pointer;
 }
 
-.company:hover{
-    background:#17365e;
+.row:hover{background:#132246}
+
+.detail{
+  overflow:auto;
+  padding:14px;
+  flex:1;
 }
 
-button{
-    background:#17365e;
-    border:none;
-    padding:10px;
-    margin:6px 0;
-    color:white;
-    border-radius:8px;
-    width:100%;
+.box{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  margin-bottom:12px;
 }
 
-@media(max-width:900px){
-    .container{
-        display:block;
-    }
-    .left{
-        width:100%;
-    }
-    .right{
-        display:none;
-    }
+.hero{
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:12px;
+}
+
+.quick button{
+  margin-right:8px;
+  margin-top:8px;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:#132246;
+  color:white;
+  cursor:pointer;
+}
+
+.quick button:active{transform:scale(.97)}
+
+@media(max-width:980px){
+  .app{grid-template-columns:1fr;padding:0}
+  .right{display:none}
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-    <div class="left">
-        <h2>Prospect {{{Radar}}} LIVE Dashboard</h2>
-        <div id="list"></div>
-    </div>
+<div class="app">
 
-    <div class="right" id="desktopPanel">
-        ← Back<br>Select a prospect
-    </div>
+<!-- LEFT LIST -->
+<section class="panel left">
+  <div class="topbar">
+    <div>RADAR PRO v6</div>
+    <div id="apiStatus">LIVE</div>
+  </div>
+
+  <input id="search" class="search" placeholder="Global Search — company, city, SIC, NAICS, exec, notes…"/>
+
+  <div id="list" class="list"></div>
+</section>
+
+<!-- RIGHT DETAIL -->
+<section class="panel right">
+  <div class="topbar">
+    <div id="detailTop">Select Prospect</div>
+  </div>
+  <div id="detail" class="detail"></div>
+</section>
+
 </div>
 
-<div id="mobilePanel" class="mobile-panel"></div>
-
 <script>
+/* ==============================
+   RADAR PRO v6 — STABLE CORE
+   Built for seasoned-dev polish:
+   - Full indexed search
+   - Consistent feature parity
+   - Stable rendering engine
+   ============================== */
 
-let DATA=[];
+const API="https://radarpro-api.onrender.com/data";
 
-function renderList(arr){
-    const list=document.getElementById("list");
-    list.innerHTML="";
-    arr.forEach((c,i)=>{
-        const div=document.createElement("div");
-        div.className="company";
-        div.innerHTML="<b>"+(c.Company||"")+"</b><br>"+(c.City||"");
-        div.onclick=()=>openProspect(i);
-        list.appendChild(div);
-    });
+const el=id=>document.getElementById(id);
+
+const state={
+  raw:[],
+  index:[],
+  filtered:[],
+  selected:-1
+};
+
+/* ========= Utility ========= */
+
+function safe(v){return (v??"").toString().trim()}
+function escapeHtml(s){return safe(s).replace(/[&<>"']/g,c=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[c]))}
+
+/* ========= Data Indexing =========
+   This is the big upgrade:
+   Every record builds a searchable blob once.
+*/
+function buildIndex(){
+  state.index=state.raw.map(row=>{
+    const blob=Object.values(row)
+      .map(v=>safe(v).toLowerCase())
+      .join(" | ");
+    return blob;
+  });
 }
 
-function buildPanel(c){
-    return `
-    <div>
-        <b style="font-size:22px">${c.Company||""}</b><br><br>
-        <b>Score:</b> ${c.Score||""}<br>
-        <b>Industry:</b> ${c["Industry Match"]||""}<br>
-        <b>Pkg Match:</b> ${c["Match for Pkg Sales "]||""}<br><br>
+/* ========= Fetch ========= */
 
-        <button onclick="window.open('${c.Website||""}')">Website</button>
-        <button onclick="window.open('mailto:${c["Company Email"]||""}')">Email</button>
-        <button onclick="window.open('https://maps.google.com/?q=${c.Address||""}')">Map</button>
-    </div>
-    `;
+async function load(){
+  try{
+    const r=await fetch(API,{cache:"no-store"});
+    const j=await r.json();
+    state.raw=Array.isArray(j)?j:(j.rows||[]);
+    buildIndex();
+    state.filtered=[...state.raw];
+    renderList();
+  }catch(e){
+    el("apiStatus").textContent="ERROR";
+  }
 }
 
-function openProspect(i){
-    const c=DATA[i];
-
-    if(window.innerWidth<900){
-        const panel=document.getElementById("mobilePanel");
-        panel.innerHTML="<button onclick='closeMobile()'>← Back</button>"+buildPanel(c);
-        panel.classList.add("open");
+/* ========= Search Engine =========
+   Fully global search — not field based.
+   Dev-grade UX: debounced.
+*/
+let debounceTimer;
+el("search").addEventListener("input",()=>{
+  clearTimeout(debounceTimer);
+  debounceTimer=setTimeout(()=>{
+    const q=safe(el("search").value).toLowerCase();
+    if(!q){
+      state.filtered=[...state.raw];
     }else{
-        document.getElementById("desktopPanel").innerHTML=buildPanel(c);
+      state.filtered=state.raw.filter((row,i)=>state.index[i].includes(q));
     }
+    renderList();
+  },120);
+});
+
+/* ========= Render List ========= */
+
+function renderList(){
+  const root=el("list");
+  root.innerHTML="";
+
+  state.filtered.forEach((row,i)=>{
+    const div=document.createElement("div");
+    div.className="row";
+    div.innerHTML=`
+      <b>${escapeHtml(row.Company||"Company")}</b><br/>
+      <small>${escapeHtml(row.City||"")} ${escapeHtml(row.State||"")}</small>
+    `;
+    div.onclick=()=>select(i);
+    root.appendChild(div);
+  });
 }
 
-function closeMobile(){
-    document.getElementById("mobilePanel").classList.remove("open");
+/* ========= Select ========= */
+
+function select(i){
+  state.selected=i;
+  renderDetail();
 }
 
-async function loadData(){
-    try{
-        const res=await fetch("https://radarpro-api.onrender.com/data");
-        DATA=await res.json();
-        renderList(DATA);
-    }catch(e){
-        console.log("DATA LOAD ERROR",e);
-    }
+/* ========= Detail Builder ========= */
+
+function renderDetail(){
+  const root=el("detail");
+  if(state.selected<0){
+    root.innerHTML="";
+    return;
+  }
+
+  const row=state.filtered[state.selected];
+
+  const addr=[row.Address,row.City,row.State,row.Zip].filter(Boolean).join(", ");
+  const website=safe(row.Website);
+  const maps=addr?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`:"";
+
+  el("detailTop").textContent=row.Company||"Prospect";
+
+  root.innerHTML=`
+  <div class="hero">
+    <h2>${escapeHtml(row.Company||"Company")}</h2>
+    <div>${escapeHtml(addr)}</div>
+
+    <div class="quick">
+      ${website?`<button onclick="window.open('${escapeHtml(normalizeWeb(website))}','_blank')">Website</button>`:`<button disabled>Website</button>`}
+      ${maps?`<button onclick="window.open('${maps}','_blank')">Maps</button>`:`<button disabled>Maps</button>`}
+      ${row["Company Email"]?`<button onclick="copy('${escapeHtml(row["Company Email"])}')">Copy Email</button>`:""}
+      ${row.Phone?`<button onclick="copy('${escapeHtml(row.Phone)}')">Copy Phone</button>`:""}
+    </div>
+  </div>
+
+  ${kv("Business",{
+    "Annual Sales":row["Annual Sales"],
+    "Employees":row["Employees on Site"],
+    "NAICS":row["NAICS Code"],
+    "SIC":row["Primary SIC Code"]
+  })}
+
+  ${kv("Notes",{Description:row["Business Description"]})}
+  `;
 }
 
-loadData();
+/* ========= Helper UI ========= */
 
+function kv(title,obj){
+  let rows="";
+  Object.entries(obj).forEach(([k,v])=>{
+    if(!safe(v))return;
+    rows+=`<div><b>${escapeHtml(k)}</b>: ${escapeHtml(v)}</div>`;
+  });
+  if(!rows)return"";
+  return `<div class="box"><h3>${title}</h3>${rows}</div>`;
+}
+
+function normalizeWeb(w){
+  w=safe(w);
+  if(!/^https?:\/\//i.test(w))w="https://"+w;
+  return w;
+}
+
+async function copy(t){
+  try{await navigator.clipboard.writeText(t)}catch{}
+}
+
+/* ========= Boot ========= */
+load();
 </script>
+
 </body>
 </html>
