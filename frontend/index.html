@@ -4,14 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- BUILD: V6.3-DELTA-02 PWA ICON ENABLED -->
+<!-- BUILD: V6.3 FINAL PWA + SERVICE WORKER -->
 
 <title>{{{PROSPECT•RADAR}}} v6.3</title>
 
-<!-- PWA / APP ICONS -->
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-512.png">
 <meta name="theme-color" content="#06142b">
 
 <style>
@@ -230,6 +229,14 @@ document.getElementById("results").innerHTML=html;
 
 }
 
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js");
+  });
+}
 </script>
 
 </body>
