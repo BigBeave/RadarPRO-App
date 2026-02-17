@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- BUILD: V6.3 FINAL PWA + SERVICE WORKER -->
-
 <title>{{{PROSPECT•RADAR}}} v6.3</title>
 
 <link rel="manifest" href="manifest.json">
@@ -33,6 +31,17 @@ font-weight:bold;
 text-align:center;
 letter-spacing:1px;
 box-shadow:0 4px 20px rgba(0,0,0,.5);
+}
+
+/* 🔥 Radar Pulse Animation */
+@keyframes radarPulse{
+0%{ text-shadow:0 0 0px #2c64ff; }
+50%{ text-shadow:0 0 18px #2c64ff; }
+100%{ text-shadow:0 0 0px #2c64ff; }
+}
+
+header.pulse{
+animation:radarPulse .3s ease-out;
 }
 
 .container{
@@ -108,7 +117,7 @@ background:#2c64ff;
 
 <body>
 
-<header>
+<header id="radarHeader">
 {{{PROSPECT•RADAR}}} v6.3
 </header>
 
@@ -168,6 +177,11 @@ div.classList.add("active");
 render();
 };
 stateWrap.appendChild(div);
+});
+
+/* 🔥 Trigger Radar Pulse Once */
+window.addEventListener("load",()=>{
+document.getElementById("radarHeader").classList.add("pulse");
 });
 
 fetch(API)
@@ -233,9 +247,9 @@ document.getElementById("results").innerHTML=html;
 
 <script>
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js");
-  });
+window.addEventListener("load",()=>{
+navigator.serviceWorker.register("/sw.js");
+});
 }
 </script>
 
