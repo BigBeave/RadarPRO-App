@@ -73,8 +73,9 @@ function populateStates(data){
     const states = new Set();
 
     data.forEach(row=>{
-        if(row.State && row.State.trim() !== ""){
-            states.add(row.State.trim());
+        const stateValue = (row.State || row["State Tag"] || "").trim();
+        if(stateValue !== ""){
+            states.add(stateValue);
         }
     });
 
@@ -115,7 +116,8 @@ function globalSearch(){
         const fullText = Object.values(row).join(" ").toLowerCase();
 
         const keywordMatch = keyword==="" || fullText.includes(keyword);
-        const stateMatch = state==="ALL" || row.State===state;
+        const rowState = (row.State || row["State Tag"] || "");
+        const stateMatch = state==="ALL" || rowState===state;
         const scoreMatch = (row.Score||0) >= minScore;
 
         return keywordMatch && stateMatch && scoreMatch;
