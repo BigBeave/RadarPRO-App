@@ -11,14 +11,11 @@ body{
     color:#e6edf3;
     margin:0;
 }
-
 header{
     background:#111827;
     padding:12px;
     font-weight:bold;
-    letter-spacing:.5px;
 }
-
 #searchBar{
     width:98%;
     margin:10px;
@@ -27,28 +24,23 @@ header{
     border-radius:6px;
     border:none;
 }
-
 table{
     width:100%;
     border-collapse:collapse;
     font-size:13px;
 }
-
 thead{
     position:sticky;
     top:0;
     background:#0f172a;
 }
-
 th,td{
     padding:6px 8px;
     border-bottom:1px solid #1f2937;
 }
-
 tr.selected{
     background:#1d4ed8;
 }
-
 button.action{
     background:#1f2937;
     color:white;
@@ -58,7 +50,6 @@ button.action{
     border-radius:4px;
     cursor:pointer;
 }
-
 button.action:hover{
     background:#2563eb;
 }
@@ -80,7 +71,10 @@ button.action:hover{
 
 <script>
 
-const API = "/data";
+/* IMPORTANT FIX:
+   Frontend must call BACKEND service directly */
+const API = "https://radarpro-api.onrender.com/data";
+
 let ALL = [];
 let FILTERED = [];
 let SELECTED = JSON.parse(localStorage.getItem("radar_selected") || "[]");
@@ -94,11 +88,10 @@ async function load(){
     const res = await fetch(API);
     const json = await res.json();
 
-    // RAW ARRAY SAFE
     ALL = Array.isArray(json) ? json : (json.items||json.data||[]);
 
     if(!ALL.length){
-        body.innerHTML="<tr><td>No Data</td></tr>";
+        body.innerHTML="<tr><td>NO DATA RECEIVED</td></tr>";
         return;
     }
 
@@ -123,7 +116,6 @@ function buildHeader(cols){
 function render(){
 
     body.innerHTML="";
-
     const frag=document.createDocumentFragment();
 
     FILTERED.forEach((row,idx)=>{
