@@ -1,738 +1,142 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Prospect {{{Radar}}} PRO</title>
-  <meta name="theme-color" content="#0b5cff" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Radar PRO</title>
 
-  <style>
-    :root{
-      --bg:#f6f8fc;
-      --card:#ffffff;
-      --text:#12223a;
-      --muted:#6b7a90;
-      --line:#e6ecf5;
-      --brand:#0b5cff;
-      --brand2:#1149c9;
-      --good:#0c7c59;
-      --warn:#b85a00;
-      --danger:#b42318;
-      --shadow:0 8px 30px rgba(16,24,40,.08);
-      --radius:14px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:var(--sans);
-      background:var(--bg);
-      color:var(--text);
-    }
-
-    /* Header */
-    .topbar{
-      position:sticky; top:0; z-index:10;
-      background:linear-gradient(90deg, var(--brand), var(--brand2));
-      color:#fff;
-      padding:14px 16px;
-      box-shadow:0 4px 18px rgba(0,0,0,.12);
-    }
-    .topbar .row{
-      display:flex; align-items:center; gap:12px; justify-content:space-between;
-      max-width:1400px; margin:0 auto;
-    }
-    .brand{
-      display:flex; align-items:center; gap:10px;
-      min-width: 240px;
-    }
-    .brand .dot{
-      width:10px; height:10px; border-radius:50%;
-      background:#34d399;
-      box-shadow:0 0 0 5px rgba(52,211,153,.18);
-      animation:pulse 1.7s ease-in-out infinite;
-    }
-    @keyframes pulse{
-      0%{transform:scale(1); box-shadow:0 0 0 5px rgba(52,211,153,.18)}
-      70%{transform:scale(1.08); box-shadow:0 0 0 14px rgba(52,211,153,0)}
-      100%{transform:scale(1); box-shadow:0 0 0 5px rgba(52,211,153,.18)}
-    }
-    .brand h1{
-      margin:0;
-      font-size:16px;
-      letter-spacing:.3px;
-      font-weight:750;
-      line-height:1.1;
-    }
-    .brand .sub{
-      font-size:12px;
-      opacity:.9;
-      margin-top:2px;
-    }
-
-    /* Layout */
-    .wrap{
-      max-width:1400px;
-      margin:14px auto;
-      padding:0 12px 18px;
-      display:grid;
-      grid-template-columns: 1fr 420px;
-      gap:12px;
-    }
-    @media (max-width: 1100px){
-      .wrap{grid-template-columns:1fr}
-      .panel{position:fixed; inset:auto 10px 10px 10px; max-height:70vh; display:none}
-      .panel.open{display:block}
-    }
-
-    /* Cards */
-    .card{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-    }
-    .controls{
-      padding:12px;
-      display:grid;
-      grid-template-columns: 1fr 180px 180px 140px;
-      gap:10px;
-      align-items:center;
-    }
-    @media (max-width: 900px){
-      .controls{grid-template-columns:1fr 1fr}
-    }
-
-    .input, select{
-      width:100%;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      outline:none;
-      background:#fff;
-      color:var(--text);
-      font-size:14px;
-    }
-    .input:focus, select:focus{border-color:rgba(11,92,255,.45); box-shadow:0 0 0 4px rgba(11,92,255,.12)}
-    .pillbar{
-      padding:0 12px 12px;
-      display:flex; flex-wrap:wrap; gap:8px;
-      align-items:center;
-      border-top:1px solid var(--line);
-    }
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      background:#f1f5ff;
-      color:#0b2f8f;
-      border:1px solid rgba(11,92,255,.18);
-      padding:7px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:650;
-    }
-    .pill .mini{
-      font-family:var(--mono);
-      font-weight:700;
-      color:#0b2f8f;
-      opacity:.9;
-    }
-    .btn{
-      border:1px solid rgba(255,255,255,.22);
-      background:rgba(255,255,255,.12);
-      color:#fff;
-      padding:9px 12px;
-      border-radius:12px;
-      font-weight:750;
-      font-size:13px;
-      cursor:pointer;
-      transition:.15s transform ease, .15s opacity ease, .15s background ease;
-      white-space:nowrap;
-    }
-    .btn:hover{transform:translateY(-1px); background:rgba(255,255,255,.16)}
-    .btn:active{transform:translateY(0)}
-    .btn.dark{
-      border:1px solid var(--line);
-      background:#fff;
-      color:var(--text);
-    }
-    .btn.dark:hover{background:#f7f9ff}
-    .btn.primary{
-      border:1px solid rgba(11,92,255,.25);
-      background:rgba(11,92,255,.12);
-      color:#0b2f8f;
-    }
-
-    /* Table */
-    .tablewrap{overflow:auto}
-    table{
-      width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      min-width:1100px;
-    }
-    thead th{
-      position:sticky; top:0;
-      background:#fff;
-      z-index:2;
-      border-bottom:1px solid var(--line);
-      text-align:left;
-      padding:10px 10px;
-      font-size:12px;
-      color:var(--muted);
-      font-weight:800;
-      letter-spacing:.25px;
-      white-space:nowrap;
-    }
-    tbody td{
-      border-bottom:1px solid var(--line);
-      padding:10px 10px;
-      font-size:13px;
-      vertical-align:top;
-      color:var(--text);
-    }
-    tbody tr{
-      cursor:pointer;
-      transition:background .12s ease;
-    }
-    tbody tr:hover{background:#f7f9ff}
-    tbody tr.selected{background:#eef4ff}
-    .muted{color:var(--muted)}
-    .score{
-      display:inline-flex; align-items:center; justify-content:center;
-      min-width:42px;
-      padding:4px 8px;
-      border-radius:999px;
-      font-weight:900;
-      font-size:12px;
-      border:1px solid var(--line);
-      background:#fff;
-    }
-    .score.good{border-color:rgba(12,124,89,.22); background:rgba(12,124,89,.08); color:var(--good)}
-    .score.warn{border-color:rgba(184,90,0,.22); background:rgba(184,90,0,.08); color:var(--warn)}
-    .score.bad{border-color:rgba(180,35,24,.22); background:rgba(180,35,24,.08); color:var(--danger)}
-
-    /* Side panel */
-    .panel{
-      padding:12px;
-      position:sticky; top:70px;
-      height: calc(100vh - 92px);
-      overflow:auto;
-    }
-    .panelHead{
-      display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
-      padding-bottom:10px;
-      border-bottom:1px solid var(--line);
-      margin-bottom:10px;
-    }
-    .panelTitle{
-      font-size:14px;
-      font-weight:900;
-      margin:0;
-      line-height:1.2;
-    }
-    .panelSub{
-      margin-top:6px;
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.35;
-    }
-    .kv{
-      display:grid;
-      grid-template-columns: 110px 1fr;
-      gap:8px 10px;
-      padding:10px 0;
-      border-bottom:1px solid var(--line);
-      font-size:13px;
-    }
-    .k{color:var(--muted); font-weight:800}
-    .v{color:var(--text); word-break:break-word}
-    .actions{
-      display:flex; flex-wrap:wrap; gap:8px;
-      padding:10px 0 2px;
-    }
-    .actionBtn{
-      display:inline-flex; align-items:center; gap:8px;
-      border:1px solid var(--line);
-      background:#fff;
-      color:var(--text);
-      padding:9px 10px;
-      border-radius:12px;
-      font-weight:800;
-      font-size:13px;
-      cursor:pointer;
-      transition:.12s background ease, .12s transform ease;
-      text-decoration:none;
-    }
-    .actionBtn:hover{background:#f7f9ff; transform:translateY(-1px)}
-    .tinyNote{
-      margin-top:8px;
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.4;
-    }
-    .badge{
-      display:inline-flex; align-items:center;
-      padding:4px 8px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:#fff;
-      font-size:12px;
-      font-weight:850;
-      color:var(--muted);
-      margin-right:6px;
-    }
-
-    /* Mobile panel close */
-    .closeX{
-      display:none;
-      border:1px solid var(--line);
-      background:#fff;
-      border-radius:10px;
-      padding:7px 10px;
-      cursor:pointer;
-      font-weight:900;
-    }
-    @media (max-width:1100px){
-      .closeX{display:inline-flex}
-    }
-    .loading{
-      padding:16px;
-      color:var(--muted);
-      font-size:13px;
-    }
-    .error{
-      padding:16px;
-      color:var(--danger);
-      font-size:13px;
-    }
-  </style>
+<style>
+body{margin:0;font-family:Segoe UI;background:#f5f7fb;color:#12223a}
+.top{background:#0b5cff;color:#fff;padding:10px 14px;font-weight:700}
+.wrap{padding:10px}
+input,select{padding:8px;border-radius:8px;border:1px solid #dfe6f2}
+table{width:100%;border-collapse:collapse;background:#fff}
+thead th{font-size:12px;text-align:left;padding:8px;border-bottom:1px solid #e6ecf5}
+tbody td{padding:8px;border-bottom:1px solid #eef2f8;font-size:13px}
+tbody tr:hover{background:#f1f6ff}
+tbody tr.selected{background:#e7efff}
+.actions{display:flex;gap:6px}
+.act{
+font-size:11px;
+padding:3px 6px;
+border-radius:6px;
+border:1px solid #c9d6ff;
+background:#f4f7ff;
+cursor:pointer;
+text-decoration:none;
+color:#1b3dbf;
+}
+.act:hover{background:#e8efff}
+.panel{position:fixed;right:0;top:0;width:320px;height:100%;background:#fff;
+border-left:1px solid #e6ecf5;padding:12px;overflow:auto}
+</style>
 </head>
 
 <body>
-  <div class="topbar">
-    <div class="row">
-      <div class="brand">
-        <div class="dot"></div>
-        <div>
-          <h1>Prospect {{{Radar}}} PRO</h1>
-          <div class="sub">LIVE • Streaming backend • Heap-safe</div>
-        </div>
-      </div>
+<div class="top">Prospect {{{Radar}}} PRO — Streaming SAFE</div>
 
-      <div style="display:flex; gap:8px; align-items:center;">
-        <button class="btn" id="btnRefresh" title="Reload data from API">Refresh</button>
-        <button class="btn" id="btnClear" title="Clear filters">Clear</button>
-      </div>
-    </div>
-  </div>
+<div class="wrap">
+<input id="q" placeholder="Search any column..." />
+<select id="limit">
+<option value="50">50</option>
+<option value="100" selected>100</option>
+<option value="250">250</option>
+</select>
 
-  <div class="wrap">
-    <!-- Left: Table -->
-    <div class="card">
-      <div class="controls">
-        <input class="input" id="q" placeholder="Search ANY column (GO keyword filter) …" autocomplete="off" />
-        <select id="state">
-          <option value="">All States</option>
-        </select>
-        <select id="scoreBand">
-          <option value="">All Scores</option>
-          <option value="80">80+</option>
-          <option value="60">60–79</option>
-          <option value="40">40–59</option>
-          <option value="0">0–39</option>
-        </select>
-        <select id="limit">
-          <option value="50">Show 50</option>
-          <option value="100" selected>Show 100</option>
-          <option value="250">Show 250</option>
-          <option value="500">Show 500</option>
-        </select>
-      </div>
+<div id="table"></div>
+</div>
 
-      <div class="pillbar" id="pillbar">
-        <span class="pill">Rows <span class="mini" id="count">0</span></span>
-        <span class="pill">Loaded <span class="mini" id="loaded">0</span></span>
-        <span class="pill">API <span class="mini" id="apiState">…</span></span>
-      </div>
+<div class="panel" id="panel">
+<b id="title">Select a business</b>
+<div id="details"></div>
+</div>
 
-      <div class="tablewrap" id="tablewrap">
-        <div class="loading" id="status">Loading…</div>
-      </div>
-    </div>
+<script>
+const API="https://radarpro-api.onrender.com/data";
 
-    <!-- Right: Detail Panel -->
-    <div class="card panel" id="panel">
-      <div class="panelHead">
-        <div>
-          <p class="panelTitle" id="pTitle">Select a business</p>
-          <div class="panelSub" id="pSub">Click any row to open full details and action buttons.</div>
-        </div>
-        <button class="closeX" id="panelClose">Close</button>
-      </div>
+let ALL=[];
+let FILTERED=[];
+let SELECTED_ID=null; // persistent selection
 
-      <div class="actions" id="actions" style="display:none;">
-        <a class="actionBtn" id="btnMyMap" href="#" target="_blank" rel="noopener">🧭 My Map Link</a>
-        <a class="actionBtn" id="btnDirections" href="#" target="_blank" rel="noopener">🗺️ Directions</a>
-        <a class="actionBtn" id="btnCall" href="#" target="_blank" rel="noopener">📞 Call</a>
-        <a class="actionBtn" id="btnWebsite" href="#" target="_blank" rel="noopener">🌐 Website</a>
-      </div>
+function pick(r,k){return (r[k]||"").toString();}
+function addr(r){
+return [r.Address,r.City,r.State,r.Zip].filter(Boolean).join(", ");
+}
+function phoneLink(p){
+if(!p)return"#";
+return "tel:"+p.replace(/[^\d+]/g,"");
+}
+function webLink(w){
+if(!w)return"#";
+return w.startsWith("http")?w:"https://"+w;
+}
+function mapLink(r){
+return "https://www.google.com/maps/search/?api=1&query="+
+encodeURIComponent((r.Company||"")+" "+addr(r));
+}
 
-      <div id="kvWrap"></div>
+function render(){
+const q=document.getElementById("q").value.toLowerCase();
+const limit=Number(document.getElementById("limit").value);
 
-      <div class="tinyNote" id="pNote">
-        Tip: “Directions” uses Google Maps with the business address. “Call” uses tel: links on mobile.
-      </div>
-    </div>
-  </div>
+let out=ALL.filter(r=>{
+if(!q)return true;
+return Object.values(r).join(" ").toLowerCase().includes(q);
+});
 
-  <script>
-    // === CONFIG: keep backend untouched ===
-    // Your streaming backend returns { items: [...] }
-    // If your Render endpoint differs, change API_URL only.
-    const API_URL = "https://radarpro-api.onrender.com/data";
+FILTERED=out.slice(0,limit);
 
-    // === STATE ===
-    let ALL = [];
-    let FILTERED = [];
-    let SELECTED_INDEX = -1;
+let html="<table><thead><tr>"+
+"<th>Score</th><th>Company</th><th>City</th><th>State</th><th>Actions</th>"+
+"</tr></thead><tbody>";
 
-    // === UTIL ===
-    const $ = (id) => document.getElementById(id);
+FILTERED.forEach((r,i)=>{
+const id=r["Company ID"]||i;
+const sel=(id===SELECTED_ID)?"selected":"";
+html+=`
+<tr class="${sel}" onclick="selectRow(${i})">
+<td>${pick(r,"Score")}</td>
+<td>${pick(r,"Company")}</td>
+<td>${pick(r,"City")}</td>
+<td>${pick(r,"State")}</td>
+<td class="actions" onclick="event.stopPropagation()">
+<a class="act" href="${phoneLink(pick(r,"Phone"))}" target="_blank">Call</a>
+<a class="act" href="${webLink(pick(r,"Website"))}" target="_blank">Web</a>
+<a class="act" href="${mapLink(r)}" target="_blank">Map</a>
+</td>
+</tr>`;
+});
 
-    function norm(v){
-      if (v === null || v === undefined) return "";
-      return String(v).trim();
-    }
+html+="</tbody></table>";
+document.getElementById("table").innerHTML=html;
+}
 
-    function safeLower(v){ return norm(v).toLowerCase(); }
+function selectRow(i){
+const r=FILTERED[i];
+SELECTED_ID=r["Company ID"]||i;
 
-    function toNumber(v){
-      const n = Number(String(v).replace(/[^\d.-]/g,""));
-      return Number.isFinite(n) ? n : null;
-    }
+document.getElementById("title").textContent=
+r.Company||"Business";
 
-    function scoreClass(score){
-      if (score === null) return "";
-      if (score >= 80) return "good";
-      if (score >= 60) return "warn";
-      if (score >= 0) return "bad";
-      return "";
-    }
+document.getElementById("details").innerHTML=
+"<div>"+addr(r)+"</div>"+
+"<div>"+(r.Phone||"")+"</div>"+
+"<div>"+(r.Website||"")+"</div>";
 
-    function buildFullText(row){
-      // Keyword filter across ANY column (existing GO logic)
-      // Join all values into one searchable blob
-      return Object.values(row).map(v => safeLower(v)).join(" | ");
-    }
+render(); // keeps highlight after filter
+}
 
-    function pick(row, keys){
-      for (const k of keys){
-        if (row && Object.prototype.hasOwnProperty.call(row,k)){
-          const v = norm(row[k]);
-          if (v) return v;
-        }
-      }
-      return "";
-    }
+async function load(){
+const res=await fetch(API);
+const json=await res.json();
+ALL=json.items||[];
+render();
+}
 
-    function normalizeWebsite(url){
-      const u = norm(url);
-      if (!u) return "";
-      if (u.startsWith("http://") || u.startsWith("https://")) return u;
-      return "https://" + u.replace(/^\/\//,"");
-    }
+document.getElementById("q").addEventListener("input",render);
+document.getElementById("limit").addEventListener("change",render);
 
-    function buildGoogleDirectionsLink(addressLine){
-      const q = encodeURIComponent(addressLine);
-      return "https://www.google.com/maps/dir/?api=1&destination=" + q;
-    }
-
-    function buildGoogleSearchMapLink(company, addressLine){
-      // If you had a real “My Map Link” column in your old logic,
-      // we’ll use it if present. Otherwise this is a strong fallback.
-      const q = encodeURIComponent([company, addressLine].filter(Boolean).join(" "));
-      return "https://www.google.com/maps/search/?api=1&query=" + q;
-    }
-
-    function fmtAddress(row){
-      const address = pick(row, ["Address","address","Street","street"]);
-      const city = pick(row, ["City","city"]);
-      const state = pick(row, ["State","state","Mailing State","MailingState"]);
-      const zip = pick(row, ["Zip","zip","ZIP"]);
-      return [address, city, state, zip].filter(Boolean).join(", ").replace(", ,", ",");
-    }
-
-    function populateStateDropdown(items){
-      const s = new Set();
-      for (const r of items){
-        const st = pick(r, ["State","state","Mailing State","MailingState","State Tag","StateTag"]);
-        if (st) s.add(st.toUpperCase());
-      }
-      const arr = Array.from(s).sort();
-      const sel = $("state");
-      // preserve current selection
-      const cur = sel.value;
-      sel.innerHTML = '<option value="">All States</option>' + arr.map(x => `<option value="${x}">${x}</option>`).join("");
-      if (arr.includes(cur)) sel.value = cur;
-    }
-
-    function renderTable(rows){
-      const wrap = $("tablewrap");
-      if (!rows.length){
-        wrap.innerHTML = `<div class="loading">No matches. Try fewer filters.</div>`;
-        return;
-      }
-
-      // Determine columns (prefer your known schema, but stay resilient)
-      const preferred = [
-        "Score","Company","Business Description","City","State","Zip","Phone","Website",
-        "Annual Sales","Employees on Site","Square Footage","Primary SIC Code","NAICS Code"
-      ];
-
-      const keys = Object.keys(rows[0] || {});
-      const cols = preferred.filter(c => keys.includes(c));
-      // Add a few more if preferred missing
-      if (!cols.length){
-        cols.push(...keys.slice(0, 10));
-      }
-
-      const thead = `
-        <thead><tr>
-          ${cols.map(c => `<th>${c}</th>`).join("")}
-        </tr></thead>
-      `;
-
-      const tbody = rows.map((r, idx) => {
-        const scoreVal = toNumber(r["Score"]);
-        return `
-          <tr data-idx="${idx}">
-            ${cols.map(c => {
-              if (c === "Score"){
-                const sc = (scoreVal === null) ? "" : scoreVal;
-                const cls = scoreClass(scoreVal);
-                return `<td><span class="score ${cls}">${sc}</span></td>`;
-              }
-              const v = norm(r[c]);
-              const isMuted = !v ? "muted" : "";
-              return `<td class="${isMuted}">${v || "—"}</td>`;
-            }).join("")}
-          </tr>
-        `;
-      }).join("");
-
-      wrap.innerHTML = `
-        <table>
-          ${thead}
-          <tbody>${tbody}</tbody>
-        </table>
-      `;
-
-      // Row click => open details
-      wrap.querySelectorAll("tbody tr").forEach(tr => {
-        tr.addEventListener("click", () => {
-          const idx = Number(tr.getAttribute("data-idx"));
-          selectRow(idx);
-        });
-      });
-    }
-
-    function clearSelectionHighlight(){
-      const wrap = $("tablewrap");
-      wrap.querySelectorAll("tbody tr.selected").forEach(tr => tr.classList.remove("selected"));
-    }
-
-    function selectRow(filteredIndex){
-      SELECTED_INDEX = filteredIndex;
-      const row = FILTERED[filteredIndex];
-      if (!row) return;
-
-      // Highlight row
-      clearSelectionHighlight();
-      const wrap = $("tablewrap");
-      const tr = wrap.querySelector(`tbody tr[data-idx="${filteredIndex}"]`);
-      if (tr) tr.classList.add("selected");
-
-      // Build detail panel fields
-      const company = pick(row, ["Company","company","Business Name","BusinessName"]);
-      const desc = pick(row, ["Business Description","BusinessDescription","Description","description"]);
-      const phone = pick(row, ["Phone","phone","Toll Free","TollFree","Alternate Phone","AlternatePhone"]);
-      const website = normalizeWebsite(pick(row, ["Website","website","URL","url"]));
-      const state = pick(row, ["State","state","Mailing State","MailingState","State Tag","StateTag"]);
-      const city = pick(row, ["City","city"]);
-      const score = toNumber(pick(row, ["Score","score"]));
-      const addrLine = fmtAddress(row);
-
-      $("pTitle").textContent = company || "Business details";
-      const badges = [
-        (score !== null ? `<span class="badge">Score: ${score}</span>` : ""),
-        (state ? `<span class="badge">${state.toUpperCase()}</span>` : ""),
-        (city ? `<span class="badge">${city}</span>` : "")
-      ].filter(Boolean).join(" ");
-      $("pSub").innerHTML = `${badges}<div class="panelSub" style="margin-top:8px;">${desc || "—"}</div>`;
-
-      // Action buttons logic (restored)
-      const myMapRaw = pick(row, ["My Map Link","MyMapLink","MyMap","Map Link","MapLink"]);
-      const myMap = normalizeWebsite(myMapRaw) || buildGoogleSearchMapLink(company, addrLine);
-      const directions = buildGoogleDirectionsLink(addrLine || company || "");
-      const callLink = phone ? `tel:${phone.replace(/[^\d+]/g,"")}` : "";
-      const webLink = website;
-
-      const actions = $("actions");
-      actions.style.display = "flex";
-
-      const setAction = (id, href, enabled) => {
-        const el = $(id);
-        if (!enabled){
-          el.style.opacity = ".45";
-          el.style.pointerEvents = "none";
-          el.href = "#";
-          return;
-        }
-        el.style.opacity = "1";
-        el.style.pointerEvents = "auto";
-        el.href = href;
-      };
-
-      setAction("btnMyMap", myMap, !!myMap);
-      setAction("btnDirections", directions, !!(addrLine || company));
-      setAction("btnCall", callLink, !!phone);
-      setAction("btnWebsite", webLink, !!webLink);
-
-      // Key/Value list (show important fields first, then everything else)
-      const importantKeys = [
-        "Company","Score","Industry Match","Company Size","Match for my Products - Services","Match for Pkg Sales",
-        "Business Description","Address","City","State","Zip","Phone","Company Email","Website",
-        "Annual Sales","Employees on Site","Square Footage","Year Established","Area of Distribution","Ownership",
-        "Imports","Woman Owned","Minority Owned","ISO Ratings","Primary SIC Code","NAICS Code",
-        "County","Mailing Address","Mailing City","Mailing State","Mailing Zip","Alternate Phone","Toll Free","Fax"
-      ];
-
-      const seen = new Set();
-      const rowsKV = [];
-
-      function addKV(k){
-        if (seen.has(k)) return;
-        if (!Object.prototype.hasOwnProperty.call(row,k)) return;
-        const v = norm(row[k]) || "—";
-        seen.add(k);
-        rowsKV.push(`<div class="kv"><div class="k">${k}</div><div class="v">${v}</div></div>`);
-      }
-
-      importantKeys.forEach(addKV);
-
-      // add remaining keys (heap-safe, just DOM)
-      Object.keys(row).forEach(k => {
-        if (seen.has(k)) return;
-        // skip empty junk
-        const v = norm(row[k]);
-        if (!v) return;
-        seen.add(k);
-        rowsKV.push(`<div class="kv"><div class="k">${k}</div><div class="v">${v}</div></div>`);
-      });
-
-      $("kvWrap").innerHTML = rowsKV.join("") || `<div class="loading">No details available.</div>`;
-
-      // On mobile, open panel overlay
-      const panel = $("panel");
-      panel.classList.add("open");
-      panel.scrollTop = 0;
-    }
-
-    function applyFilters(){
-      const q = safeLower($("q").value);
-      const st = safeLower($("state").value);
-      const band = $("scoreBand").value;
-      const limit = Number($("limit").value) || 100;
-
-      let out = ALL;
-
-      if (st){
-        out = out.filter(r => safeLower(pick(r, ["State","state","Mailing State","MailingState","State Tag","StateTag"])) === st);
-      }
-
-      if (band !== ""){
-        const b = Number(band);
-        out = out.filter(r => {
-          const sc = toNumber(pick(r, ["Score","score"]));
-          if (sc === null) return false;
-          if (b === 80) return sc >= 80;
-          if (b === 60) return sc >= 60 && sc <= 79;
-          if (b === 40) return sc >= 40 && sc <= 59;
-          if (b === 0) return sc >= 0 && sc <= 39;
-          return true;
-        });
-      }
-
-      if (q){
-        out = out.filter(r => (r.__blob || "").includes(q));
-      }
-
-      FILTERED = out.slice(0, limit);
-      $("count").textContent = String(out.length);
-      renderTable(FILTERED);
-
-      // If previously selected index is out of range, clear panel
-      if (SELECTED_INDEX >= FILTERED.length){
-        SELECTED_INDEX = -1;
-        $("pTitle").textContent = "Select a business";
-        $("pSub").textContent = "Click any row to open full details and action buttons.";
-        $("actions").style.display = "none";
-        $("kvWrap").innerHTML = "";
-      }
-    }
-
-    async function loadData(){
-      $("apiState").textContent = "loading";
-      $("status").textContent = "Loading…";
-
-      try{
-        const res = await fetch(API_URL, { cache:"no-store" });
-        if (!res.ok) throw new Error("API HTTP " + res.status);
-
-        const json = await res.json();
-
-        // Backend returns json.items (LOCKED in your architecture)
-        const items = Array.isArray(json.items) ? json.items : (Array.isArray(json.data) ? json.data : []);
-        ALL = items.map(r => {
-          // Precompute blob for fast keyword search (client-side only)
-          r.__blob = buildFullText(r);
-          return r;
-        });
-
-        $("loaded").textContent = String(ALL.length);
-        $("apiState").textContent = "ok";
-        populateStateDropdown(ALL);
-        applyFilters();
-      }catch(err){
-        $("apiState").textContent = "error";
-        $("tablewrap").innerHTML = `<div class="error">API load failed: ${norm(err.message)}<br><span class="muted">Check Render backend URL or /data route.</span></div>`;
-      }
-    }
-
-    function clearFilters(){
-      $("q").value = "";
-      $("state").value = "";
-      $("scoreBand").value = "";
-      $("limit").value = "100";
-      applyFilters();
-    }
-
-    // === EVENTS ===
-    $("q").addEventListener("input", () => applyFilters());
-    $("state").addEventListener("change", () => applyFilters());
-    $("scoreBand").addEventListener("change", () => applyFilters());
-    $("limit").addEventListener("change", () => applyFilters());
-
-    $("btnRefresh").addEventListener("click", () => loadData());
-    $("btnClear").addEventListener("click", () => clearFilters());
-
-    $("panelClose").addEventListener("click", () => {
-      $("panel").classList.remove("open");
-    });
-
-    // Initial
-    loadData();
-  </script>
+load();
+</script>
 </body>
 </html>
