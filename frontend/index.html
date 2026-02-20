@@ -1,28 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Prospect {{{Radar}}} LIVE Dashboard</title>
+
 <style>
-body{font-family:Arial;background:#0d1b2a;color:white;margin:0;padding:20px}
-input,select,button{padding:8px;margin:5px;border-radius:6px;border:none}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:10px;border-bottom:1px solid #1b263b}
-tr:hover{background:#1b263b;cursor:pointer}
+body{font-family:Arial;background:#071a2b;color:#fff;margin:0;padding:20px}
+h1{margin-bottom:10px}
+input,select,button{padding:8px;border-radius:6px;border:none;margin-right:8px}
+button{cursor:pointer;background:#e6e6e6}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+th,td{padding:10px;border-bottom:1px solid #1d3a56;text-align:left}
+tr:hover{background:#0e2a44}
 </style>
 </head>
+
 <body>
+<h1>Prospect {{{Radar}}} LIVE Dashboard</h1>
 
-<h2>Prospect {{{Radar}}} LIVE Dashboard</h2>
-
-<div>
-<input id="searchBox" placeholder="Search keyword">
+<input id="keyword" placeholder="Search keyword">
 <input id="minScore" placeholder="Min Score">
-<select id="stateSelect"><option value="">All States</option></select>
-<button onclick="runSearch()">GO</button>
-</div>
+<select id="stateFilter">
+<option value="ALL">All States</option>
+</select>
+<button id="goBtn">GO</button>
 
-<div id="counts">Loading...</div>
+<div id="count">Loading...</div>
 
 <table>
 <thead>
@@ -37,107 +41,95 @@ tr:hover{background:#1b263b;cursor:pointer}
 </table>
 
 <script>
+let ALL_DATA = [];
 
+// STREAMING API SOURCE (LOCKED)
 const API_URL = "https://radarpro-api.onrender.com/data";
 
-let ALL_ROWS = [];
-let FILTERED = [];
-
+// ---------- LOAD DATA ----------
 async function loadData(){
+    try{
+        const res = await fetch(API_URL);
+        const json = await res.json();
 
-const res = await fetch(API_URL);
-const data = await res.json();
+        // NEW STREAM FORMAT SUPPORT
+        ALL_DATA = json.items || json.data || json;
 
-/*
-  BULLETPROOF API FORMAT DETECTION
-*/
-if(Array.isArray(data)){
-  ALL_ROWS = data;
-}else if(Array.isArray(data.items)){
-  ALL_ROWS = data.items;
-}else if(Array.isArray(data.rows)){
-  ALL_ROWS = data.rows;
-}else{
-  ALL_ROWS = [];
+        populateStates(ALL_DATA);
+        renderTable(ALL_DATA);
+    }catch(e){
+        document.getElementById("count").innerText="API ERROR";
+        console.error(e);
+    }
 }
 
-ALL_ROWS = ALL_ROWS.map(r=>({
-  ...r,
-  _searchBlob:Object.values(r).join(" ").toLowerCase()
-}));
+// ---------- BUILD STATE DROPDOWN ----------
+function populateStates(data){
+    const select = document.getElementById("stateFilter");
 
-populateStates();
-updateCounts();
-renderRows(ALL_ROWS);
+    // reset except ALL
+    select.innerHTML = '<option value="ALL">All States</option>';
 
+    const states = new Set();
+
+    data.forEach(row=>{
+        if(row.State && row.State.trim() !== ""){
+            states.add(row.State.trim());
+        }
+    });
+
+    Array.from(states).sort().forEach(st=>{
+        const opt = document.createElement("option");
+        opt.value = st;
+        opt.textContent = st;
+        select.appendChild(opt);
+    });
 }
 
-function populateStates(){
+// ---------- TABLE RENDER ----------
+function renderTable(data){
+    const body = document.getElementById("tableBody");
+    body.innerHTML="";
 
-const states=[...new Set(ALL_ROWS.map(r=>r.State).filter(Boolean))].sort();
+    data.forEach(r=>{
+        const tr=document.createElement("tr");
+        tr.innerHTML=`
+        <td>${r.Company||""}</td>
+        <td>${r.City||""}</td>
+        <td>${r.State||""}</td>
+        <td>${r.Score||""}</td>`;
+        body.appendChild(tr);
+    });
 
-const sel=document.getElementById("stateSelect");
-states.forEach(s=>{
-  const opt=document.createElement("option");
-  opt.value=s;
-  opt.textContent=s;
-  sel.appendChild(opt);
-});
-
+    document.getElementById("count").innerText = `Total Prospects: ${data.length}`;
 }
 
-function runSearch(){
+// ---------- GLOBAL SEARCH LOGIC ----------
+function globalSearch(){
+    const keyword = document.getElementById("keyword").value.toLowerCase();
+    const state = document.getElementById("stateFilter").value;
+    const minScore = parseInt(document.getElementById("minScore").value||"0");
 
-const q=document.getElementById("searchBox").value.toLowerCase().trim();
-const tokens=q.split(" ").filter(Boolean);
-const state=document.getElementById("stateSelect").value;
-const minScore=parseInt(document.getElementById("minScore").value)||0;
+    const filtered = ALL_DATA.filter(row=>{
+        // FULL ROW STRING SEARCH (covers plastic logic everywhere)
+        const fullText = Object.values(row).join(" ").toLowerCase();
 
-FILTERED=ALL_ROWS.filter(r=>{
+        const keywordMatch = keyword==="" || fullText.includes(keyword);
+        const stateMatch = state==="ALL" || row.State===state;
+        const scoreMatch = (row.Score||0) >= minScore;
 
-if(state && r.State!==state) return false;
+        return keywordMatch && stateMatch && scoreMatch;
+    });
 
-if(Number(r.Score||0)<minScore) return false;
-
-if(tokens.length){
-  for(const t of tokens){
-    if(!r._searchBlob.includes(t)) return false;
-  }
+    renderTable(filtered);
 }
 
-return true;
+// ---------- GO BUTTON ----------
+document.getElementById("goBtn").addEventListener("click",globalSearch);
 
-});
-
-updateCounts();
-renderRows(FILTERED);
-
-}
-
-function updateCounts(){
-document.getElementById("counts").textContent=
-`Total Prospects: ${ALL_ROWS.length}`;
-}
-
-function renderRows(rows){
-
-const body=document.getElementById("tableBody");
-body.innerHTML="";
-
-rows.forEach(r=>{
-const tr=document.createElement("tr");
-tr.innerHTML=`
-<td>${r.Company||""}</td>
-<td>${r.City||""}</td>
-<td>${r.State||""}</td>
-<td>${r.Score||""}</td>`;
-body.appendChild(tr);
-});
-
-}
-
+// INITIAL LOAD
 loadData();
-
 </script>
+
 </body>
 </html>
