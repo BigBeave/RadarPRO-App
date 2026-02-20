@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Radar PRO</title>
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#f5f7fb;color:#12223a}
-.top{background:#0b5cff;color:#fff;padding:10px 14px;font-weight:700}
+body{margin:0;font-family:Segoe UI;background:#f5f7fb}
+.top{background:#0b5cff;color:#fff;padding:10px;font-weight:700}
 .wrap{padding:10px}
 input,select{padding:8px;border-radius:8px;border:1px solid #dfe6f2}
 table{width:100%;border-collapse:collapse;background:#fff}
@@ -16,19 +16,8 @@ tbody td{padding:8px;border-bottom:1px solid #eef2f8;font-size:13px}
 tbody tr:hover{background:#f1f6ff}
 tbody tr.selected{background:#e7efff}
 .actions{display:flex;gap:6px}
-.act{
-font-size:11px;
-padding:3px 6px;
-border-radius:6px;
-border:1px solid #c9d6ff;
-background:#f4f7ff;
-cursor:pointer;
-text-decoration:none;
-color:#1b3dbf;
-}
-.act:hover{background:#e8efff}
-.panel{position:fixed;right:0;top:0;width:320px;height:100%;background:#fff;
-border-left:1px solid #e6ecf5;padding:12px;overflow:auto}
+.act{font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid #c9d6ff;background:#f4f7ff;text-decoration:none}
+.panel{position:fixed;right:0;top:0;width:320px;height:100%;background:#fff;border-left:1px solid #e6ecf5;padding:12px}
 </style>
 </head>
 
@@ -46,7 +35,7 @@ border-left:1px solid #e6ecf5;padding:12px;overflow:auto}
 <div id="table"></div>
 </div>
 
-<div class="panel" id="panel">
+<div class="panel">
 <b id="title">Select a business</b>
 <div id="details"></div>
 </div>
@@ -56,9 +45,8 @@ const API="https://radarpro-api.onrender.com/data";
 
 let ALL=[];
 let FILTERED=[];
-let SELECTED_ID=null; // persistent selection
+let SELECTED_ID=null;
 
-function pick(r,k){return (r[k]||"").toString();}
 function addr(r){
 return [r.Address,r.City,r.State,r.Zip].filter(Boolean).join(", ");
 }
@@ -95,13 +83,13 @@ const id=r["Company ID"]||i;
 const sel=(id===SELECTED_ID)?"selected":"";
 html+=`
 <tr class="${sel}" onclick="selectRow(${i})">
-<td>${pick(r,"Score")}</td>
-<td>${pick(r,"Company")}</td>
-<td>${pick(r,"City")}</td>
-<td>${pick(r,"State")}</td>
+<td>${r.Score||""}</td>
+<td>${r.Company||""}</td>
+<td>${r.City||""}</td>
+<td>${r.State||""}</td>
 <td class="actions" onclick="event.stopPropagation()">
-<a class="act" href="${phoneLink(pick(r,"Phone"))}" target="_blank">Call</a>
-<a class="act" href="${webLink(pick(r,"Website"))}" target="_blank">Web</a>
+<a class="act" href="${phoneLink(r.Phone)}" target="_blank">Call</a>
+<a class="act" href="${webLink(r.Website)}" target="_blank">Web</a>
 <a class="act" href="${mapLink(r)}" target="_blank">Map</a>
 </td>
 </tr>`;
@@ -115,21 +103,22 @@ function selectRow(i){
 const r=FILTERED[i];
 SELECTED_ID=r["Company ID"]||i;
 
-document.getElementById("title").textContent=
-r.Company||"Business";
-
+document.getElementById("title").textContent=r.Company||"Business";
 document.getElementById("details").innerHTML=
 "<div>"+addr(r)+"</div>"+
 "<div>"+(r.Phone||"")+"</div>"+
 "<div>"+(r.Website||"")+"</div>";
 
-render(); // keeps highlight after filter
+render();
 }
 
 async function load(){
 const res=await fetch(API);
 const json=await res.json();
-ALL=json.items||[];
+
+/* 🔥 FIX — accept ANY backend format */
+ALL = json.items || json.data || json.rows || [];
+
 render();
 }
 
