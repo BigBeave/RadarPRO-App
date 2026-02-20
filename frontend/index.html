@@ -1,399 +1,143 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
 <title>Prospect {{{Radar}}} LIVE Dashboard</title>
-
 <style>
-  :root{
-    --bg:#0b1c3a;
-    --panel:#06142b;
-    --line:rgba(255,255,255,.10);
-    --line2:rgba(255,255,255,.08);
-    --text:#ffffff;
-    --muted:#b9c6e6;
-    --accent:#9cc3ff;
-    --hover:#122a55;
-    --chip:#0f2a57;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    font-family: Arial, sans-serif;
-    background:var(--bg);
-    color:var(--text);
-  }
-  .container{display:flex;height:100vh;width:100vw;}
-  .left{width:66%;padding:18px 18px 10px 18px;overflow:auto;}
-  .right{width:34%;background:var(--panel);border-left:1px solid var(--line2);padding:18px;overflow:auto;}
-  h1{margin:0 0 6px 0;font-size:28px;}
-  .stats{margin:0 0 12px 0;color:var(--muted);font-weight:600;}
-  .controls{
-    display:flex;gap:10px;flex-wrap:wrap;
-    padding:10px;border:1px solid var(--line2);
-    border-radius:10px;background:rgba(0,0,0,.12);
-    margin-bottom:12px;
-  }
-  .control{display:flex;flex-direction:column;gap:6px;min-width:160px;}
-  .control label{font-size:12px;color:var(--muted);}
-  input, select{
-    padding:10px;border-radius:10px;border:1px solid var(--line2);
-    background:#071a39;color:var(--text);outline:none;
-  }
-  input::placeholder{color:rgba(255,255,255,.45);}
-  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
-  .chip{
-    background:var(--chip);border:1px solid var(--line2);
-    padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted);
-  }
-  table{width:100%;border-collapse:collapse;}
-  th, td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;}
-  th{color:var(--accent);font-size:13px;text-align:left;position:sticky;top:0;background:var(--bg);}
-  tr:hover{background:var(--hover);cursor:pointer;}
-  .small{color:var(--muted);font-size:12px;}
-  .detail-title{font-size:20px;color:var(--accent);margin-bottom:8px;}
-  .section{margin:14px 0;padding-bottom:14px;border-bottom:1px solid var(--line2);}
-  .kv{display:grid;grid-template-columns:120px 1fr;gap:8px 10px;align-items:start;}
-  .k{color:var(--muted);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;}
-  .v{color:var(--text);}
-  .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
-  .btn{
-    display:inline-block;text-decoration:none;color:var(--text);
-    background:#0a2a58;border:1px solid var(--line2);
-    padding:8px 10px;border-radius:10px;font-size:13px;
-  }
-  .btn:hover{background:#0d3470;}
-  .empty{
-    padding:12px;border:1px dashed var(--line2);border-radius:10px;color:var(--muted);
-  }
+body{font-family:Arial;background:#0d1b2a;color:white;margin:0;padding:20px}
+input,select,button{padding:8px;margin:5px;border-radius:6px;border:none}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:10px;border-bottom:1px solid #1b263b}
+tr:hover{background:#1b263b;cursor:pointer}
 </style>
 </head>
-
 <body>
-<div class="container">
 
-  <div class="left">
-    <h1>Prospect {{{Radar}}} LIVE Dashboard</h1>
-    <div class="stats" id="stats">Loading Radar Engine…</div>
+<h2>Prospect {{{Radar}}} LIVE Dashboard</h2>
 
-    <div class="controls">
-      <div class="control" style="min-width:280px;flex:1;">
-        <label>Search (Company, Description, City, State, Email, Website)</label>
-        <input id="q" placeholder="ex: extrusion, HVAC, laser cutting, plastics, ISO 9001…" />
-      </div>
-
-      <div class="control">
-        <label>Min Score</label>
-        <input id="minScore" type="number" value="0" min="0" step="1"/>
-      </div>
-
-      <div class="control">
-        <label>Min Industry Match</label>
-        <input id="minIndustry" type="number" value="0" min="0" step="1"/>
-      </div>
-
-      <div class="control">
-        <label>Min Pkg Sales Match</label>
-        <input id="minPkg" type="number" value="0" min="0" step="1"/>
-      </div>
-
-      <div class="control">
-        <label>State</label>
-        <input id="state" placeholder="ex: OH" maxlength="2"/>
-      </div>
-
-      <div class="control">
-        <label>Show</label>
-        <select id="limit">
-          <option value="50">Top 50</option>
-          <option value="200">Top 200</option>
-          <option value="500">Top 500</option>
-          <option value="1000">Top 1000</option>
-        </select>
-      </div>
-    </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th style="width:28%;">Company</th>
-          <th style="width:14%;">City</th>
-          <th style="width:8%;">State</th>
-          <th style="width:8%;">Score</th>
-          <th style="width:12%;">Industry</th>
-          <th style="width:12%;">Pkg Match</th>
-          <th style="width:18%;">Phone</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-  </div>
-
-  <div class="right" id="detailPanel">
-    <div class="detail-title">Select a Prospect</div>
-    <div class="empty">Click any row to open a HubSpot-style detail panel with address, email, website, description, and executive contacts.</div>
-  </div>
-
+<div>
+<input id="searchBox" placeholder="Search keyword">
+<input id="minScore" placeholder="Min Score">
+<select id="stateSelect"><option value="">All States</option></select>
+<button onclick="runSearch()">GO</button>
 </div>
 
+<div id="counts">Loading...</div>
+
+<table>
+<thead>
+<tr>
+<th>Company</th>
+<th>City</th>
+<th>State</th>
+<th>Score</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+
 <script>
-  const API_URL = "https://radarpro-api.onrender.com/data";
 
-  // --- helpers ---
-  function esc(x){
-    return String(x ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#39;");
+const API_URL = "https://radarpro-api.onrender.com/data";
+
+let ALL_ROWS = [];
+let FILTERED = [];
+
+async function loadData(){
+
+const res = await fetch(API_URL);
+const data = await res.json();
+
+/*
+  BULLETPROOF API FORMAT DETECTION
+*/
+if(Array.isArray(data)){
+  ALL_ROWS = data;
+}else if(Array.isArray(data.items)){
+  ALL_ROWS = data.items;
+}else if(Array.isArray(data.rows)){
+  ALL_ROWS = data.rows;
+}else{
+  ALL_ROWS = [];
+}
+
+ALL_ROWS = ALL_ROWS.map(r=>({
+  ...r,
+  _searchBlob:Object.values(r).join(" ").toLowerCase()
+}));
+
+populateStates();
+updateCounts();
+renderRows(ALL_ROWS);
+
+}
+
+function populateStates(){
+
+const states=[...new Set(ALL_ROWS.map(r=>r.State).filter(Boolean))].sort();
+
+const sel=document.getElementById("stateSelect");
+states.forEach(s=>{
+  const opt=document.createElement("option");
+  opt.value=s;
+  opt.textContent=s;
+  sel.appendChild(opt);
+});
+
+}
+
+function runSearch(){
+
+const q=document.getElementById("searchBox").value.toLowerCase().trim();
+const tokens=q.split(" ").filter(Boolean);
+const state=document.getElementById("stateSelect").value;
+const minScore=parseInt(document.getElementById("minScore").value)||0;
+
+FILTERED=ALL_ROWS.filter(r=>{
+
+if(state && r.State!==state) return false;
+
+if(Number(r.Score||0)<minScore) return false;
+
+if(tokens.length){
+  for(const t of tokens){
+    if(!r._searchBlob.includes(t)) return false;
   }
+}
 
-  function getAny(row, keys){
-    for(const k of keys){
-      if(row && Object.prototype.hasOwnProperty.call(row, k) && row[k] !== "" && row[k] != null){
-        return row[k];
-      }
-    }
-    return "";
-  }
+return true;
 
-  function num(v){
-    const n = Number(String(v ?? "").trim());
-    return Number.isFinite(n) ? n : 0;
-  }
+});
 
-  function buildExecList(row){
-    const out = [];
-    for(let i=1;i<=10;i++){
-      const first = getAny(row, [`Executive ${i} First Name`]);
-      const last  = getAny(row, [`Executive ${i} Last Name`]);
-      const title = getAny(row, [`Executive ${i} Title`]);
-      const abbrev= getAny(row, [`Executive ${i} Abbreviated Title`]);
-      const fullName = `${first} ${last}`.trim();
-      const bestTitle = (title || abbrev || "").trim();
-      if(fullName || bestTitle){
-        out.push({name: fullName, title: bestTitle});
-      }
-    }
-    return out;
-  }
+updateCounts();
+renderRows(FILTERED);
 
-  let ALL_ROWS = [];
-  let FILTERED = [];
+}
 
-  async function fetchWithRetry(){
-    // Render free tier can sleep. We retry politely.
-    for(let attempt=0; attempt<8; attempt++){
-      try{
-        const res = await fetch(API_URL, { cache: "no-store" });
-        if(!res.ok) throw new Error("HTTP " + res.status);
-        const data = await res.json();
+function updateCounts(){
+document.getElementById("counts").textContent=
+`Total Prospects: ${ALL_ROWS.length}`;
+}
 
-        // Backend may return wrapped object OR raw array. Support both.
-        if(Array.isArray(data)) return { rows: data };
-        if(data && Array.isArray(data.rows)) return data;
+function renderRows(rows){
 
-        throw new Error("Unexpected JSON shape");
-      }catch(e){
-        document.getElementById("stats").innerText = "Waking Radar API (Render free tier)…";
-        await new Promise(r => setTimeout(r, 1500));
-      }
-    }
-    throw new Error("API not reachable after retries");
-  }
+const body=document.getElementById("tableBody");
+body.innerHTML="";
 
-  function applyFilters(){
-    const q = document.getElementById("q").value.trim().toLowerCase();
-    const minScore = num(document.getElementById("minScore").value);
-    const minIndustry = num(document.getElementById("minIndustry").value);
-    const minPkg = num(document.getElementById("minPkg").value);
-    const state = document.getElementById("state").value.trim().toUpperCase();
-    const limit = num(document.getElementById("limit").value) || 50;
+rows.forEach(r=>{
+const tr=document.createElement("tr");
+tr.innerHTML=`
+<td>${r.Company||""}</td>
+<td>${r.City||""}</td>
+<td>${r.State||""}</td>
+<td>${r.Score||""}</td>`;
+body.appendChild(tr);
+});
 
-    const rows = ALL_ROWS.filter(r => {
-      const company = getAny(r, ["Company"]).toString();
-      const desc = getAny(r, ["Business Description"]).toString();
-      const city = getAny(r, ["City"]).toString();
-      const st = getAny(r, ["State"]).toString().toUpperCase();
-      const email = getAny(r, ["Company Email"]).toString();
-      const website = getAny(r, ["Website"]).toString();
+}
 
-      const score = num(getAny(r, ["Score"]));
-      const industry = num(getAny(r, ["Industry Match", "Industry Match "]));
-      const pkg = num(getAny(r, ["Match for Pkg Sales", "Match for Pkg Sales "]));
+loadData();
 
-      if(score < minScore) return false;
-      if(industry < minIndustry) return false;
-      if(pkg < minPkg) return false;
-      if(state && st !== state) return false;
-
-      if(q){
-        const hay = `${company} ${desc} ${city} ${st} ${email} ${website}`.toLowerCase();
-        if(!hay.includes(q)) return false;
-      }
-      return true;
-    });
-
-    // Sort by Score desc, then Industry desc, then Pkg desc
-    rows.sort((a,b)=>{
-      const as = num(getAny(a, ["Score"])), bs = num(getAny(b, ["Score"]));
-      if(bs !== as) return bs - as;
-      const ai = num(getAny(a, ["Industry Match", "Industry Match "])), bi = num(getAny(b, ["Industry Match", "Industry Match "]));
-      if(bi !== ai) return bi - ai;
-      const ap = num(getAny(a, ["Match for Pkg Sales", "Match for Pkg Sales "])), bp = num(getAny(b, ["Match for Pkg Sales", "Match for Pkg Sales "]));
-      return bp - ap;
-    });
-
-    FILTERED = rows.slice(0, limit);
-    renderTable();
-
-    // Stats that never show "undefined"
-    const total = rows.length;
-    const highPriority = rows.filter(r => num(getAny(r, ["Score"])) >= 18).length; // simple, stable definition
-    document.getElementById("stats").innerText = `Total Prospects: ${total} | High Priority: ${highPriority}`;
-
-    return { total, highPriority };
-  }
-
-  function renderTable(){
-    const tb = document.getElementById("tableBody");
-    tb.innerHTML = "";
-
-    for(const r of FILTERED){
-      const company = esc(getAny(r, ["Company"]));
-      const city = esc(getAny(r, ["City"]));
-      const state = esc(getAny(r, ["State"]));
-      const score = esc(getAny(r, ["Score"]));
-      const industry = esc(getAny(r, ["Industry Match", "Industry Match "]));
-      const pkg = esc(getAny(r, ["Match for Pkg Sales", "Match for Pkg Sales "]));
-      const phone = esc(getAny(r, ["Phone"]));
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td><b>${company}</b></td>
-        <td>${city}</td>
-        <td>${state}</td>
-        <td>${score}</td>
-        <td>${industry}</td>
-        <td>${pkg}</td>
-        <td>${phone}</td>
-      `;
-      tr.onclick = () => showDetails(r);
-      tb.appendChild(tr);
-    }
-  }
-
-  function showDetails(r){
-    const company = getAny(r, ["Company"]);
-    const desc = getAny(r, ["Business Description"]);
-    const addr = getAny(r, ["Address"]);
-    const city = getAny(r, ["City"]);
-    const st = getAny(r, ["State"]);
-    const zip = getAny(r, ["Zip"]);
-    const phone = getAny(r, ["Phone"]);
-    const altPhone = getAny(r, ["Alternate Phone"]);
-    const tollFree = getAny(r, ["Toll Free"]);
-    const fax = getAny(r, ["Fax"]);
-    const email = getAny(r, ["Company Email"]);
-    const website = getAny(r, ["Website"]);
-
-    const score = getAny(r, ["Score"]);
-    const industry = getAny(r, ["Industry Match", "Industry Match "]);
-    const pkg = getAny(r, ["Match for Pkg Sales", "Match for Pkg Sales "]);
-    const products = getAny(r, ["Match for my Products -Services", "Match for my Products - Services", "Match for my Products -Services ", "Match for my Products - Services "]);
-
-    const county = getAny(r, ["County"]);
-    const annualSales = getAny(r, ["Annual Sales"]);
-    const employees = getAny(r, ["Employees on Site"]);
-    const brandNames = getAny(r, ["Brand Names"]);
-    const iso = getAny(r, ["ISO Ratings"]);
-
-    const execs = buildExecList(r);
-
-    const mapQuery = encodeURIComponent(`${addr} ${city} ${st} ${zip}`.trim());
-    const websiteUrl = (website || "").startsWith("http") ? website : (website ? `https://${website}` : "");
-    const mailto = email ? `mailto:${email}` : "";
-    const google = `https://www.google.com/search?q=${encodeURIComponent(String(company))}`;
-
-    const execHtml = execs.length
-      ? execs.map(x => `<div style="margin:6px 0;"><b>${esc(x.title || "Executive")}</b><div class="small">${esc(x.name || "")}</div></div>`).join("")
-      : `<div class="small">No executive data in rows 1–10 for this company.</div>`;
-
-    document.getElementById("detailPanel").innerHTML = `
-      <div class="detail-title">${esc(company)}</div>
-
-      <div class="chips">
-        <div class="chip">Score: ${esc(score)}</div>
-        <div class="chip">Industry: ${esc(industry)}</div>
-        <div class="chip">Pkg Match: ${esc(pkg)}</div>
-        ${products ? `<div class="chip">Products/Services: ${esc(products)}</div>` : ``}
-      </div>
-
-      <div class="btnrow">
-        ${websiteUrl ? `<a class="btn" href="${esc(websiteUrl)}" target="_blank" rel="noopener">Website</a>` : ``}
-        ${mailto ? `<a class="btn" href="${esc(mailto)}">Email</a>` : ``}
-        ${addr || city || st ? `<a class="btn" href="https://www.google.com/maps/search/?api=1&query=${mapQuery}" target="_blank" rel="noopener">Map</a>` : ``}
-        <a class="btn" href="${esc(google)}" target="_blank" rel="noopener">Google</a>
-      </div>
-
-      <div class="section">
-        <div class="kv">
-          <div class="k">Address</div><div class="v">${esc(addr)}<br>${esc(city)}, ${esc(st)} ${esc(zip)}</div>
-          <div class="k">Phone</div><div class="v">${esc(phone)}</div>
-          ${altPhone ? `<div class="k">Alt Phone</div><div class="v">${esc(altPhone)}</div>` : ``}
-          ${tollFree ? `<div class="k">Toll Free</div><div class="v">${esc(tollFree)}</div>` : ``}
-          ${fax ? `<div class="k">Fax</div><div class="v">${esc(fax)}</div>` : ``}
-          ${email ? `<div class="k">Email</div><div class="v">${esc(email)}</div>` : ``}
-          ${website ? `<div class="k">Website</div><div class="v">${esc(website)}</div>` : ``}
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="k" style="margin-bottom:8px;">Business Description</div>
-        <div class="v">${esc(desc) || `<span class="small">No description provided.</span>`}</div>
-      </div>
-
-      <div class="section">
-        <div class="k" style="margin-bottom:8px;">Executives</div>
-        <div class="v">${execHtml}</div>
-      </div>
-
-      <div class="section">
-        <div class="k" style="margin-bottom:8px;">Extra</div>
-        <div class="kv">
-          ${county ? `<div class="k">County</div><div class="v">${esc(county)}</div>` : ``}
-          ${annualSales ? `<div class="k">Annual Sales</div><div class="v">${esc(annualSales)}</div>` : ``}
-          ${employees ? `<div class="k">Employees</div><div class="v">${esc(employees)}</div>` : ``}
-          ${brandNames ? `<div class="k">Brand Names</div><div class="v">${esc(brandNames)}</div>` : ``}
-          ${iso ? `<div class="k">ISO</div><div class="v">${esc(iso)}</div>` : ``}
-        </div>
-      </div>
-    `;
-  }
-
-  function wireInputs(){
-    const ids = ["q","minScore","minIndustry","minPkg","state","limit"];
-    ids.forEach(id => document.getElementById(id).addEventListener("input", ()=>applyFilters()));
-  }
-
-  async function init(){
-    wireInputs();
-
-    const data = await fetchWithRetry();
-    ALL_ROWS = data.rows || [];
-
-    // show stable totals immediately
-    const total = (data.total != null) ? Number(data.total) : ALL_ROWS.length;
-    const hp = (data.highPriority != null) ? Number(data.highPriority) : ALL_ROWS.filter(r => num(getAny(r, ["Score"])) >= 18).length;
-    document.getElementById("stats").innerText = `Total Prospects: ${total} | High Priority: ${hp}`;
-
-    applyFilters();
-  }
-
-  init();
 </script>
-
 </body>
 </html>
