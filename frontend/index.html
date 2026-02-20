@@ -14,7 +14,6 @@ table{width:100%;border-collapse:collapse;background:#fff}
 thead th{font-size:12px;text-align:left;padding:8px;border-bottom:1px solid #e6ecf5}
 tbody td{padding:8px;border-bottom:1px solid #eef2f8;font-size:13px}
 tbody tr:hover{background:#f1f6ff}
-tbody tr.selected{background:#e7efff}
 .actions{display:flex;gap:6px}
 .act{font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid #c9d6ff;background:#f4f7ff;text-decoration:none}
 .panel{position:fixed;right:0;top:0;width:320px;height:100%;background:#fff;border-left:1px solid #e6ecf5;padding:12px}
@@ -22,7 +21,7 @@ tbody tr.selected{background:#e7efff}
 </head>
 
 <body>
-<div class="top">Prospect {{{Radar}}} PRO — Streaming SAFE</div>
+<div class="top">Prospect {{{Radar}}} PRO — LIVE</div>
 
 <div class="wrap">
 <input id="q" placeholder="Search any column..." />
@@ -31,7 +30,6 @@ tbody tr.selected{background:#e7efff}
 <option value="100" selected>100</option>
 <option value="250">250</option>
 </select>
-
 <div id="table"></div>
 </div>
 
@@ -41,6 +39,7 @@ tbody tr.selected{background:#e7efff}
 </div>
 
 <script>
+
 const API="https://radarpro-api.onrender.com/data";
 
 let ALL=[];
@@ -79,10 +78,8 @@ let html="<table><thead><tr>"+
 "</tr></thead><tbody>";
 
 FILTERED.forEach((r,i)=>{
-const id=r["Company ID"]||i;
-const sel=(id===SELECTED_ID)?"selected":"";
 html+=`
-<tr class="${sel}" onclick="selectRow(${i})">
+<tr onclick="selectRow(${i})">
 <td>${r.Score||""}</td>
 <td>${r.Company||""}</td>
 <td>${r.City||""}</td>
@@ -101,23 +98,19 @@ document.getElementById("table").innerHTML=html;
 
 function selectRow(i){
 const r=FILTERED[i];
-SELECTED_ID=r["Company ID"]||i;
-
 document.getElementById("title").textContent=r.Company||"Business";
 document.getElementById("details").innerHTML=
 "<div>"+addr(r)+"</div>"+
 "<div>"+(r.Phone||"")+"</div>"+
 "<div>"+(r.Website||"")+"</div>";
-
-render();
 }
 
 async function load(){
 const res=await fetch(API);
 const json=await res.json();
 
-/* ⭐ FINAL FIX — YOUR API RETURNS RAW ARRAY */
-ALL = Array.isArray(json) ? json : (json.items || json.data || json.rows || []);
+/* ⭐ THIS LINE FIXES EVERYTHING */
+ALL = Array.isArray(json) ? json : (json.items||json.data||[]);
 
 render();
 }
