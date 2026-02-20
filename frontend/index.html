@@ -1,124 +1,209 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Radar PRO</title>
+<meta charset="UTF-8">
+<title>Radar PRO LIVE Dashboard</title>
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#f5f7fb}
-.top{background:#0b5cff;color:#fff;padding:10px;font-weight:700}
-.wrap{padding:10px}
-input,select{padding:8px;border-radius:8px;border:1px solid #dfe6f2}
-table{width:100%;border-collapse:collapse;background:#fff}
-thead th{font-size:12px;text-align:left;padding:8px;border-bottom:1px solid #e6ecf5}
-tbody td{padding:8px;border-bottom:1px solid #eef2f8;font-size:13px}
-tbody tr:hover{background:#f1f6ff}
-.actions{display:flex;gap:6px}
-.act{font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid #c9d6ff;background:#f4f7ff;text-decoration:none}
-.panel{position:fixed;right:0;top:0;width:320px;height:100%;background:#fff;border-left:1px solid #e6ecf5;padding:12px}
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#0b0f14;
+    color:#e6edf3;
+    margin:0;
+}
+
+header{
+    background:#111827;
+    padding:12px;
+    font-weight:bold;
+    letter-spacing:.5px;
+}
+
+#searchBar{
+    width:98%;
+    margin:10px;
+    padding:8px;
+    font-size:14px;
+    border-radius:6px;
+    border:none;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+}
+
+thead{
+    position:sticky;
+    top:0;
+    background:#0f172a;
+}
+
+th,td{
+    padding:6px 8px;
+    border-bottom:1px solid #1f2937;
+}
+
+tr.selected{
+    background:#1d4ed8;
+}
+
+button.action{
+    background:#1f2937;
+    color:white;
+    border:none;
+    padding:3px 6px;
+    margin-right:4px;
+    border-radius:4px;
+    cursor:pointer;
+}
+
+button.action:hover{
+    background:#2563eb;
+}
 </style>
 </head>
 
 <body>
-<div class="top">Prospect {{{Radar}}} PRO — LIVE</div>
 
-<div class="wrap">
-<input id="q" placeholder="Search any column..." />
-<select id="limit">
-<option value="50">50</option>
-<option value="100" selected>100</option>
-<option value="250">250</option>
-</select>
-<div id="table"></div>
-</div>
+<header>Prospect {{{Radar}}} LIVE Dashboard</header>
 
-<div class="panel">
-<b id="title">Select a business</b>
-<div id="details"></div>
-</div>
+<input id="searchBar" placeholder="Search ANY column…">
+
+<table>
+<thead>
+<tr id="headerRow"></tr>
+</thead>
+<tbody id="body"></tbody>
+</table>
 
 <script>
 
-const API="https://radarpro-api.onrender.com/data";
+const API = "/data";
+let ALL = [];
+let FILTERED = [];
+let SELECTED = JSON.parse(localStorage.getItem("radar_selected") || "[]");
 
-let ALL=[];
-let FILTERED=[];
-let SELECTED_ID=null;
+const body = document.getElementById("body");
+const headerRow = document.getElementById("headerRow");
+const searchBar = document.getElementById("searchBar");
 
-function addr(r){
-return [r.Address,r.City,r.State,r.Zip].filter(Boolean).join(", ");
+async function load(){
+
+    const res = await fetch(API);
+    const json = await res.json();
+
+    // RAW ARRAY SAFE
+    ALL = Array.isArray(json) ? json : (json.items||json.data||[]);
+
+    if(!ALL.length){
+        body.innerHTML="<tr><td>No Data</td></tr>";
+        return;
+    }
+
+    buildHeader(Object.keys(ALL[0]));
+    FILTERED = ALL;
+    render();
 }
-function phoneLink(p){
-if(!p)return"#";
-return "tel:"+p.replace(/[^\d+]/g,"");
-}
-function webLink(w){
-if(!w)return"#";
-return w.startsWith("http")?w:"https://"+w;
-}
-function mapLink(r){
-return "https://www.google.com/maps/search/?api=1&query="+
-encodeURIComponent((r.Company||"")+" "+addr(r));
+
+function buildHeader(cols){
+    headerRow.innerHTML="";
+    cols.forEach(c=>{
+        const th=document.createElement("th");
+        th.textContent=c;
+        headerRow.appendChild(th);
+    });
+
+    const act=document.createElement("th");
+    act.textContent="Actions";
+    headerRow.appendChild(act);
 }
 
 function render(){
-const q=document.getElementById("q").value.toLowerCase();
-const limit=Number(document.getElementById("limit").value);
 
-let out=ALL.filter(r=>{
-if(!q)return true;
-return Object.values(r).join(" ").toLowerCase().includes(q);
+    body.innerHTML="";
+
+    const frag=document.createDocumentFragment();
+
+    FILTERED.forEach((row,idx)=>{
+
+        const tr=document.createElement("tr");
+
+        if(SELECTED.includes(idx)) tr.classList.add("selected");
+
+        Object.values(row).forEach(v=>{
+            const td=document.createElement("td");
+            td.textContent=v||"";
+            tr.appendChild(td);
+        });
+
+        const actionTD=document.createElement("td");
+
+        const callBtn=document.createElement("button");
+        callBtn.textContent="📞";
+        callBtn.className="action";
+        callBtn.onclick=()=>window.open("tel:"+ (row.Phone||""));
+
+        const webBtn=document.createElement("button");
+        webBtn.textContent="🌐";
+        webBtn.className="action";
+        webBtn.onclick=()=>window.open(row.Website||"#","_blank");
+
+        const mapBtn=document.createElement("button");
+        mapBtn.textContent="🧭";
+        mapBtn.className="action";
+        mapBtn.onclick=()=>{
+            const addr = encodeURIComponent(
+                (row.Address||"")+" "+(row.City||"")+" "+(row.State||"")
+            );
+            window.open("https://www.google.com/maps/search/?api=1&query="+addr);
+        };
+
+        actionTD.appendChild(callBtn);
+        actionTD.appendChild(webBtn);
+        actionTD.appendChild(mapBtn);
+        tr.appendChild(actionTD);
+
+        tr.onclick=()=>{
+            const i=SELECTED.indexOf(idx);
+            if(i>-1){
+                SELECTED.splice(i,1);
+                tr.classList.remove("selected");
+            }else{
+                SELECTED.push(idx);
+                tr.classList.add("selected");
+            }
+            localStorage.setItem("radar_selected",JSON.stringify(SELECTED));
+        };
+
+        frag.appendChild(tr);
+    });
+
+    body.appendChild(frag);
+}
+
+searchBar.addEventListener("input",()=>{
+    const q=searchBar.value.toLowerCase();
+
+    if(!q){
+        FILTERED=ALL;
+        render();
+        return;
+    }
+
+    FILTERED = ALL.filter(r=>{
+        return Object.values(r).some(v=>
+            String(v||"").toLowerCase().includes(q)
+        );
+    });
+
+    render();
 });
-
-FILTERED=out.slice(0,limit);
-
-let html="<table><thead><tr>"+
-"<th>Score</th><th>Company</th><th>City</th><th>State</th><th>Actions</th>"+
-"</tr></thead><tbody>";
-
-FILTERED.forEach((r,i)=>{
-html+=`
-<tr onclick="selectRow(${i})">
-<td>${r.Score||""}</td>
-<td>${r.Company||""}</td>
-<td>${r.City||""}</td>
-<td>${r.State||""}</td>
-<td class="actions" onclick="event.stopPropagation()">
-<a class="act" href="${phoneLink(r.Phone)}" target="_blank">Call</a>
-<a class="act" href="${webLink(r.Website)}" target="_blank">Web</a>
-<a class="act" href="${mapLink(r)}" target="_blank">Map</a>
-</td>
-</tr>`;
-});
-
-html+="</tbody></table>";
-document.getElementById("table").innerHTML=html;
-}
-
-function selectRow(i){
-const r=FILTERED[i];
-document.getElementById("title").textContent=r.Company||"Business";
-document.getElementById("details").innerHTML=
-"<div>"+addr(r)+"</div>"+
-"<div>"+(r.Phone||"")+"</div>"+
-"<div>"+(r.Website||"")+"</div>";
-}
-
-async function load(){
-const res=await fetch(API);
-const json=await res.json();
-
-/* ⭐ THIS LINE FIXES EVERYTHING */
-ALL = Array.isArray(json) ? json : (json.items||json.data||[]);
-
-render();
-}
-
-document.getElementById("q").addEventListener("input",render);
-document.getElementById("limit").addEventListener("change",render);
 
 load();
+
 </script>
+
 </body>
 </html>
