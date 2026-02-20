@@ -116,8 +116,8 @@ async function load(){
 const res=await fetch(API);
 const json=await res.json();
 
-/* 🔥 FIX — accept ANY backend format */
-ALL = json.items || json.data || json.rows || [];
+/* ⭐ FINAL FIX — YOUR API RETURNS RAW ARRAY */
+ALL = Array.isArray(json) ? json : (json.items || json.data || json.rows || []);
 
 render();
 }
