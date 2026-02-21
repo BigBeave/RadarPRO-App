@@ -6,6 +6,7 @@
 <title>Radar PRO</title>
 
 <style>
+
 body{
 margin:0;
 background:#0c0f14;
@@ -13,7 +14,7 @@ color:white;
 font-family:Arial;
 }
 
-/* HOME SEARCH */
+/* HOME */
 #home{
 padding:20px;
 max-width:900px;
@@ -49,18 +50,18 @@ cursor:pointer;
 }
 .stateBtn.active{background:#2563eb;}
 
-/* WORKSPACE */
+/* WORKSPACE LAYOUT (FLEX FIX) */
 #workspace{
 display:none;
 height:100vh;
+display:flex;
 }
 
+/* LEFT RESULTS */
 #left{
 width:35%;
 background:#0b1220;
 overflow-y:auto;
-float:left;
-height:100%;
 padding:10px;
 }
 
@@ -71,10 +72,11 @@ cursor:pointer;
 }
 .result:hover{background:#1f2937;}
 
+/* RIGHT CONTACT */
 #right{
 width:65%;
-float:left;
 padding:20px;
+overflow-y:auto;
 }
 
 .card{
@@ -99,9 +101,10 @@ margin-top:10px;
 }
 
 .backBtn{
-margin-bottom:14px;
+margin-bottom:12px;
 display:inline-block;
 }
+
 </style>
 </head>
 
@@ -113,7 +116,6 @@ display:inline-block;
 <h2>Prospect {{{Radar}}} LIVE</h2>
 
 <input id="kw" placeholder="Keyword search (ANY column)">
-
 <div id="states"></div>
 
 <button onclick="runSearch()">Run Search</button>
@@ -126,11 +128,7 @@ display:inline-block;
 <div id="left"></div>
 
 <div id="right">
-
-<button class="backBtn" onclick="goHome()">⬅ Back to Search</button>
-
 <div id="detail"></div>
-
 </div>
 
 </div>
@@ -174,12 +172,10 @@ Object.keys(row).forEach(k=>{
 clean[k.trim()] = row[k];
 });
 
-/* normalize state field */
 if(!clean.State){
 clean.State = clean["State"] || clean["        State"] || "";
 }
 
-/* ensure numeric score */
 clean.Score = Number(clean.Score||0);
 
 return clean;
@@ -205,11 +201,11 @@ return Object.values(o).some(v=>String(v).toLowerCase().includes(kw));
 return true;
 });
 
-/* SORT BY SCORE DESC AUTOMATICALLY */
+/* AUTO SORT BY SCORE DESC */
 RESULTS.sort((a,b)=>b.Score-a.Score);
 
 document.getElementById("home").style.display="none";
-document.getElementById("workspace").style.display="block";
+document.getElementById("workspace").style.display="flex";
 
 renderResults();
 }
@@ -232,7 +228,11 @@ function openDetail(i){
 
 const x=RESULTS[i];
 
+window.scrollTo(0,0);
+
 document.getElementById("detail").innerHTML=`
+
+<button class="backBtn" onclick="goHome()">⬅ Back to Search</button>
 
 <div class="card">
 
@@ -268,7 +268,6 @@ function goHome(){
 document.getElementById("workspace").style.display="none";
 document.getElementById("home").style.display="block";
 
-/* reset filters */
 document.getElementById("kw").value="";
 ACTIVE_STATES=[];
 document.querySelectorAll(".stateBtn").forEach(b=>b.classList.remove("active"));
