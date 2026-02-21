@@ -71,8 +71,6 @@ button.action:hover{
 
 <script>
 
-/* IMPORTANT FIX:
-   Frontend must call BACKEND service directly */
 const API = "https://radarpro-api.onrender.com/data";
 
 let ALL = [];
@@ -118,7 +116,11 @@ function render(){
     body.innerHTML="";
     const frag=document.createDocumentFragment();
 
-    FILTERED.forEach((row,idx)=>{
+    // 🚀 PERFORMANCE SAFE LIMIT
+    const MAX = 500;
+    const rows = FILTERED.slice(0,MAX);
+
+    rows.forEach((row,idx)=>{
 
         const tr=document.createElement("tr");
 
