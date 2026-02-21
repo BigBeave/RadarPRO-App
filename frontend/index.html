@@ -13,6 +13,14 @@ background:#0c0f14;
 color:white;
 font-family:Arial;
 }
+#searchBar{
+width:100%;
+padding:12px;
+margin-bottom:14px;
+border-radius:8px;
+border:none;
+font-size:15px;
+}
 #results{
 display:flex;
 flex-wrap:wrap;
@@ -25,30 +33,47 @@ padding:16px;
 border-radius:12px;
 box-shadow:0 0 8px rgba(0,0,0,.45);
 width:48%;
-max-width:700px;
+max-width:720px;
+cursor:pointer;
 }
 @media(max-width:700px){
-.card{
-width:100%;
-}
+.card{width:100%;}
 }
 .cardTitle{
 font-size:18px;
 font-weight:bold;
 margin-bottom:6px;
 }
-.row{
-font-size:14px;
-margin:3px 0;
+.row{font-size:14px;margin:3px 0;}
+.actions{
+margin-top:8px;
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+}
+button{
+background:#1f2937;
+color:white;
+border:none;
+padding:6px 10px;
+border-radius:6px;
+cursor:pointer;
+}
+button:hover{background:#2563eb;}
+.score{
+color:#22c55e;
+font-weight:bold;
 }
 </style>
 </head>
 
 <body>
 
+<input id="searchBar" placeholder="Search any column...">
 <div id="results"></div>
 
 <script>
+
 let masterData=[];
 
 async function load(){
@@ -57,20 +82,57 @@ masterData=await r.json();
 render(masterData);
 }
 
-function render(data){
-const el=document.getElementById("results");
-el.innerHTML=data.map(x=>`
-<div class="card">
-<div class="cardTitle">${x.Company||""}</div>
-<div class="row">City: ${x.City||""}</div>
-<div class="row">State: ${x.State||""}</div>
-<div class="row">Employees: ${x["Employees on Site"]||""}</div>
-<div class="row">Annual Sales: ${x["Annual Sales"]||""}</div>
-</div>
-`).join("");
+function mapsLink(row){
+return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(row.Address+" "+row.City+" "+row.State)}`;
 }
 
+function websiteLink(row){
+if(!row.Website) return "#";
+return row.Website.startsWith("http")?row.Website:"https://"+row.Website;
+}
+
+function buildCard(x){
+
+return `
+<div class="card">
+
+<div class="cardTitle">${x.Company||""}</div>
+
+<div class="row">City: ${x.City||""}</div>
+<div class="row">State: ${x.State||""}</div>
+<div class="row">Phone: ${x.Phone||""}</div>
+<div class="row">Website: ${x.Website||""}</div>
+<div class="row">Employees: ${x["Employees on Site"]||""}</div>
+<div class="row">Annual Sales: ${x["Annual Sales"]||""}</div>
+<div class="row score">Score: ${x.Score||""}</div>
+
+<div class="actions">
+
+<button onclick="window.open('tel:${x.Phone||""}')">Call</button>
+
+<button onclick="window.open('${mapsLink(x)}')">Maps</button>
+
+<button onclick="window.open('${websiteLink(x)}')">Website</button>
+
+<button onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(x.Company)}')">Search</button>
+
+</div>
+
+</div>
+`;
+}
+
+function render(data){
+document.getElementById("results").innerHTML=data.map(buildCard).join("");
+}
+
+document.getElementById("searchBar").addEventListener("input",e=>{
+const t=e.target.value.toLowerCase();
+render(masterData.filter(o=>Object.values(o).some(v=>String(v).toLowerCase().includes(t))));
+});
+
 load();
+
 </script>
 
 </body>
