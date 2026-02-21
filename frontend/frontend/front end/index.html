@@ -2,134 +2,200 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Radar PRO MOBILE TEST</title>
+<title>Prospect {{{Radar}}} LIVE Dashboard</title>
 
 <style>
+
 body{
     font-family:Arial,Helvetica,sans-serif;
     background:#0b0f14;
     color:#e6edf3;
     margin:0;
 }
+
 header{
-    background:#111827;
+    background:#0f172a;
     padding:14px;
+    text-align:center;
     font-weight:bold;
-}
-#searchBar{
-    width:95%;
-    margin:10px;
-    padding:10px;
-    font-size:16px;
-    border-radius:8px;
-    border:none;
 }
 
-.mobileCard{
-    background:#0f172a;
-    margin:10px;
-    padding:14px;
-    border-radius:10px;
-}
-.mobileTitle{
-    font-size:16px;
-    font-weight:bold;
-}
-.mobileSub{
-    font-size:13px;
-    color:#9ca3af;
-    margin-bottom:10px;
-}
-button.action{
-    background:#1f2937;
-    color:white;
-    border:none;
-    padding:6px 10px;
-    margin-right:6px;
+#search{
+    width:95%;
+    margin:10px auto;
+    display:block;
+    padding:10px;
     border-radius:6px;
+    border:none;
+    font-size:16px;
 }
+
+/* ===== TABLE (DESKTOP) ===== */
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    background:#0f172a;
+    padding:10px;
+    font-size:13px;
+}
+
+td{
+    padding:10px;
+    border-bottom:1px solid #111827;
+    font-size:13px;
+}
+
+/* ===== MOBILE CARDS ===== */
+
+#cards{
+    display:none;
+    padding:10px;
+}
+
+.card{
+    background:#0f172a;
+    border-radius:10px;
+    padding:14px;
+    margin-bottom:12px;
+}
+
+.card-title{
+    font-weight:bold;
+    font-size:16px;
+    margin-bottom:6px;
+}
+
+.card-row{
+    font-size:13px;
+    margin:2px 0;
+    color:#cbd5e1;
+}
+
+/* ===== MOBILE BREAKPOINT ===== */
+
+@media(max-width:900px){
+
+    table{
+        display:none;
+    }
+
+    #cards{
+        display:block;
+    }
+}
+
 </style>
 </head>
 
 <body>
 
-<header>Prospect {{{Radar}}} MOBILE TEST</header>
+<header>Prospect {{{Radar}}} LIVE Dashboard</header>
 
-<input id="searchBar" placeholder="Search ANY column…">
+<input id="search" placeholder="Search ANY column..." onkeyup="filterData()">
 
-<div id="body"></div>
+<table id="table">
+<thead>
+<tr>
+<th>Score</th>
+<th>Industry</th>
+<th>Size</th>
+<th>Products</th>
+<th>Pkg</th>
+<th>ID</th>
+<th>Description</th>
+<th>Address</th>
+<th>City</th>
+<th>State</th>
+<th>Zip</th>
+<th>Phone</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+
+<div id="cards"></div>
 
 <script>
 
-const API="https://radarpro-api.onrender.com/data";
+let masterData = [];
 
-let ALL=[];
-let FILTERED=[];
+async function loadData(){
 
-const body=document.getElementById("body");
-const searchBar=document.getElementById("searchBar");
+    const res = await fetch("/data");
+    const json = await res.json();
 
-async function load(){
+    masterData = json.items || [];
 
-    const res=await fetch(API);
-    const json=await res.json();
-
-    ALL=Array.isArray(json)?json:(json.items||json.data||[]);
-
-    FILTERED=ALL;
-    render();
+    render(masterData);
 }
 
-function render(){
+function render(data){
 
-    body.innerHTML="";
+    const tbody = document.getElementById("tbody");
+    const cards = document.getElementById("cards");
 
-    const MAX=200;
-    const rows=FILTERED.slice(0,MAX);
+    tbody.innerHTML="";
+    cards.innerHTML="";
 
-    rows.forEach(row=>{
+    data.forEach(row=>{
 
-        const card=document.createElement("div");
-        card.className="mobileCard";
+        /* ===== TABLE ROW ===== */
 
-        card.innerHTML=`
-            <div class="mobileTitle">${row.Company||""}</div>
-            <div class="mobileSub">${row.City||""} ${row.State||""}</div>
+        const tr = document.createElement("tr");
 
-            <button class="action" onclick="window.open('tel:${row.Phone||""}')">📞</button>
-            <button class="action" onclick="window.open('${row.Website||"#"}','_blank')">🌐</button>
-            <button class="action" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((row.Address||"")+" "+(row.City||"")+" "+(row.State||""))}')">🧭</button>
+        tr.innerHTML = `
+        <td>${row.Score||""}</td>
+        <td>${row["Industry Match"]||""}</td>
+        <td>${row["Company Size"]||""}</td>
+        <td>${row["Match for my Products - Services"]||""}</td>
+        <td>${row["Match for Pkg Sales"]||""}</td>
+        <td>${row["Company ID"]||""}</td>
+        <td>${row["Business Description"]||""}</td>
+        <td>${row.Address||""}</td>
+        <td>${row.City||""}</td>
+        <td>${row.State||""}</td>
+        <td>${row.Zip||""}</td>
+        <td>${row.Phone||""}</td>
         `;
 
-        body.appendChild(card);
+        tbody.appendChild(tr);
+
+        /* ===== MOBILE CARD ===== */
+
+        const card = document.createElement("div");
+        card.className="card";
+
+        card.innerHTML = `
+        <div class="card-title">${row.Company||""}</div>
+        <div class="card-row">Score: ${row.Score||""}</div>
+        <div class="card-row">${row["Business Description"]||""}</div>
+        <div class="card-row">${row.Address||""}, ${row.City||""} ${row.State||""}</div>
+        <div class="card-row">${row.Phone||""}</div>
+        `;
+
+        cards.appendChild(card);
     });
 }
 
-searchBar.addEventListener("input",()=>{
-    const q=searchBar.value.toLowerCase();
+function filterData(){
 
-    if(!q){
-        FILTERED=ALL;
-        render();
-        return;
-    }
+    const term = document.getElementById("search").value.toLowerCase();
 
-    FILTERED=ALL.filter(r=>
-        Object.values(r).some(v=>
-            String(v||"").toLowerCase().includes(q)
-        )
-    );
+    const filtered = masterData.filter(row=>{
 
-    render();
-});
+        return Object.values(row).join(" ").toLowerCase().includes(term);
+    });
 
-load();
+    render(filtered);
+}
+
+loadData();
 
 </script>
 
 </body>
 </html>
-
-
-
-
