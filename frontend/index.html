@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar PRO</title>
+
+<style>
+body{
+margin:0;
+padding:14px;
+background:#0c0f14;
+color:white;
+font-family:Arial;
+}
+#results{
+display:flex;
+flex-wrap:wrap;
+gap:14px;
+justify-content:center;
+}
+.card{
+background:#161b22;
+padding:16px;
+border-radius:12px;
+box-shadow:0 0 8px rgba(0,0,0,.45);
+width:48%;
+max-width:700px;
+}
+@media(max-width:700px){
+.card{
+width:100%;
+}
+}
+.cardTitle{
+font-size:18px;
+font-weight:bold;
+margin-bottom:6px;
+}
+.row{
+font-size:14px;
+margin:3px 0;
+}
+</style>
+</head>
+
+<body>
+
+<div id="results"></div>
+
+<script>
+let masterData=[];
+
+async function load(){
+const r=await fetch("https://radarpro-api.onrender.com/data");
+masterData=await r.json();
+render(masterData);
+}
+
+function render(data){
+const el=document.getElementById("results");
+el.innerHTML=data.map(x=>`
+<div class="card">
+<div class="cardTitle">${x.Company||""}</div>
+<div class="row">City: ${x.City||""}</div>
+<div class="row">State: ${x.State||""}</div>
+<div class="row">Employees: ${x["Employees on Site"]||""}</div>
+<div class="row">Annual Sales: ${x["Annual Sales"]||""}</div>
+</div>
+`).join("");
+}
+
+load();
+</script>
+
+</body>
+</html>
