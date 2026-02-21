@@ -6,7 +6,6 @@
 <title>Radar PRO</title>
 
 <style>
-
 body{
 margin:0;
 background:#0c0f14;
@@ -14,14 +13,14 @@ color:white;
 font-family:Arial;
 }
 
-/* HOME SEARCH SCREEN */
+/* HOME SEARCH */
 #home{
 padding:20px;
 max-width:900px;
 margin:auto;
 }
 
-input,select{
+input{
 width:100%;
 padding:10px;
 margin:6px 0;
@@ -38,7 +37,6 @@ padding:10px 14px;
 border-radius:8px;
 cursor:pointer;
 }
-
 button:hover{background:#2563eb;}
 
 .stateBtn{
@@ -49,15 +47,14 @@ border-radius:20px;
 background:#1f2937;
 cursor:pointer;
 }
-
 .stateBtn.active{background:#2563eb;}
 
+/* WORKSPACE */
 #workspace{
 display:none;
 height:100vh;
 }
 
-/* LEFT RESULTS */
 #left{
 width:35%;
 background:#0b1220;
@@ -72,10 +69,8 @@ padding:12px;
 border-bottom:1px solid #1f2937;
 cursor:pointer;
 }
-
 .result:hover{background:#1f2937;}
 
-/* RIGHT CONTACT */
 #right{
 width:65%;
 float:left;
@@ -86,7 +81,7 @@ padding:20px;
 background:#161b22;
 padding:18px;
 border-radius:12px;
-max-width:600px;
+max-width:650px;
 }
 
 .row{margin:4px 0;}
@@ -107,27 +102,19 @@ margin-top:10px;
 margin-bottom:14px;
 display:inline-block;
 }
-
 </style>
 </head>
 
 <body>
 
-<!-- HOME SEARCH -->
+<!-- HOME -->
 <div id="home">
 
 <h2>Prospect {{{Radar}}} LIVE</h2>
 
 <input id="kw" placeholder="Keyword search (ANY column)">
-<input id="minScore" placeholder="Minimum score">
-<input id="rows" value="50" placeholder="Rows per page">
 
 <div id="states"></div>
-
-<select id="sort">
-<option value="scoreDesc">Score (high → low)</option>
-<option value="scoreAsc">Score (low → high)</option>
-</select>
 
 <button onclick="runSearch()">Run Search</button>
 
@@ -174,39 +161,52 @@ el.appendChild(d);
 });
 }
 
+/* LOAD DATA + FIX CSV HEADER SPACING */
 async function load(){
+
 const r=await fetch("https://radarpro-api.onrender.com/data");
-DATA=await r.json();
+let raw=await r.json();
+
+DATA = raw.map(row=>{
+let clean={};
+
+Object.keys(row).forEach(k=>{
+clean[k.trim()] = row[k];
+});
+
+/* normalize state field */
+if(!clean.State){
+clean.State = clean["State"] || clean["        State"] || "";
+}
+
+/* ensure numeric score */
+clean.Score = Number(clean.Score||0);
+
+return clean;
+});
+
 initStates();
 }
 
 function runSearch(){
 
 let kw=document.getElementById("kw").value.toLowerCase();
-let minScore=parseInt(document.getElementById("minScore").value)||0;
-let sort=document.getElementById("sort").value;
 
-RESULTS=DATA.filter(o=>{
+RESULTS = DATA.filter(o=>{
 
 if(ACTIVE_STATES.length){
 if(!ACTIVE_STATES.includes(o.State)) return false;
 }
-
-if(o.Score<minScore) return false;
 
 if(kw){
 return Object.values(o).some(v=>String(v).toLowerCase().includes(kw));
 }
 
 return true;
-
 });
 
-if(sort==="scoreDesc"){
+/* SORT BY SCORE DESC AUTOMATICALLY */
 RESULTS.sort((a,b)=>b.Score-a.Score);
-}else{
-RESULTS.sort((a,b)=>a.Score-b.Score);
-}
 
 document.getElementById("home").style.display="none";
 document.getElementById("workspace").style.display="block";
@@ -218,11 +218,10 @@ function renderResults(){
 
 const left=document.getElementById("left");
 
-left.innerHTML=RESULTS.map((x,i)=>`
+left.innerHTML = RESULTS.map((x,i)=>`
 <div class="result" onclick="openDetail(${i})">
-<b>${x.Company}</b><br>
-${x.City}, ${x.State}<br>
-Score: ${x.Score}
+<b>${x.Company||""}</b><br>
+${x.City||""}, ${x.State||""}
 </div>
 `).join("");
 
@@ -237,7 +236,7 @@ document.getElementById("detail").innerHTML=`
 
 <div class="card">
 
-<h3>${x.Company}</h3>
+<h3>${x.Company||""}</h3>
 
 <div class="row">Phone: ${x.Phone||""}</div>
 <div class="row">Email: ${x["Company Email"]||""}</div>
@@ -254,7 +253,7 @@ document.getElementById("detail").innerHTML=`
 
 <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.Address+" "+x.City+" "+x.State)}')">Directions</button>
 
-<button onclick="window.open('${x.Website.startsWith("http")?x.Website:"https://"+x.Website}')">Website</button>
+<button onclick="window.open('${x.Website && x.Website.startsWith("http")?x.Website:"https://"+(x.Website||"")}')">Website</button>
 
 </div>
 
@@ -269,11 +268,10 @@ function goHome(){
 document.getElementById("workspace").style.display="none";
 document.getElementById("home").style.display="block";
 
+/* reset filters */
 document.getElementById("kw").value="";
-document.getElementById("minScore").value="";
 ACTIVE_STATES=[];
 document.querySelectorAll(".stateBtn").forEach(b=>b.classList.remove("active"));
-
 }
 
 load();
