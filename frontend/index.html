@@ -6,130 +6,275 @@
 <title>Radar PRO</title>
 
 <style>
+
 body{
 margin:0;
-padding:14px;
 background:#0c0f14;
 color:white;
 font-family:Arial;
 }
-#searchBar{
+
+/* HOME SEARCH SCREEN */
+#home{
+padding:20px;
+max-width:900px;
+margin:auto;
+}
+
+input,select{
 width:100%;
-padding:12px;
-margin-bottom:14px;
+padding:10px;
+margin:6px 0;
 border-radius:8px;
 border:none;
 font-size:15px;
 }
-#results{
-display:flex;
-flex-wrap:wrap;
-gap:14px;
-justify-content:center;
-}
-.card{
-background:#161b22;
-padding:16px;
-border-radius:12px;
-box-shadow:0 0 8px rgba(0,0,0,.45);
-width:48%;
-max-width:720px;
-cursor:pointer;
-}
-@media(max-width:700px){
-.card{width:100%;}
-}
-.cardTitle{
-font-size:18px;
-font-weight:bold;
-margin-bottom:6px;
-}
-.row{font-size:14px;margin:3px 0;}
-.actions{
-margin-top:8px;
-display:flex;
-gap:8px;
-flex-wrap:wrap;
-}
+
 button{
 background:#1f2937;
 color:white;
 border:none;
-padding:6px 10px;
-border-radius:6px;
+padding:10px 14px;
+border-radius:8px;
 cursor:pointer;
 }
+
 button:hover{background:#2563eb;}
-.score{
-color:#22c55e;
-font-weight:bold;
+
+.stateBtn{
+display:inline-block;
+margin:4px;
+padding:8px 12px;
+border-radius:20px;
+background:#1f2937;
+cursor:pointer;
 }
+
+.stateBtn.active{background:#2563eb;}
+
+#workspace{
+display:none;
+height:100vh;
+}
+
+/* LEFT RESULTS */
+#left{
+width:35%;
+background:#0b1220;
+overflow-y:auto;
+float:left;
+height:100%;
+padding:10px;
+}
+
+.result{
+padding:12px;
+border-bottom:1px solid #1f2937;
+cursor:pointer;
+}
+
+.result:hover{background:#1f2937;}
+
+/* RIGHT CONTACT */
+#right{
+width:65%;
+float:left;
+padding:20px;
+}
+
+.card{
+background:#161b22;
+padding:18px;
+border-radius:12px;
+max-width:600px;
+}
+
+.row{margin:4px 0;}
+
+.actions button{
+margin:6px 6px 0 0;
+}
+
+.badge{
+background:#065f46;
+padding:6px 10px;
+border-radius:6px;
+display:inline-block;
+margin-top:10px;
+}
+
+.backBtn{
+margin-bottom:14px;
+display:inline-block;
+}
+
 </style>
 </head>
 
 <body>
 
-<input id="searchBar" placeholder="Search any column...">
-<div id="results"></div>
+<!-- HOME SEARCH -->
+<div id="home">
+
+<h2>Prospect {{{Radar}}} LIVE</h2>
+
+<input id="kw" placeholder="Keyword search (ANY column)">
+<input id="minScore" placeholder="Minimum score">
+<input id="rows" value="50" placeholder="Rows per page">
+
+<div id="states"></div>
+
+<select id="sort">
+<option value="scoreDesc">Score (high → low)</option>
+<option value="scoreAsc">Score (low → high)</option>
+</select>
+
+<button onclick="runSearch()">Run Search</button>
+
+</div>
+
+<!-- WORKSPACE -->
+<div id="workspace">
+
+<div id="left"></div>
+
+<div id="right">
+
+<button class="backBtn" onclick="goHome()">⬅ Back to Search</button>
+
+<div id="detail"></div>
+
+</div>
+
+</div>
 
 <script>
 
-let masterData=[];
+let DATA=[];
+let RESULTS=[];
+let ACTIVE_STATES=[];
+
+const STATE_LIST=["OH","IN","MI","KY","TN","WV","PA","IL"];
+
+function initStates(){
+const el=document.getElementById("states");
+STATE_LIST.forEach(s=>{
+const d=document.createElement("span");
+d.className="stateBtn";
+d.innerText=s;
+d.onclick=()=>{
+d.classList.toggle("active");
+if(ACTIVE_STATES.includes(s)){
+ACTIVE_STATES=ACTIVE_STATES.filter(x=>x!==s);
+}else{
+ACTIVE_STATES.push(s);
+}
+};
+el.appendChild(d);
+});
+}
 
 async function load(){
 const r=await fetch("https://radarpro-api.onrender.com/data");
-masterData=await r.json();
-render(masterData);
+DATA=await r.json();
+initStates();
 }
 
-function mapsLink(row){
-return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(row.Address+" "+row.City+" "+row.State)}`;
+function runSearch(){
+
+let kw=document.getElementById("kw").value.toLowerCase();
+let minScore=parseInt(document.getElementById("minScore").value)||0;
+let sort=document.getElementById("sort").value;
+
+RESULTS=DATA.filter(o=>{
+
+if(ACTIVE_STATES.length){
+if(!ACTIVE_STATES.includes(o.State)) return false;
 }
 
-function websiteLink(row){
-if(!row.Website) return "#";
-return row.Website.startsWith("http")?row.Website:"https://"+row.Website;
+if(o.Score<minScore) return false;
+
+if(kw){
+return Object.values(o).some(v=>String(v).toLowerCase().includes(kw));
 }
 
-function buildCard(x){
+return true;
 
-return `
+});
+
+if(sort==="scoreDesc"){
+RESULTS.sort((a,b)=>b.Score-a.Score);
+}else{
+RESULTS.sort((a,b)=>a.Score-b.Score);
+}
+
+document.getElementById("home").style.display="none";
+document.getElementById("workspace").style.display="block";
+
+renderResults();
+}
+
+function renderResults(){
+
+const left=document.getElementById("left");
+
+left.innerHTML=RESULTS.map((x,i)=>`
+<div class="result" onclick="openDetail(${i})">
+<b>${x.Company}</b><br>
+${x.City}, ${x.State}<br>
+Score: ${x.Score}
+</div>
+`).join("");
+
+if(RESULTS.length) openDetail(0);
+}
+
+function openDetail(i){
+
+const x=RESULTS[i];
+
+document.getElementById("detail").innerHTML=`
+
 <div class="card">
 
-<div class="cardTitle">${x.Company||""}</div>
+<h3>${x.Company}</h3>
 
+<div class="row">Phone: ${x.Phone||""}</div>
+<div class="row">Email: ${x["Company Email"]||""}</div>
+<div class="row">Website: ${x.Website||""}</div>
 <div class="row">City: ${x.City||""}</div>
 <div class="row">State: ${x.State||""}</div>
-<div class="row">Phone: ${x.Phone||""}</div>
-<div class="row">Website: ${x.Website||""}</div>
 <div class="row">Employees: ${x["Employees on Site"]||""}</div>
-<div class="row">Annual Sales: ${x["Annual Sales"]||""}</div>
-<div class="row score">Score: ${x.Score||""}</div>
 
 <div class="actions">
 
 <button onclick="window.open('tel:${x.Phone||""}')">Call</button>
 
-<button onclick="window.open('${mapsLink(x)}')">Maps</button>
+<button onclick="window.open('mailto:${x["Company Email"]||""}')">Email</button>
 
-<button onclick="window.open('${websiteLink(x)}')">Website</button>
+<button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.Address+" "+x.City+" "+x.State)}')">Directions</button>
 
-<button onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(x.Company)}')">Search</button>
+<button onclick="window.open('${x.Website.startsWith("http")?x.Website:"https://"+x.Website}')">Website</button>
 
 </div>
+
+<div class="badge">Sales Match: ${x.Score}</div>
 
 </div>
 `;
 }
 
-function render(data){
-document.getElementById("results").innerHTML=data.map(buildCard).join("");
-}
+function goHome(){
 
-document.getElementById("searchBar").addEventListener("input",e=>{
-const t=e.target.value.toLowerCase();
-render(masterData.filter(o=>Object.values(o).some(v=>String(v).toLowerCase().includes(t))));
-});
+document.getElementById("workspace").style.display="none";
+document.getElementById("home").style.display="block";
+
+document.getElementById("kw").value="";
+document.getElementById("minScore").value="";
+ACTIVE_STATES=[];
+document.querySelectorAll(".stateBtn").forEach(b=>b.classList.remove("active"));
+
+}
 
 load();
 
