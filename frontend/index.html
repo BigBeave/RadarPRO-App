@@ -2,255 +2,240 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>{{{PROSPECT•RADAR}}} v6.3</title>
-
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-512.png">
-<meta name="theme-color" content="#06142b">
+<title>Radar PRO LIVE Dashboard</title>
 
 <style>
-
 body{
-margin:0;
-font-family:Arial,Helvetica,sans-serif;
-background:linear-gradient(180deg,#06142b,#02060f);
-color:white;
+    font-family:Arial,Helvetica,sans-serif;
+    background:#0b0f14;
+    color:#e6edf3;
+    margin:0;
 }
-
 header{
-position:sticky;
-top:0;
-z-index:100;
-background:#03122a;
-padding:14px;
-font-size:20px;
-font-weight:bold;
-text-align:center;
-letter-spacing:1px;
-box-shadow:0 4px 20px rgba(0,0,0,.5);
+    background:#111827;
+    padding:12px;
+    font-weight:bold;
 }
-
-/* 🔥 Radar Pulse Animation */
-@keyframes radarPulse{
-0%{ text-shadow:0 0 0px #2c64ff; }
-50%{ text-shadow:0 0 18px #2c64ff; }
-100%{ text-shadow:0 0 0px #2c64ff; }
+#searchBar{
+    width:98%;
+    margin:10px;
+    padding:8px;
+    font-size:14px;
+    border-radius:6px;
+    border:none;
 }
-
-header.pulse{
-animation:radarPulse .3s ease-out;
+table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
 }
-
-.container{
-padding:12px;
+thead{
+    position:sticky;
+    top:0;
+    background:#0f172a;
 }
-
-.filters{
-display:flex;
-flex-wrap:wrap;
-gap:8px;
-margin-bottom:10px;
+th,td{
+    padding:6px 8px;
+    border-bottom:1px solid #1f2937;
 }
-
-input,select{
-padding:10px;
-border-radius:10px;
-border:none;
-background:#081c3b;
-color:white;
+tr.selected{
+    background:#1d4ed8;
 }
-
-.card{
-background:#081c3b;
-margin-bottom:10px;
-padding:14px;
-border-radius:14px;
-box-shadow:0 6px 18px rgba(0,0,0,.4);
+button.action{
+    background:#1f2937;
+    color:white;
+    border:none;
+    padding:6px 10px;
+    margin-right:6px;
+    border-radius:6px;
+    cursor:pointer;
 }
-
-.company{
-font-size:18px;
-font-weight:bold;
+button.action:hover{
+    background:#2563eb;
 }
-
-.city{
-opacity:.7;
+.mobileCard{
+    background:#0f172a;
+    margin:10px;
+    padding:14px;
+    border-radius:10px;
 }
-
-.actions{
-margin-top:8px;
-display:flex;
-gap:10px;
+.mobileTitle{
+    font-size:16px;
+    font-weight:bold;
+    margin-bottom:4px;
 }
-
-.btn{
-background:#0e2c63;
-padding:8px 12px;
-border-radius:10px;
-cursor:pointer;
+.mobileSub{
+    font-size:13px;
+    color:#9ca3af;
+    margin-bottom:10px;
 }
-
-.states{
-display:flex;
-flex-wrap:wrap;
-gap:6px;
-margin-bottom:8px;
-}
-
-.state{
-background:#0c244f;
-padding:6px 10px;
-border-radius:10px;
-cursor:pointer;
-font-size:12px;
-}
-
-.state.active{
-background:#2c64ff;
-}
-
 </style>
 </head>
 
 <body>
 
-<header id="radarHeader">
-{{{PROSPECT•RADAR}}} v6.3
-</header>
+<header>Prospect {{{Radar}}} LIVE Dashboard</header>
 
-<div class="container">
+<input id="searchBar" placeholder="Search ANY column…">
 
-<div class="filters">
-
-<input id="searchBox" placeholder="Industry / Keyword Search">
-
-<select id="scoreFilter">
-<option value="0">Score Any</option>
-<option value="25">25+</option>
-<option value="50">50+</option>
-<option value="75">75+</option>
-</select>
-
-<select id="limitFilter">
-<option value="25">25 Results</option>
-<option value="50">50 Results</option>
-<option value="100">100 Results</option>
-<option value="1000">1000 Results</option>
-<option value="999999">All</option>
-</select>
-
-</div>
-
-<div class="states" id="states"></div>
-
-<div id="results"></div>
-
-</div>
+<table>
+<thead>
+<tr id="headerRow"></tr>
+</thead>
+<tbody id="body"></tbody>
+</table>
 
 <script>
 
-const API="https://radarpro-api.onrender.com/data";
+const API = "https://radarpro-api.onrender.com/data";
 
-let DATA=[];
-let ACTIVE_STATES=[];
+let ALL = [];
+let FILTERED = [];
+let SELECTED = JSON.parse(localStorage.getItem("radar_selected") || "[]");
 
-const STATES=["OH","MI","IN","KY","PA","WV","TN","NC"];
+const body = document.getElementById("body");
+const headerRow = document.getElementById("headerRow");
+const searchBar = document.getElementById("searchBar");
 
-const stateWrap=document.getElementById("states");
+const isMobile = window.innerWidth <= 768;
 
-STATES.forEach(s=>{
-let div=document.createElement("div");
-div.className="state active";
-div.innerText=s;
-ACTIVE_STATES.push(s);
-div.onclick=()=>{
-if(ACTIVE_STATES.includes(s)){
-ACTIVE_STATES=ACTIVE_STATES.filter(x=>x!==s);
-div.classList.remove("active");
-}else{
-ACTIVE_STATES.push(s);
-div.classList.add("active");
+async function load(){
+
+    const res = await fetch(API);
+    const json = await res.json();
+
+    ALL = Array.isArray(json) ? json : (json.items||json.data||[]);
+
+    if(!ALL.length){
+        body.innerHTML="<tr><td>NO DATA RECEIVED</td></tr>";
+        return;
+    }
+
+    buildHeader(Object.keys(ALL[0]));
+    FILTERED = ALL;
+    render();
 }
-render();
-};
-stateWrap.appendChild(div);
-});
 
-/* 🔥 Trigger Radar Pulse Once */
-window.addEventListener("load",()=>{
-document.getElementById("radarHeader").classList.add("pulse");
-});
+function buildHeader(cols){
 
-fetch(API)
-.then(r=>r.json())
-.then(d=>{
-DATA=d;
-render();
-});
+    if(isMobile){ return; }
 
-document.getElementById("searchBox").oninput=render;
-document.getElementById("scoreFilter").onchange=render;
-document.getElementById("limitFilter").onchange=render;
+    headerRow.innerHTML="";
+    cols.forEach(c=>{
+        const th=document.createElement("th");
+        th.textContent=c;
+        headerRow.appendChild(th);
+    });
+
+    const act=document.createElement("th");
+    act.textContent="Actions";
+    headerRow.appendChild(act);
+}
+
+function renderMobileCards(){
+
+    body.innerHTML="";
+    const frag=document.createDocumentFragment();
+
+    const MAX = 200;
+    const rows = FILTERED.slice(0,MAX);
+
+    rows.forEach((row)=>{
+
+        const card=document.createElement("div");
+        card.className="mobileCard";
+
+        card.innerHTML = `
+            <div class="mobileTitle">${row.Company || ""}</div>
+            <div class="mobileSub">${row.City || ""}, ${row.State || ""}</div>
+            <div>
+                <button class="action" onclick="window.open('tel:${row.Phone||""}')">📞 Call</button>
+                <button class="action" onclick="window.open('${row.Website||"#"}')">🌐 Website</button>
+                <button class="action" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((row.Address||"")+" "+(row.City||"")+" "+(row.State||""))}')">🧭 Map</button>
+            </div>
+        `;
+
+        frag.appendChild(card);
+    });
+
+    body.appendChild(frag);
+}
 
 function render(){
 
-let keyword=document.getElementById("searchBox").value.toLowerCase();
-let score=parseInt(document.getElementById("scoreFilter").value);
-let limit=parseInt(document.getElementById("limitFilter").value);
+    if(isMobile){ renderMobileCards(); return; }
 
-let res=DATA.filter(x=>{
+    body.innerHTML="";
+    const frag=document.createDocumentFragment();
 
-if(!ACTIVE_STATES.includes(x["State"])) return false;
+    const MAX = 500;
+    const rows = FILTERED.slice(0,MAX);
 
-if(parseInt(x["Score"]||0)<score) return false;
+    rows.forEach((row,idx)=>{
 
-if(keyword){
-let joined=Object.values(x).join(" ").toLowerCase();
-if(!joined.includes(keyword)) return false;
+        const tr=document.createElement("tr");
+
+        if(SELECTED.includes(idx)) tr.classList.add("selected");
+
+        Object.values(row).forEach(v=>{
+            const td=document.createElement("td");
+            td.textContent=v||"";
+            tr.appendChild(td);
+        });
+
+        const actionTD=document.createElement("td");
+
+        const callBtn=document.createElement("button");
+        callBtn.textContent="📞";
+        callBtn.className="action";
+        callBtn.onclick=()=>window.open("tel:"+ (row.Phone||""));
+
+        const webBtn=document.createElement("button");
+        webBtn.textContent="🌐";
+        webBtn.className="action";
+        webBtn.onclick=()=>window.open(row.Website||"#","_blank");
+
+        const mapBtn=document.createElement("button");
+        mapBtn.textContent="🧭";
+        mapBtn.className="action";
+        mapBtn.onclick=()=>{
+            const addr = encodeURIComponent(
+                (row.Address||"")+" "+(row.City||"")+" "+(row.State||"")
+            );
+            window.open("https://www.google.com/maps/search/?api=1&query="+addr);
+        };
+
+        actionTD.appendChild(callBtn);
+        actionTD.appendChild(webBtn);
+        actionTD.appendChild(mapBtn);
+        tr.appendChild(actionTD);
+
+        frag.appendChild(tr);
+    });
+
+    body.appendChild(frag);
 }
 
-return true;
+searchBar.addEventListener("input",()=>{
+    const q=searchBar.value.toLowerCase();
 
-}).slice(0,limit);
+    if(!q){
+        FILTERED=ALL;
+        render();
+        return;
+    }
 
-let html="";
+    FILTERED = ALL.filter(r=>{
+        return Object.values(r).some(v=>
+            String(v||"").toLowerCase().includes(q)
+        );
+    });
 
-res.forEach(r=>{
-
-let map=`https://maps.apple.com/?q=${encodeURIComponent(r.Company+" "+r.Address+" "+r.City+" "+r.State)}`;
-let tel=`tel:${r.Phone||""}`;
-let mail=`mailto:${r["Company Email"]||""}`;
-
-html+=`
-<div class="card">
-<div class="company">${r.Company||""}</div>
-<div class="city">${r.City||""}, ${r.State||""}</div>
-
-<div class="actions">
-<div class="btn" onclick="window.open('${tel}')">Call</div>
-<div class="btn" onclick="window.open('${mail}')">Email</div>
-<div class="btn" onclick="window.open('${map}')">Route</div>
-</div>
-</div>
-`;
-
+    render();
 });
 
-document.getElementById("results").innerHTML=html;
+load();
 
-}
-
-</script>
-
-<script>
-if ("serviceWorker" in navigator) {
-window.addEventListener("load",()=>{
-navigator.serviceWorker.register("/sw.js");
-});
-}
 </script>
 
 </body>
