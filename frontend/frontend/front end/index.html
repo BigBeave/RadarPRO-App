@@ -7,48 +7,67 @@
 
 <style>
 body{
-    font-family: Arial, sans-serif;
+    margin:0;
+    padding:14px;
     background:#0c0f14;
     color:white;
-    margin:0;
-    padding:12px;
+    font-family:Arial, sans-serif;
 }
 
 #searchBar{
     width:100%;
-    padding:12px;
+    padding:14px;
     font-size:16px;
-    margin-bottom:12px;
-    border-radius:8px;
+    border-radius:10px;
     border:none;
+    margin-bottom:14px;
 }
 
+#results{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    justify-content:center;
+}
+
+/* CARD BASE */
 .card{
     background:#161b22;
-    margin-bottom:12px;
-    padding:14px;
-    border-radius:10px;
-    box-shadow:0 0 6px rgba(0,0,0,0.4);
+    border-radius:12px;
+    padding:16px;
+    box-shadow:0 0 8px rgba(0,0,0,.45);
+    width:100%;
+    max-width:420px;
+}
+
+/* DESKTOP CARD WIDTH */
+@media(min-width:900px){
+    .card{
+        max-width:700px;
+        width:48%;
+    }
 }
 
 .cardTitle{
     font-size:18px;
     font-weight:bold;
-    margin-bottom:6px;
+    margin-bottom:8px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
 }
 
 .row{
     font-size:14px;
-    margin:2px 0;
     opacity:.9;
 }
 
-@media(min-width:700px){
-    .card{
-        max-width:900px;
-        margin:auto;
-        margin-bottom:14px;
-    }
+.label{
+    font-weight:bold;
+    opacity:.8;
 }
 </style>
 </head>
@@ -56,7 +75,6 @@ body{
 <body>
 
 <input id="searchBar" placeholder="Search any column...">
-
 <div id="results"></div>
 
 <script>
@@ -67,32 +85,35 @@ async function loadData(){
     const res = await fetch("/data");
     const json = await res.json();
 
-    masterData = json.items || json; // supports raw array OR items wrapper
+    /* SUPPORTS STREAMING BACKEND FORMAT */
+    masterData = json.items || json;
+
     render(masterData);
+}
+
+function buildCard(row){
+
+    return `
+        <div class="card">
+            <div class="cardTitle">${row.Company || ""}</div>
+
+            <div class="grid">
+                <div class="row"><span class="label">City:</span> ${row.City || ""}</div>
+                <div class="row"><span class="label">State:</span> ${row.State || ""}</div>
+                <div class="row"><span class="label">Employees:</span> ${row["Employees on Site"] || ""}</div>
+                <div class="row"><span class="label">Annual Sales:</span> ${row["Annual Sales"] || ""}</div>
+                <div class="row"><span class="label">SIC:</span> ${row["Primary SIC Code"] || ""}</div>
+                <div class="row"><span class="label">Industry Match:</span> ${row["Industry Match"] || ""}</div>
+            </div>
+        </div>
+    `;
 }
 
 function render(data){
 
     const container = document.getElementById("results");
-    container.innerHTML = "";
+    container.innerHTML = data.map(buildCard).join("");
 
-    data.forEach(row => {
-
-        const div = document.createElement("div");
-        div.className = "card";
-
-        div.innerHTML = `
-            <div class="cardTitle">${row.Company || ""}</div>
-
-            <div class="row"><b>City:</b> ${row.City || ""}</div>
-            <div class="row"><b>State:</b> ${row.State || ""}</div>
-            <div class="row"><b>Industry:</b> ${row["Primary SIC Code"] || ""}</div>
-            <div class="row"><b>Employees:</b> ${row["Employees on Site"] || ""}</div>
-            <div class="row"><b>Annual Sales:</b> ${row["Annual Sales"] || ""}</div>
-        `;
-
-        container.appendChild(div);
-    });
 }
 
 document.getElementById("searchBar").addEventListener("input", e => {
