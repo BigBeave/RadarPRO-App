@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Radar PRO LIVE Dashboard</title>
+
+<style>
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#0b0f14;
+    color:#e6edf3;
+    margin:0;
+}
+header{
+    background:#111827;
+    padding:12px;
+    font-weight:bold;
+}
+#searchBar{
+    width:94%;
+    margin:10px;
+    padding:10px;
+    border-radius:8px;
+    border:none;
+}
+
+.mobileCard{
+    background:#0f172a;
+    margin:12px;
+    padding:14px;
+    border-radius:10px;
+}
+.mobileTitle{
+    font-size:16px;
+    font-weight:bold;
+}
+.mobileSub{
+    font-size:13px;
+    color:#9ca3af;
+    margin-bottom:10px;
+}
+button.action{
+    background:#1f2937;
+    color:white;
+    border:none;
+    padding:6px 10px;
+    margin-right:6px;
+    border-radius:6px;
+}
+</style>
+</head>
+
+<body>
+
+<header>Prospect {{{Radar}}} LIVE Dashboard</header>
+
+<input id="searchBar" placeholder="Search ANY column…">
+
+<div id="body"></div>
+
+<script>
+
+const API = "https://radarpro-api.onrender.com/data";
+
+let ALL = [];
+let FILTERED = [];
+
+const body = document.getElementById("body");
+const searchBar = document.getElementById("searchBar");
+
+async function load(){
+
+    const res = await fetch(API);
+    const json = await res.json();
+
+    ALL = Array.isArray(json) ? json : (json.items||json.data||[]);
+    FILTERED = ALL;
+
+    render();
+}
+
+function render(){
+
+    body.innerHTML="";
+    const frag=document.createDocumentFragment();
+
+    const MAX = 200;
+    const rows = FILTERED.slice(0,MAX);
+
+    rows.forEach(row=>{
+
+        const card=document.createElement("div");
+        card.className="mobileCard";
+
+        const title=document.createElement("div");
+        title.className="mobileTitle";
+        title.textContent=row.Company || "Company";
+
+        const sub=document.createElement("div");
+        sub.className="mobileSub";
+        sub.textContent=(row.City||"")+" "+(row.State||"");
+
+        const callBtn=document.createElement("button");
+        callBtn.textContent="📞";
+        callBtn.className="action";
+        callBtn.onclick=()=>window.open("tel:"+ (row.Phone||""));
+
+        const webBtn=document.createElement("button");
+        webBtn.textContent="🌐";
+        webBtn.className="action";
+        webBtn.onclick=()=>window.open(row.Website||"#","_blank");
+
+        const mapBtn=document.createElement("button");
+        mapBtn.textContent="🧭";
+        mapBtn.className="action";
+        mapBtn.onclick=()=>{
+            const addr = encodeURIComponent(
+                (row.Address||"")+" "+(row.City||"")+" "+(row.State||"")
+            );
+            window.open("https://www.google.com/maps/search/?api=1&query="+addr);
+        };
+
+        card.appendChild(title);
+        card.appendChild(sub);
+        card.appendChild(callBtn);
+        card.appendChild(webBtn);
+        card.appendChild(mapBtn);
+
+        frag.appendChild(card);
+    });
+
+    body.appendChild(frag);
+}
+
+searchBar.addEventListener("input",()=>{
+    const q=searchBar.value.toLowerCase();
+
+    if(!q){
+        FILTERED=ALL;
+        render();
+        return;
+    }
+
+    FILTERED = ALL.filter(r=>{
+        return Object.values(r).some(v=>
+            String(v||"").toLowerCase().includes(q)
+        );
+    });
+
+    render();
+});
+
+load();
+
+</script>
+
+</body>
+</html>
