@@ -4,176 +4,606 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Radar PRO</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg-deep:#080b10;--bg-panel:#0d1117;--bg-card:#0f1923;
-  --accent:#00c2ff;--accent-dim:#004e66;--accent-glow:rgba(0,194,255,0.15);
-  --gold:#f5a623;--gold-dim:rgba(245,166,35,0.12);
-  --green:#34d399;--green-dim:rgba(52,211,153,0.12);
-  --white:#f0f4f8;--muted:#6b7a8d;--border:rgba(255,255,255,0.07);
-  --row-a-bg:#0d1117;--row-a-text:#e8edf2;
-  --row-b-bg:#e8edf2;--row-b-text:#0d1117;
+  --bg:         #060912;
+  --bg2:        #0a0f1e;
+  --bg3:        #0e1628;
+  --panel:      #0d1525;
+  --card:       #101c30;
+  --border:     rgba(100,160,255,0.1);
+  --border2:    rgba(100,160,255,0.18);
+  --accent:     #3b82f6;
+  --accent2:    #60a5fa;
+  --accent-dim: rgba(59,130,246,0.15);
+  --accent-glow:rgba(59,130,246,0.25);
+  --steel:      #94a3b8;
+  --silver:     #cbd5e1;
+  --white:      #f1f5f9;
+  --gold:       #f59e0b;
+  --gold-dim:   rgba(245,158,11,0.12);
+  --green:      #10b981;
+  --green-dim:  rgba(16,185,129,0.12);
+  --red:        #ef4444;
+  --muted:      #475569;
+  --row-dark:   #080e1c;
+  --row-light:  #e8eef8;
 }
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg-deep);color:var(--white);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 10%,rgba(0,194,255,0.04) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 90%,rgba(245,166,35,0.03) 0%,transparent 60%);pointer-events:none;z-index:0;}
 
-/* HOME */
-#home{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:40px 24px 32px;}
-.logo-wrap{display:flex;align-items:center;gap:14px;margin-bottom:28px;}
-.logo-icon{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#0070a8);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 28px rgba(0,194,255,0.4);}
-.logo-text{font-family:'Rajdhani',sans-serif;font-size:34px;font-weight:700;letter-spacing:1px;}
-.logo-text span{color:var(--accent);text-shadow:0 0 20px rgba(0,194,255,0.5);}
-.logo-badge{font-size:11px;color:var(--accent);background:var(--accent-glow);border:1px solid var(--accent-dim);padding:3px 8px;border-radius:20px;letter-spacing:1px;text-transform:uppercase;align-self:flex-start;margin-top:8px;}
-.mode-tabs{display:flex;gap:8px;margin-bottom:22px;}
-.tab{flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-panel);color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:all 0.2s;text-align:center;}
-.tab:hover{border-color:var(--accent-dim);color:var(--accent);}
-.tab.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);box-shadow:0 0 16px var(--accent-glow);}
+body{
+  background:var(--bg);
+  color:var(--white);
+  font-family:'DM Sans',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── ANIMATED STEEL BACKGROUND ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 120% 60% at 15% -10%, rgba(59,130,246,0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 50% at 85% 110%, rgba(99,102,241,0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 50% 50%, rgba(14,22,40,0.9) 0%, transparent 100%);
+  pointer-events:none;z-index:0;
+  animation:bgShift 12s ease-in-out infinite alternate;
+}
+
+@keyframes bgShift{
+  0%{opacity:1;}
+  100%{opacity:0.85;}
+}
+
+/* Steel grid lines */
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;z-index:0;
+}
+
+/* ── HOME ── */
+#home{
+  position:relative;z-index:1;
+  max-width:920px;margin:0 auto;
+  padding:48px 28px 40px;
+}
+
+/* Logo */
+.logo-wrap{display:flex;align-items:center;gap:16px;margin-bottom:36px;}
+.logo-icon{
+  width:58px;height:58px;border-radius:16px;
+  background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  box-shadow:0 0 0 1px rgba(59,130,246,0.4),0 0 32px rgba(59,130,246,0.3),0 0 64px rgba(59,130,246,0.1);
+  animation:logoPulse 3s ease-in-out infinite;
+}
+@keyframes logoPulse{
+  0%,100%{box-shadow:0 0 0 1px rgba(59,130,246,0.4),0 0 32px rgba(59,130,246,0.3),0 0 64px rgba(59,130,246,0.1);}
+  50%{box-shadow:0 0 0 1px rgba(59,130,246,0.6),0 0 40px rgba(59,130,246,0.45),0 0 80px rgba(59,130,246,0.15);}
+}
+.logo-title{font-family:'Rajdhani',sans-serif;font-size:38px;font-weight:700;letter-spacing:1.5px;line-height:1;}
+.logo-title span{
+  background:linear-gradient(135deg,#60a5fa,#93c5fd);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 12px rgba(96,165,250,0.4));
+}
+.logo-badge{
+  font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--accent2);background:var(--accent-dim);
+  border:1px solid rgba(59,130,246,0.3);
+  padding:4px 10px;border-radius:20px;align-self:flex-start;margin-top:6px;
+}
+
+/* Tabs */
+.tabs{display:flex;gap:10px;margin-bottom:24px;}
+.tab{
+  flex:1;padding:13px 16px;border-radius:12px;
+  border:1px solid var(--border);background:var(--panel);
+  color:var(--muted);font-family:'Rajdhani',sans-serif;
+  font-size:16px;font-weight:600;letter-spacing:1px;
+  cursor:pointer;transition:all 0.2s;text-align:center;
+  position:relative;overflow:hidden;
+}
+.tab::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(59,130,246,0.1),transparent);
+  opacity:0;transition:opacity 0.2s;
+}
+.tab:hover::before{opacity:1;}
+.tab:hover{border-color:rgba(59,130,246,0.3);color:var(--accent2);}
+.tab.active{
+  background:linear-gradient(135deg,rgba(29,78,216,0.4),rgba(59,130,246,0.2));
+  border-color:rgba(59,130,246,0.5);color:var(--accent2);
+  box-shadow:0 0 20px rgba(59,130,246,0.2),inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* Search panels */
 .search-panel{display:none;}.search-panel.active{display:block;}
-.section-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px;}
-.input-wrap{position:relative;margin-bottom:12px;}
-.input-wrap input{width:100%;padding:13px 18px 13px 44px;background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;color:var(--white);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
-.input-wrap input:focus{border-color:var(--accent-dim);box-shadow:0 0 0 3px var(--accent-glow);}
-.input-wrap input:disabled{opacity:0.45;cursor:not-allowed;}
-.input-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px;pointer-events:none;}
-.radius-row{display:flex;gap:10px;margin-bottom:16px;align-items:center;}
-.radius-row input[type=range]{flex:1;padding:0;background:transparent;border:none;accent-color:var(--accent);cursor:pointer;}
-.radius-val{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--accent);min-width:70px;text-align:right;}
-#loadingMsg{font-size:13px;color:var(--muted);margin:8px 2px 14px;min-height:18px;display:flex;align-items:center;gap:6px;}
-#loadingMsg.error{color:#f87171;}#loadingMsg.success{color:#34d399;}
-#states{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
-.stateBtn{padding:7px 14px;border-radius:8px;background:var(--bg-panel);border:1px solid var(--border);color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;letter-spacing:1px;cursor:pointer;transition:all 0.15s;user-select:none;}
-.stateBtn:hover{border-color:var(--accent-dim);color:var(--accent);}
-.stateBtn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);box-shadow:0 0 12px var(--accent-glow);}
-.run-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),#0070a8);color:#000;font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:12px;cursor:pointer;transition:opacity 0.2s,box-shadow 0.2s;box-shadow:0 4px 24px rgba(0,194,255,0.3);}
-.run-btn:hover:not(:disabled){opacity:0.9;box-shadow:0 4px 32px rgba(0,194,255,0.5);}
-.run-btn:disabled{opacity:0.4;cursor:not-allowed;box-shadow:none;}
-.run-btn.gold{background:linear-gradient(135deg,var(--gold),#c07a10);box-shadow:0 4px 24px rgba(245,166,35,0.35);}
-.run-btn.gold:hover:not(:disabled){box-shadow:0 4px 32px rgba(245,166,35,0.55);}
-#geocodeStatus{padding:10px 14px;border-radius:8px;background:var(--accent-glow);border:1px solid var(--accent-dim);font-size:13px;color:var(--accent);margin-bottom:14px;display:none;}
-#geocodeStatus.visible{display:block;}
-#geocodeStatus.error{background:rgba(248,113,113,0.1);border-color:#f87171;color:#f87171;}
+.section-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:10px;}
 
-/* WORKSPACE */
+.input-wrap{position:relative;margin-bottom:12px;}
+.input-wrap input{
+  width:100%;padding:14px 18px 14px 46px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;color:var(--white);
+  font-family:'DM Sans',sans-serif;font-size:15px;outline:none;
+  transition:all 0.25s;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.03);
+}
+.input-wrap input:focus{
+  border-color:rgba(59,130,246,0.5);
+  box-shadow:0 0 0 3px rgba(59,130,246,0.12),inset 0 1px 0 rgba(255,255,255,0.03);
+  background:var(--bg3);
+}
+.input-wrap input:disabled{opacity:0.4;cursor:not-allowed;}
+.input-wrap input::placeholder{color:var(--muted);}
+.iicon{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:16px;pointer-events:none;}
+
+/* Radius slider */
+.radius-row{display:flex;gap:12px;align-items:center;margin-bottom:18px;}
+.radius-row input[type=range]{
+  flex:1;height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent) 0%,var(--panel) 0%);
+  border:none;outline:none;cursor:pointer;
+  -webkit-appearance:none;
+  transition:background 0.1s;
+}
+.radius-row input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:20px;height:20px;
+  border-radius:50%;background:var(--accent);
+  box-shadow:0 0 10px rgba(59,130,246,0.5);
+  cursor:pointer;transition:box-shadow 0.2s;
+}
+.radius-row input[type=range]::-webkit-slider-thumb:hover{
+  box-shadow:0 0 16px rgba(59,130,246,0.8);
+}
+.radius-val{
+  font-family:'Rajdhani',sans-serif;font-size:22px;
+  font-weight:700;color:var(--accent2);min-width:75px;text-align:right;
+}
+
+/* Status */
+#loadingMsg{font-size:13px;color:var(--muted);margin:8px 2px 16px;min-height:20px;}
+#loadingMsg.success{color:var(--green);}
+#loadingMsg.error{color:var(--red);}
+
+/* State buttons */
+#states{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;}
+.stateBtn{
+  padding:8px 16px;border-radius:8px;
+  background:var(--panel);border:1px solid var(--border);
+  color:var(--muted);font-family:'Rajdhani',sans-serif;
+  font-size:15px;font-weight:600;letter-spacing:1px;
+  cursor:pointer;transition:all 0.15s;user-select:none;
+}
+.stateBtn:hover{border-color:rgba(59,130,246,0.4);color:var(--accent2);}
+.stateBtn.active{
+  background:rgba(29,78,216,0.35);border-color:rgba(59,130,246,0.6);
+  color:var(--accent2);box-shadow:0 0 14px rgba(59,130,246,0.2);
+}
+
+/* Run buttons */
+.run-btn{
+  width:100%;padding:15px;border:none;border-radius:13px;
+  font-family:'Rajdhani',sans-serif;font-size:19px;
+  font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+  cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;
+}
+.run-btn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.08),transparent);
+  pointer-events:none;
+}
+.run-btn.blue{
+  background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+  color:white;box-shadow:0 4px 24px rgba(59,130,246,0.4);
+}
+.run-btn.blue:hover:not(:disabled){
+  box-shadow:0 6px 32px rgba(59,130,246,0.6);transform:translateY(-1px);
+}
+.run-btn.gold{
+  background:linear-gradient(135deg,#b45309,#f59e0b);
+  color:#000;box-shadow:0 4px 24px rgba(245,158,11,0.4);
+}
+.run-btn.gold:hover:not(:disabled){
+  box-shadow:0 6px 32px rgba(245,158,11,0.6);transform:translateY(-1px);
+}
+.run-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none!important;box-shadow:none!important;}
+
+/* Geocode status */
+#geocodeStatus{
+  padding:11px 15px;border-radius:10px;
+  background:rgba(59,130,246,0.08);
+  border:1px solid rgba(59,130,246,0.2);
+  font-size:13px;color:var(--accent2);
+  margin-bottom:14px;display:none;
+}
+#geocodeStatus.visible{display:block;}
+#geocodeStatus.error{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.3);color:var(--red);}
+
+/* ── ANIMATED LOADING OVERLAY ── */
+#loadingOverlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(6,9,18,0.92);z-index:1000;
+  align-items:center;justify-content:center;flex-direction:column;gap:20px;
+  backdrop-filter:blur(4px);
+}
+#loadingOverlay.visible{display:flex;}
+.radar-spin{
+  width:80px;height:80px;position:relative;
+}
+.radar-spin::before{
+  content:'';position:absolute;inset:0;
+  border-radius:50%;
+  border:2px solid rgba(59,130,246,0.15);
+  box-shadow:0 0 30px rgba(59,130,246,0.2);
+}
+.radar-spin::after{
+  content:'';position:absolute;inset:4px;
+  border-radius:50%;
+  border:2px solid transparent;
+  border-top-color:var(--accent);
+  border-right-color:rgba(59,130,246,0.3);
+  animation:spin 1s linear infinite;
+  box-shadow:0 0 16px rgba(59,130,246,0.4);
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.radar-rings{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.radar-rings span{
+  position:absolute;border-radius:50%;
+  border:1px solid rgba(59,130,246,0.2);
+  animation:radarPing 2s ease-out infinite;
+}
+.radar-rings span:nth-child(1){width:20px;height:20px;animation-delay:0s;}
+.radar-rings span:nth-child(2){width:40px;height:40px;animation-delay:0.4s;}
+.radar-rings span:nth-child(3){width:60px;height:60px;animation-delay:0.8s;}
+@keyframes radarPing{
+  0%{opacity:1;transform:scale(0.5);}
+  100%{opacity:0;transform:scale(1.8);}
+}
+.loading-text{
+  font-family:'Rajdhani',sans-serif;font-size:18px;
+  font-weight:600;color:var(--accent2);letter-spacing:2px;
+  animation:textPulse 1.5s ease-in-out infinite;
+}
+@keyframes textPulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+.loading-sub{font-size:13px;color:var(--muted);}
+
+/* ── WORKSPACE ── */
 #workspace{display:none;height:100vh;position:relative;z-index:1;}
 #workspace.visible{display:flex;}
-#left{width:36%;min-width:260px;background:var(--bg-panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
-.left-header{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.left-logo{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:1px;}
-#resultCount{font-size:12px;color:var(--muted);background:var(--bg-card);padding:3px 8px;border-radius:20px;border:1px solid var(--border);}
-.left-actions{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;}
-.left-actions button{flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.15s;}
-.left-actions button:hover{border-color:var(--accent-dim);color:var(--accent);}
-.back-btn{color:var(--accent)!important;border-color:var(--accent-dim)!important;}
-.route-all-btn{color:var(--gold)!important;border-color:rgba(245,166,35,0.3)!important;}
+
+/* LEFT PANEL */
+#left{
+  width:36%;min-width:270px;
+  background:var(--panel);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.left-top{
+  padding:14px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+  background:linear-gradient(180deg,var(--bg3),var(--panel));
+}
+.left-logo{
+  font-family:'Rajdhani',sans-serif;font-size:17px;
+  font-weight:700;letter-spacing:1px;
+  background:linear-gradient(135deg,var(--accent2),#93c5fd);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+#resultCount{
+  font-size:12px;color:var(--muted);
+  background:var(--bg3);padding:3px 9px;
+  border-radius:20px;border:1px solid var(--border);
+}
+.left-btns{
+  padding:10px 12px;border-bottom:1px solid var(--border);
+  display:flex;gap:8px;flex-shrink:0;
+}
+.left-btns button{
+  flex:1;padding:8px;border-radius:8px;
+  border:1px solid var(--border);background:var(--bg3);
+  color:var(--muted);font-family:'DM Sans',sans-serif;
+  font-size:12px;cursor:pointer;transition:all 0.15s;
+}
+.left-btns button:hover{border-color:rgba(59,130,246,0.4);color:var(--accent2);}
+.lbtn-back{color:var(--accent2)!important;border-color:rgba(59,130,246,0.3)!important;}
+.lbtn-route{color:var(--gold)!important;border-color:rgba(245,158,11,0.3)!important;}
+
 #resultList{overflow-y:auto;flex:1;}
-.result{padding:13px 16px;cursor:pointer;border-bottom:1px solid rgba(0,0,0,0.15);transition:filter 0.1s;position:relative;}
-.result:nth-child(even){background:var(--row-a-bg);color:var(--row-a-text);}
-.result:nth-child(odd){background:var(--row-b-bg);color:var(--row-b-text);}
-.result:nth-child(odd) .result-sub{color:#555;}
+#resultList::-webkit-scrollbar{width:4px;}
+#resultList::-webkit-scrollbar-track{background:transparent;}
+#resultList::-webkit-scrollbar-thumb{background:rgba(59,130,246,0.2);border-radius:2px;}
+
+/* Results - alternating with animation */
+.result{
+  padding:14px 16px 13px;cursor:pointer;
+  border-bottom:1px solid rgba(0,0,0,0.2);
+  position:relative;
+  transition:filter 0.15s;
+  animation:slideIn 0.3s ease-out both;
+}
+@keyframes slideIn{
+  from{opacity:0;transform:translateX(-12px);}
+  to{opacity:1;transform:translateX(0);}
+}
+.result:nth-child(even){background:var(--row-dark);color:#c8d5e8;}
+.result:nth-child(odd){background:var(--row-light);color:#0f1a2e;}
+.result:nth-child(odd) .result-sub{color:#3d5a80;}
 .result:nth-child(even) .result-sub{color:var(--muted);}
-.result:hover{filter:brightness(1.08);}
-.result.active{background:var(--accent-dim)!important;color:var(--accent)!important;border-left:3px solid var(--accent);box-shadow:inset 0 0 20px var(--accent-glow);}
-.result.active .result-sub{color:rgba(0,194,255,0.7)!important;}
-.result-name{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.5px;}
-.result-sub{font-size:12px;margin-top:2px;}
-.result-badge{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-family:'Rajdhani',sans-serif;font-weight:600;padding:2px 6px;border-radius:4px;}
-.result-badge.score{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(245,166,35,0.25);}
-.result-badge.dist{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.25);}
-#right{flex:1;padding:24px;overflow-y:auto;background:var(--bg-deep);}
-#routeBanner{display:none;margin-bottom:16px;padding:12px 16px;background:var(--gold-dim);border:1px solid rgba(245,166,35,0.3);border-radius:10px;font-size:13px;color:var(--gold);align-items:center;gap:10px;}
+.result:hover{filter:brightness(1.1);}
+.result.active{
+  background:rgba(29,78,216,0.35)!important;
+  color:var(--accent2)!important;
+  border-left:3px solid var(--accent);
+  box-shadow:inset 0 0 24px rgba(59,130,246,0.1);
+}
+.result.active .result-sub{color:rgba(96,165,250,0.7)!important;}
+.result-name{
+  font-family:'Rajdhani',sans-serif;
+  font-size:16px;font-weight:700;
+  letter-spacing:0.5px;line-height:1.2;
+}
+.result-sub{font-size:12px;margin-top:3px;}
+.rbadge{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  font-size:11px;font-family:'Rajdhani',sans-serif;font-weight:700;
+  padding:3px 7px;border-radius:5px;letter-spacing:0.5px;
+}
+.rbadge.score{background:rgba(245,158,11,0.15);color:var(--gold);border:1px solid rgba(245,158,11,0.3);}
+.rbadge.dist{background:rgba(16,185,129,0.12);color:var(--green);border:1px solid rgba(16,185,129,0.25);}
+
+/* RIGHT PANEL */
+#right{flex:1;padding:24px;overflow-y:auto;background:var(--bg);}
+#right::-webkit-scrollbar{width:4px;}
+#right::-webkit-scrollbar-thumb{background:rgba(59,130,246,0.15);border-radius:2px;}
+
+/* Route banner */
+#routeBanner{
+  display:none;margin-bottom:18px;padding:13px 18px;
+  background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.05));
+  border:1px solid rgba(245,158,11,0.25);
+  border-radius:12px;font-size:13px;color:var(--gold);
+  align-items:center;gap:12px;
+}
 #routeBanner.visible{display:flex;}
-#routeBanner button{margin-left:auto;padding:7px 16px;background:var(--gold);color:#000;border:none;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;}
+#routeBanner button{
+  margin-left:auto;padding:8px 18px;
+  background:linear-gradient(135deg,#b45309,#f59e0b);
+  color:#000;border:none;border-radius:8px;
+  font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;white-space:nowrap;letter-spacing:1px;
+  transition:box-shadow 0.2s;
+}
+#routeBanner button:hover{box-shadow:0 4px 16px rgba(245,158,11,0.4);}
 
 /* CARD */
-.card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;max-width:700px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.4);margin-bottom:16px;}
-.card-header{background:linear-gradient(135deg,#0f1f2e,#0a1520);border-bottom:1px solid var(--border);padding:22px 24px;position:relative;overflow:hidden;}
-.card-header::after{content:'📡';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:44px;opacity:0.06;}
-.card-company{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:var(--white);letter-spacing:0.5px;margin-bottom:6px;}
-.card-meta{font-size:13px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;}
-.card-body{padding:20px 24px;}
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
-.info-item{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:11px 13px;}
-.info-label{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:3px;}
-.info-value{font-size:14px;color:var(--white);font-weight:500;word-break:break-word;}
-.score-bar-wrap{margin-bottom:18px;}
-.score-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:7px;}
-.score-bar-bg{background:var(--bg-panel);border-radius:6px;height:8px;overflow:hidden;margin-bottom:4px;}
-.score-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:6px;transition:width 0.6s cubic-bezier(0.4,0,0.2,1);}
-.score-value{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--gold);}
-.divider{height:1px;background:var(--border);margin:16px 0;}
-.actions-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:10px;}
-.actions{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:14px;}
-.action-btn{padding:11px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg-panel);color:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;}
-.action-btn:hover{border-color:var(--accent-dim);color:var(--accent);background:var(--accent-glow);transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,194,255,0.15);}
-.action-btn.maps{border-color:rgba(52,211,153,0.3);color:var(--green);background:var(--green-dim);}
-.action-btn.maps:hover{border-color:var(--green);background:rgba(52,211,153,0.18);}
-.action-btn.route{border-color:rgba(245,166,35,0.3);color:var(--gold);background:var(--gold-dim);}
-.action-btn.route:hover{border-color:var(--gold);background:rgba(245,166,35,0.18);}
+.card{
+  background:var(--card);
+  border:1px solid var(--border2);
+  border-radius:18px;max-width:720px;
+  overflow:hidden;
+  box-shadow:0 8px 48px rgba(0,0,0,0.5),0 1px 0 rgba(255,255,255,0.04) inset;
+  margin-bottom:18px;
+  animation:cardIn 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+.card-hdr{
+  background:linear-gradient(135deg,#0d1e35,#091525);
+  border-bottom:1px solid var(--border);
+  padding:24px 26px;position:relative;overflow:hidden;
+}
+.card-hdr::before{
+  content:'';position:absolute;
+  top:-30px;right:-30px;
+  width:120px;height:120px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(59,130,246,0.08) 0%,transparent 70%);
+}
+.card-hdr::after{content:'📡';position:absolute;right:22px;top:50%;transform:translateY(-50%);font-size:48px;opacity:0.05;}
+.card-company{
+  font-family:'Rajdhani',sans-serif;font-size:28px;
+  font-weight:700;color:var(--white);letter-spacing:0.5px;margin-bottom:8px;
+}
+.card-meta{font-size:13px;color:var(--steel);display:flex;gap:16px;flex-wrap:wrap;}
+.card-meta span{display:flex;align-items:center;gap:4px;}
+
+.card-body{padding:22px 26px;}
+
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.info-item{
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);
+  border-radius:11px;padding:13px 15px;
+  transition:border-color 0.2s;
+}
+.info-item:hover{border-color:var(--border2);}
+.info-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:4px;}
+.info-value{font-size:14px;color:var(--silver);font-weight:500;word-break:break-word;}
+
+.score-wrap{margin-bottom:20px;}
+.score-label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.score-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);}
+.score-num{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;color:var(--gold);}
+.score-bg{background:rgba(255,255,255,0.04);border-radius:6px;height:7px;overflow:hidden;border:1px solid var(--border);}
+.score-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:6px;transition:width 0.7s cubic-bezier(0.4,0,0.2,1);}
+
+.divider{height:1px;background:var(--border);margin:18px 0;}
+.actions-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:12px;}
+.actions{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:9px;margin-bottom:14px;}
+.abtn{
+  padding:12px 10px;border-radius:11px;
+  border:1px solid var(--border);background:rgba(255,255,255,0.02);
+  color:var(--silver);font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:500;cursor:pointer;
+  transition:all 0.18s;display:flex;align-items:center;
+  justify-content:center;gap:7px;
+}
+.abtn:hover{border-color:rgba(59,130,246,0.4);color:var(--accent2);background:var(--accent-dim);transform:translateY(-2px);box-shadow:0 4px 20px rgba(59,130,246,0.15);}
+.abtn.green{border-color:rgba(16,185,129,0.3);color:var(--green);background:var(--green-dim);}
+.abtn.green:hover{border-color:var(--green);background:rgba(16,185,129,0.2);box-shadow:0 4px 16px rgba(16,185,129,0.2);}
+.abtn.gold{border-color:rgba(245,158,11,0.3);color:var(--gold);background:var(--gold-dim);}
+.abtn.gold:hover{border-color:var(--gold);background:rgba(245,158,11,0.2);box-shadow:0 4px 16px rgba(245,158,11,0.2);}
 
 /* DAY PLANNER */
-.planner-card{background:var(--bg-card);border:1px solid rgba(245,166,35,0.2);border-radius:16px;max-width:700px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.4);}
-.planner-header{background:linear-gradient(135deg,#1a1200,#100e00);border-bottom:1px solid rgba(245,166,35,0.15);padding:20px 24px;}
-.planner-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--gold);letter-spacing:1px;margin-bottom:4px;}
+.planner{
+  background:linear-gradient(135deg,#0c1a0a,#0a1208);
+  border:1px solid rgba(16,185,129,0.2);
+  border-radius:18px;max-width:720px;overflow:hidden;
+  box-shadow:0 8px 48px rgba(0,0,0,0.5);
+  animation:cardIn 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+.planner-hdr{
+  background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(16,185,129,0.03));
+  border-bottom:1px solid rgba(16,185,129,0.15);
+  padding:22px 26px;
+}
+.planner-title{font-family:'Rajdhani',sans-serif;font-size:23px;font-weight:700;color:var(--green);letter-spacing:1px;margin-bottom:5px;}
 .planner-sub{font-size:13px;color:var(--muted);}
-.planner-body{padding:20px 24px;}
-.planner-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
-.stat-box{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
-.stat-num{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:var(--accent);}
-.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
-.stop-list{margin-bottom:20px;}
-.stop{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.planner-body{padding:22px 26px;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px;}
+.stat{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;}
+.stat-n{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:var(--accent2);}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px;}
+.stops{margin-bottom:22px;}
+.stop{display:flex;align-items:flex-start;gap:13px;padding:13px 0;border-bottom:1px solid var(--border);}
 .stop:last-child{border-bottom:none;}
-.stop-num{width:28px;height:28px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.stop-info{flex:1;}
-.stop-name{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;color:var(--white);}
-.stop-detail{font-size:12px;color:var(--muted);margin-top:2px;}
-.stop-dist{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;color:var(--green);white-space:nowrap;}
+.stop-n{
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  background:rgba(29,78,216,0.3);border:1px solid rgba(59,130,246,0.4);
+  color:var(--accent2);font-family:'Rajdhani',sans-serif;
+  font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;
+}
+.stop-i{flex:1;}
+.stop-name{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--white);}
+.stop-d{font-size:12px;color:var(--muted);margin-top:3px;}
+.stop-mi{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--green);white-space:nowrap;}
 .planner-btns{display:flex;gap:10px;flex-wrap:wrap;}
-.planner-btn{flex:1;padding:13px;border-radius:10px;border:none;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all 0.15s;}
-.planner-btn.primary{background:linear-gradient(135deg,var(--gold),#c07a10);color:#000;box-shadow:0 4px 20px rgba(245,166,35,0.3);}
-.planner-btn.primary:hover{box-shadow:0 4px 28px rgba(245,166,35,0.5);}
-.planner-btn.secondary{background:var(--bg-panel);color:var(--accent);border:1px solid var(--accent-dim);}
-.planner-btn.secondary:hover{background:var(--accent-glow);}
+.pbtn{
+  flex:1;padding:14px;border-radius:11px;border:none;
+  font-family:'Rajdhani',sans-serif;font-size:17px;
+  font-weight:700;letter-spacing:1.5px;cursor:pointer;
+  transition:all 0.18s;
+}
+.pbtn.primary{background:linear-gradient(135deg,#065f46,#10b981);color:white;box-shadow:0 4px 20px rgba(16,185,129,0.3);}
+.pbtn.primary:hover{box-shadow:0 6px 28px rgba(16,185,129,0.5);transform:translateY(-1px);}
+.pbtn.secondary{background:rgba(255,255,255,0.03);color:var(--accent2);border:1px solid rgba(59,130,246,0.3);}
+.pbtn.secondary:hover{background:var(--accent-dim);}
+
+/* EXPORT MODAL */
+#exportModal{
+  display:none;position:fixed;inset:0;
+  background:rgba(6,9,18,0.9);z-index:2000;
+  align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);
+}
+#exportModal.visible{display:flex;}
+.modal-box{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:20px;padding:32px;width:100%;max-width:420px;
+  box-shadow:0 24px 64px rgba(0,0,0,0.7);
+  animation:cardIn 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--white);margin-bottom:8px;}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:22px;}
+.modal-input{
+  width:100%;padding:13px 16px;background:var(--panel);
+  border:1px solid var(--border);border-radius:10px;
+  color:var(--white);font-family:'DM Sans',sans-serif;
+  font-size:15px;outline:none;margin-bottom:14px;
+  transition:border-color 0.2s;
+  -webkit-text-security:disc;
+  type:password;
+}
+.modal-input:focus{border-color:rgba(59,130,246,0.5);}
+#exportError{font-size:13px;color:var(--red);margin-bottom:12px;min-height:18px;}
+.modal-btns{display:flex;gap:10px;}
+.modal-btn{
+  flex:1;padding:13px;border-radius:10px;border:none;
+  font-family:'Rajdhani',sans-serif;font-size:16px;
+  font-weight:700;letter-spacing:1px;cursor:pointer;transition:all 0.15s;
+}
+.modal-btn.confirm{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:white;}
+.modal-btn.confirm:hover{box-shadow:0 4px 16px rgba(59,130,246,0.4);}
+.modal-btn.cancel{background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid var(--border);}
+.modal-btn.cancel:hover{color:var(--white);}
+
+/* Export button in workspace */
+.export-trigger{
+  padding:8px 14px;border-radius:8px;
+  border:1px solid rgba(245,158,11,0.3);
+  background:var(--gold-dim);
+  color:var(--gold);font-family:'DM Sans',sans-serif;
+  font-size:12px;cursor:pointer;transition:all 0.15s;
+}
+.export-trigger:hover{border-color:var(--gold);background:rgba(245,158,11,0.2);}
 </style>
 </head>
 <body>
 
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay">
+  <div class="radar-spin">
+    <div class="radar-rings">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+  <div class="loading-text" id="loadingOverlayText">SCANNING DATABASE</div>
+  <div class="loading-sub" id="loadingOverlaySub">Connecting to Radar PRO...</div>
+</div>
+
+<!-- HOME -->
 <div id="home">
   <div class="logo-wrap">
     <div class="logo-icon">📡</div>
-    <div><div class="logo-text">Prospect <span>Radar</span></div></div>
-    <div class="logo-badge">LIVE v4</div>
+    <div>
+      <div class="logo-title">Prospect <span>Radar</span></div>
+    </div>
+    <div class="logo-badge">LIVE V5</div>
   </div>
 
-  <div class="mode-tabs">
+  <div class="tabs">
     <div class="tab active" id="tabKeyword" onclick="switchTab('keyword')">🔍 Keyword Search</div>
     <div class="tab" id="tabRadius" onclick="switchTab('radius')">📍 Radius + Day Plan</div>
   </div>
 
   <div id="loadingMsg">⏳ Connecting to Radar PRO database...</div>
 
-  <!-- KEYWORD PANEL -->
+  <!-- KEYWORD -->
   <div class="search-panel active" id="panelKeyword">
     <div class="input-wrap">
-      <span class="input-icon">🔍</span>
-      <input id="kw" placeholder="Keyword — company, city, industry..." disabled>
+      <span class="iicon">🔍</span>
+      <input id="kw" placeholder="Search company, city, industry, keyword..." disabled>
     </div>
     <div class="section-label">Filter by State</div>
     <div id="states"></div>
-    <button class="run-btn" id="searchBtn" onclick="runKeywordSearch()" disabled>⚡ Run Search</button>
+    <button class="run-btn blue" id="searchBtn" onclick="runKeywordSearch()" disabled>⚡ Run Search</button>
   </div>
 
-  <!-- RADIUS PANEL -->
+  <!-- RADIUS -->
   <div class="search-panel" id="panelRadius">
     <div class="input-wrap">
-      <span class="input-icon">📍</span>
+      <span class="iicon">📍</span>
       <input id="radiusLocation" placeholder="City, address, or zip code..." disabled>
     </div>
     <div class="input-wrap">
-      <span class="input-icon">🏭</span>
-      <input id="radiusKeyword" placeholder="Keyword filter (optional)" disabled>
+      <span class="iicon">🏭</span>
+      <input id="radiusKeyword" placeholder="Keyword filter — metal, fabrication, tooling... (optional)" disabled>
     </div>
     <div class="section-label">Search Radius</div>
     <div class="radius-row">
@@ -185,47 +615,82 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 </div>
 
+<!-- WORKSPACE -->
 <div id="workspace">
   <div id="left">
-    <div class="left-header">
+    <div class="left-top">
       <div class="left-logo">📡 Radar PRO</div>
-      <div id="resultCount">0 results</div>
+      <div id="resultCount">—</div>
     </div>
-    <div class="left-actions">
-      <button class="back-btn" onclick="goHome()">⬅ Search</button>
-      <button class="route-all-btn" onclick="openAllRoute()">🗺️ Route All</button>
+    <div class="left-btns">
+      <button class="lbtn-back" onclick="goHome()">⬅ Search</button>
+      <button class="lbtn-route" onclick="openAllRoute()">🗺️ Route All</button>
+      <button class="export-trigger" onclick="showExportModal()">⬇ Export</button>
     </div>
     <div id="resultList"></div>
   </div>
   <div id="right">
     <div id="routeBanner">
       <span>🗺️ <span id="routeCount">0</span> prospects ready for routing</span>
-      <button onclick="openAllRoute()">Open in Google Maps</button>
+      <button onclick="openAllRoute()">Open Full Route in Google Maps</button>
     </div>
     <div id="detail"></div>
   </div>
 </div>
 
+<!-- EXPORT MODAL -->
+<div id="exportModal">
+  <div class="modal-box">
+    <div class="modal-title">🔒 Export Results</div>
+    <div class="modal-sub">This feature is password protected. Enter your access code to download the current results as a CSV file.</div>
+    <input class="modal-input" type="password" id="exportPass" placeholder="Enter access password..." onkeydown="if(event.key==='Enter')confirmExport()">
+    <div id="exportError"></div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeExportModal()">Cancel</button>
+      <button class="modal-btn confirm" onclick="confirmExport()">Download CSV</button>
+    </div>
+  </div>
+</div>
+
 <script>
-const API="https://radarpro-api.onrender.com";
+const API = "https://radarpro-api.onrender.com";
+// ⚠️ CHANGE THIS PASSWORD TO YOUR OWN SECRET WORD
+const EXPORT_PASSWORD = "radar2026";
+
 let DATA=[],RESULTS=[],ACTIVE_STATES=[],ACTIVE_INDEX=-1,CURRENT_MODE="keyword",RADIUS_CENTER=null;
 const STATE_LIST=["OH","IN","MI","KY","TN","WV","PA","AL"];
 
 function safe(s){const d=document.createElement("div");d.textContent=s||"";return d.innerHTML;}
 function txt(s){return String(s||"").trim();}
 
+/* ── LOADING OVERLAY ── */
+function showOverlay(text,sub){
+  document.getElementById("loadingOverlayText").textContent=text||"SCANNING";
+  document.getElementById("loadingOverlaySub").textContent=sub||"";
+  document.getElementById("loadingOverlay").classList.add("visible");
+}
+function hideOverlay(){document.getElementById("loadingOverlay").classList.remove("visible");}
+
+/* ── TAB SWITCH ── */
 function switchTab(m){
   CURRENT_MODE=m;
   ["keyword","radius"].forEach(t=>{
-    document.getElementById("tab"+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle("active",t===m);
-    document.getElementById("panel"+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle("active",t===m);
+    const T=t.charAt(0).toUpperCase()+t.slice(1);
+    document.getElementById("tab"+T).classList.toggle("active",t===m);
+    document.getElementById("panel"+T).classList.toggle("active",t===m);
   });
 }
 
+/* ── RADIUS SLIDER ── */
 function updateRadius(){
-  document.getElementById("radiusDisplay").textContent=document.getElementById("radiusSlider").value;
+  const v=document.getElementById("radiusSlider").value;
+  document.getElementById("radiusDisplay").textContent=v;
+  const pct=(v-5)/(150-5)*100;
+  document.getElementById("radiusSlider").style.background=
+    `linear-gradient(90deg,var(--accent) ${pct}%,rgba(255,255,255,0.06) ${pct}%)`;
 }
 
+/* ── INIT STATES ── */
 function initStates(){
   const el=document.getElementById("states");
   STATE_LIST.forEach(s=>{
@@ -239,10 +704,10 @@ function initStates(){
   });
 }
 
+/* ── LOAD DATA ── */
 async function load(){
   const msg=document.getElementById("loadingMsg");
-  const allBtns=[document.getElementById("searchBtn"),document.getElementById("radiusBtn")];
-  const allInputs=[document.getElementById("kw"),document.getElementById("radiusLocation"),document.getElementById("radiusKeyword")];
+  showOverlay("LOADING DATABASE","Fetching 13,000+ prospects...");
   try{
     const r=await fetch(API+"/data");
     if(!r.ok)throw new Error("Server "+r.status);
@@ -256,66 +721,84 @@ async function load(){
       c.Lon=parseFloat(c.Lon)||null;
       return c;
     });
-    const withCoords=DATA.filter(d=>d.Lat&&d.Lon).length;
+    const gps=DATA.filter(d=>d.Lat&&d.Lon).length;
     msg.className="success";
-    msg.textContent=`✅ ${DATA.length.toLocaleString()} prospects — ${withCoords.toLocaleString()} with GPS coords ready for radius search!`;
-    allInputs.forEach(i=>i.disabled=false);
-    allBtns.forEach(b=>b.disabled=false);
+    msg.textContent=`✅ ${DATA.length.toLocaleString()} prospects loaded — ${gps.toLocaleString()} GPS-enabled`;
+    [document.getElementById("kw"),document.getElementById("radiusLocation"),document.getElementById("radiusKeyword")].forEach(i=>i.disabled=false);
+    [document.getElementById("searchBtn"),document.getElementById("radiusBtn")].forEach(b=>b.disabled=false);
     setTimeout(()=>{msg.textContent="";},6000);
   }catch(err){
-    msg.className="error";
-    msg.textContent="❌ Connection failed. Please refresh.";
+    msg.className="error";msg.textContent="❌ Connection failed. Please refresh.";
   }
+  hideOverlay();
   initStates();
+  updateRadius();
 }
 
+/* ── KEYWORD SEARCH ── */
 function runKeywordSearch(){
   const kw=document.getElementById("kw").value.toLowerCase().trim();
-  RESULTS=DATA.filter(o=>{
-    if(ACTIVE_STATES.length&&!ACTIVE_STATES.includes(o.State))return false;
-    if(kw)return Object.values(o).some(v=>String(v).toLowerCase().includes(kw));
-    return true;
-  }).sort((a,b)=>b.Score-a.Score);
-  CURRENT_MODE="keyword";
-  showWorkspace();
+  showOverlay("SCANNING","Filtering prospects...");
+  setTimeout(()=>{
+    RESULTS=DATA.filter(o=>{
+      if(ACTIVE_STATES.length&&!ACTIVE_STATES.includes(o.State))return false;
+      if(kw)return Object.values(o).some(v=>String(v).toLowerCase().includes(kw));
+      return true;
+    }).sort((a,b)=>b.Score-a.Score);
+    CURRENT_MODE="keyword";
+    hideOverlay();
+    showWorkspace();
+  },400);
 }
 
+/* ── RADIUS SEARCH ── */
 async function runRadiusSearch(){
   const location=document.getElementById("radiusLocation").value.trim();
   const keyword=document.getElementById("radiusKeyword").value.trim();
   const miles=document.getElementById("radiusSlider").value;
   const status=document.getElementById("geocodeStatus");
   if(!location){status.className="visible error";status.textContent="⚠️ Please enter a city, address, or zip code.";return;}
-  status.className="visible";status.textContent="🔍 Locating "+location+"...";
+  status.className="";
+  showOverlay("LOCATING","Finding "+location+"...");
   document.getElementById("radiusBtn").disabled=true;
   try{
     const gr=await fetch(API+"/geocode?q="+encodeURIComponent(location));
     const gd=await gr.json();
-    if(!gd.found){status.className="visible error";status.textContent="❌ Location not found. Try a zip code or city, state.";document.getElementById("radiusBtn").disabled=false;return;}
+    if(!gd.found){
+      hideOverlay();
+      status.className="visible error";
+      status.textContent="❌ Location not found. Try a zip code or city, state.";
+      document.getElementById("radiusBtn").disabled=false;
+      return;
+    }
     RADIUS_CENTER={lat:gd.lat,lon:gd.lon,label:location};
-    status.textContent="📡 Scanning "+miles+" mile radius around "+location+"...";
+    document.getElementById("loadingOverlayText").textContent="SCANNING RADIUS";
+    document.getElementById("loadingOverlaySub").textContent="Searching "+miles+" miles around "+location+"...";
     let url=API+"/radius?lat="+gd.lat+"&lon="+gd.lon+"&miles="+miles;
     if(keyword)url+="&keyword="+encodeURIComponent(keyword);
     const rr=await fetch(url);
     const rd=await rr.json();
     RESULTS=rd.results||[];
-    status.className="";
-    document.getElementById("radiusBtn").disabled=false;
     CURRENT_MODE="radius";
+    hideOverlay();
+    document.getElementById("radiusBtn").disabled=false;
     showWorkspace();
   }catch(err){
+    hideOverlay();
     status.className="visible error";
     status.textContent="❌ Search failed. Please try again.";
     document.getElementById("radiusBtn").disabled=false;
   }
 }
 
+/* ── SHOW WORKSPACE ── */
 function showWorkspace(){
   document.getElementById("home").style.display="none";
   document.getElementById("workspace").classList.add("visible");
   renderResults();
 }
 
+/* ── RENDER RESULTS ── */
 function renderResults(){
   const list=document.getElementById("resultList");
   const countEl=document.getElementById("resultCount");
@@ -328,83 +811,85 @@ function renderResults(){
   if(RESULTS.length>1)routeBanner.classList.add("visible");
   else routeBanner.classList.remove("visible");
 
+  detail.innerHTML="";
   list.innerHTML="";
+
   RESULTS.forEach((x,i)=>{
     const div=document.createElement("div");
     div.className="result";
+    div.style.animationDelay=(i*0.025)+"s";
     const name=document.createElement("div");name.className="result-name";name.textContent=x.Company||"—";
     const sub=document.createElement("div");sub.className="result-sub";sub.textContent=[x.City,x.State].filter(Boolean).join(", ");
     div.appendChild(name);div.appendChild(sub);
     if(CURRENT_MODE==="radius"&&x._distance!=null){
-      const b=document.createElement("div");b.className="result-badge dist";b.textContent=x._distance+" mi";div.appendChild(b);
+      const b=document.createElement("div");b.className="rbadge dist";b.textContent=x._distance+" mi";div.appendChild(b);
     }else if(x.Score){
-      const b=document.createElement("div");b.className="result-badge score";b.textContent=x.Score;div.appendChild(b);
+      const b=document.createElement("div");b.className="rbadge score";b.textContent=x.Score;div.appendChild(b);
     }
     div.onclick=()=>openDetail(i);
     list.appendChild(div);
   });
 
-  if(CURRENT_MODE==="radius"&&RESULTS.length>0){showDayPlanner();}
-  else if(RESULTS.length>0){openDetail(0);}
+  if(CURRENT_MODE==="radius"&&RESULTS.length>0)showDayPlanner();
+  else if(RESULTS.length>0)openDetail(0);
 }
 
+/* ── DAY PLANNER ── */
 function showDayPlanner(){
   const detail=document.getElementById("detail");
   detail.innerHTML="";
   const stops=RESULTS.slice(0,10);
   const totalMiles=stops.reduce((s,x)=>s+(x._distance||0),0);
   const estHours=Math.round((totalMiles/45)*10)/10;
-
-  const pc=document.createElement("div");pc.className="planner-card";
+  const pc=document.createElement("div");pc.className="planner";
   pc.innerHTML=`
-    <div class="planner-header">
+    <div class="planner-hdr">
       <div class="planner-title">🗺️ Sales Day Plan</div>
-      <div class="planner-sub">${txt(RADIUS_CENTER?RADIUS_CENTER.label:"Your location")} · ${document.getElementById("radiusSlider").value} mile radius · ${RESULTS.length} prospects found</div>
+      <div class="planner-sub">${safe(txt(RADIUS_CENTER?RADIUS_CENTER.label:"Your location"))} · ${document.getElementById("radiusSlider").value} mile radius · ${RESULTS.length.toLocaleString()} prospects found</div>
     </div>
     <div class="planner-body">
-      <div class="planner-stats">
-        <div class="stat-box"><div class="stat-num">${stops.length}</div><div class="stat-label">Top Stops</div></div>
-        <div class="stat-box"><div class="stat-num">${Math.round(totalMiles)}</div><div class="stat-label">Est. Miles</div></div>
-        <div class="stat-box"><div class="stat-num">${estHours}h</div><div class="stat-label">Drive Time</div></div>
+      <div class="stats">
+        <div class="stat"><div class="stat-n">${stops.length}</div><div class="stat-l">Top Stops</div></div>
+        <div class="stat"><div class="stat-n">${Math.round(totalMiles)}</div><div class="stat-l">Est. Miles</div></div>
+        <div class="stat"><div class="stat-n">${estHours}h</div><div class="stat-l">Drive Time</div></div>
       </div>
-      <div class="stop-list">
+      <div class="stops">
         ${stops.map((x,i)=>`
           <div class="stop">
-            <div class="stop-num">${i+1}</div>
-            <div class="stop-info">
+            <div class="stop-n">${i+1}</div>
+            <div class="stop-i">
               <div class="stop-name">${safe(x.Company)}</div>
-              <div class="stop-detail">${safe([x.Address,x.City,x.State].filter(Boolean).join(", "))}${x.Phone?" · "+safe(x.Phone):""}</div>
+              <div class="stop-d">${safe([x.Address,x.City,x.State].filter(Boolean).join(", "))}${x.Phone?" · "+safe(x.Phone):""}</div>
             </div>
-            <div class="stop-dist">${x._distance} mi</div>
+            <div class="stop-mi">${x._distance} mi</div>
           </div>
         `).join("")}
       </div>
       <div class="planner-btns">
-        <button class="planner-btn primary" onclick="openAllRoute()">🧭 Open Full Route in Google Maps</button>
-        <button class="planner-btn secondary" onclick="openDetail(0)">📋 View First Prospect</button>
+        <button class="pbtn primary" onclick="openAllRoute()">🧭 Open Full Route in Google Maps</button>
+        <button class="pbtn secondary" onclick="openDetail(0)">📋 View First Prospect</button>
       </div>
     </div>
   `;
   detail.appendChild(pc);
 }
 
+/* ── DETAIL CARD ── */
 function openDetail(i){
-  ACTIVE_INDEX=i;
-  const x=RESULTS[i];
+  ACTIVE_INDEX=i;const x=RESULTS[i];
   document.querySelectorAll(".result").forEach((el,idx)=>el.classList.toggle("active",idx===i));
-  const detail=document.getElementById("detail");
-  detail.innerHTML="";
+  const detail=document.getElementById("detail");detail.innerHTML="";
   const card=document.createElement("div");card.className="card";
-  const hdr=document.createElement("div");hdr.className="card-header";
+  const hdr=document.createElement("div");hdr.className="card-hdr";
   const co=document.createElement("div");co.className="card-company";co.textContent=txt(x.Company);hdr.appendChild(co);
   const meta=document.createElement("div");meta.className="card-meta";
   meta.innerHTML=`<span>📍 ${safe([txt(x.City),txt(x.State)].filter(Boolean).join(", "))}</span>`+
-    (x._distance?`<span>📏 ${x._distance} miles away</span>`:"")+
+    (x._distance?`<span>📏 ${x._distance} mi away</span>`:"")+
     (x["Employees on Site"]?`<span>👥 ${safe(x["Employees on Site"])} employees</span>`:"");
   hdr.appendChild(meta);card.appendChild(hdr);
   const body=document.createElement("div");body.className="card-body";
   const grid=document.createElement("div");grid.className="info-grid";
-  [["📞 Phone",x.Phone],["✉️ Email",x["Company Email"]],["🌐 Website",x.Website],["🏢 Founded",x["Year Established"]]].forEach(([l,v])=>{
+  [["📞 Phone",x.Phone],["✉️ Email",x["Company Email"]],["🌐 Website",x.Website],["📅 Founded",x["Year Established"]]].forEach(([l,v])=>{
     if(!v)return;
     const item=document.createElement("div");item.className="info-item";
     item.innerHTML=`<div class="info-label">${l}</div><div class="info-value">${safe(v)}</div>`;
@@ -414,28 +899,29 @@ function openDetail(i){
   if(x.Score){
     const maxScore=Math.max(...RESULTS.map(r=>r.Score),20);
     const pct=Math.min(100,Math.round((x.Score/maxScore)*100));
-    const sw=document.createElement("div");sw.className="score-bar-wrap";
-    sw.innerHTML=`<div class="score-label">Sales Match Score</div><div class="score-bar-bg"><div class="score-bar-fill" style="width:${pct}%"></div></div><div class="score-value">${x.Score} <span style="font-size:13px;color:var(--muted);font-family:'DM Sans'">/ ${maxScore}</span></div>`;
+    const sw=document.createElement("div");sw.className="score-wrap";
+    sw.innerHTML=`<div class="score-label-row"><div class="score-label">Sales Match Score</div><div class="score-num">${x.Score} <span style="font-size:14px;color:var(--muted);font-family:'DM Sans'">/ ${maxScore}</span></div></div><div class="score-bg"><div class="score-fill" style="width:${pct}%"></div></div>`;
     body.appendChild(sw);
   }
   const dv=document.createElement("div");dv.className="divider";body.appendChild(dv);
   const al=document.createElement("div");al.className="actions-label";al.textContent="Quick Actions";body.appendChild(al);
-  const actions=document.createElement("div");actions.className="actions";
-  if(x.Phone){const b=document.createElement("button");b.className="action-btn";b.innerHTML="📞 Call";b.onclick=()=>window.open("tel:"+x.Phone.replace(/[^0-9+]/g,""));actions.appendChild(b);}
-  if(x["Company Email"]){const b=document.createElement("button");b.className="action-btn";b.innerHTML="✉️ Email";b.onclick=()=>window.open("mailto:"+x["Company Email"]);actions.appendChild(b);}
-  const db=document.createElement("button");db.className="action-btn";db.innerHTML="🧭 Directions";
-  db.onclick=()=>window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent([x.Address,x.City,x.State].filter(Boolean).join(" "))+"&travelmode=driving");
-  actions.appendChild(db);
-  if(x.Website){const b=document.createElement("button");b.className="action-btn";b.innerHTML="🌐 Website";const u=x.Website.startsWith("http")?x.Website:"https://"+x.Website;b.onclick=()=>window.open(u);actions.appendChild(b);}
-  const mb=document.createElement("button");mb.className="action-btn maps";mb.innerHTML="📍 My Maps";
-  mb.onclick=()=>window.open("https://www.google.com/maps/search/?api=1&query="+encodeURIComponent([txt(x.Company),txt(x.Address),txt(x.City),txt(x.State)].filter(Boolean).join(", ")));
-  actions.appendChild(mb);
-  const rb=document.createElement("button");rb.className="action-btn route";rb.innerHTML="🗺️ Route";
-  rb.onclick=()=>window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent([txt(x.Address),txt(x.City),txt(x.State)].filter(Boolean).join(" "))+"&travelmode=driving");
-  actions.appendChild(rb);
-  body.appendChild(actions);card.appendChild(body);detail.appendChild(card);
+  const acts=document.createElement("div");acts.className="actions";
+  const btns=[
+    x.Phone?["📞 Call","",()=>window.open("tel:"+x.Phone.replace(/[^0-9+]/g,""))]:null,
+    x["Company Email"]?["✉️ Email","",()=>window.open("mailto:"+x["Company Email"])]:null,
+    ["🧭 Directions","",()=>window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent([x.Address,x.City,x.State].filter(Boolean).join(" "))+"&travelmode=driving")],
+    x.Website?["🌐 Website","",()=>{const u=x.Website.startsWith("http")?x.Website:"https://"+x.Website;window.open(u);}]:null,
+    ["📍 My Maps","green",()=>window.open("https://www.google.com/maps/search/?api=1&query="+encodeURIComponent([txt(x.Company),txt(x.Address),txt(x.City),txt(x.State)].filter(Boolean).join(", ")))],
+    ["🗺️ Route","gold",()=>window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent([txt(x.Address),txt(x.City),txt(x.State)].filter(Boolean).join(" "))+"&travelmode=driving")],
+  ].filter(Boolean);
+  btns.forEach(([label,cls,fn])=>{
+    const b=document.createElement("button");
+    b.className="abtn"+(cls?" "+cls:"");b.innerHTML=label;b.onclick=fn;acts.appendChild(b);
+  });
+  body.appendChild(acts);card.appendChild(body);detail.appendChild(card);
 }
 
+/* ── ROUTE ALL ── */
 function openAllRoute(){
   if(!RESULTS.length)return;
   const stops=RESULTS.slice(0,10);
@@ -449,6 +935,47 @@ function openAllRoute(){
   window.open(url);
 }
 
+/* ── EXPORT (PASSWORD PROTECTED) ── */
+function showExportModal(){
+  document.getElementById("exportPass").value="";
+  document.getElementById("exportError").textContent="";
+  document.getElementById("exportModal").classList.add("visible");
+  setTimeout(()=>document.getElementById("exportPass").focus(),100);
+}
+function closeExportModal(){document.getElementById("exportModal").classList.remove("visible");}
+
+function confirmExport(){
+  const pass=document.getElementById("exportPass").value;
+  const errEl=document.getElementById("exportError");
+  if(pass!==EXPORT_PASSWORD){
+    errEl.textContent="❌ Incorrect password. Access denied.";
+    document.getElementById("exportPass").value="";
+    return;
+  }
+  errEl.textContent="";
+  closeExportModal();
+  downloadCSV();
+}
+
+function downloadCSV(){
+  if(!RESULTS.length)return;
+  const cols=["Company","Address","City","State","Phone","Company Email","Website","Employees on Site","Score","Lat","Lon","_distance"];
+  const header=cols.map(c=>'"'+c+'"').join(",");
+  const rows=RESULTS.map(r=>cols.map(c=>{
+    const v=String(r[c]||"").replace(/"/g,'""');
+    return '"'+v+'"';
+  }).join(","));
+  const csv=[header,...rows].join("\n");
+  const blob=new Blob([csv],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="RadarPRO_Export_"+new Date().toISOString().slice(0,10)+".csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ── GO HOME ── */
 function goHome(){
   document.getElementById("workspace").classList.remove("visible");
   document.getElementById("home").style.display="block";
