@@ -1,281 +1,999 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Radar PRO</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 
 <style>
 
-body{
-margin:0;
-background:#0c0f14;
-color:white;
-font-family:Arial;
+:root {
+  --bg-deep:     #080b10;
+  --bg-panel:    #0d1117;
+  --bg-card:     #0f1923;
+  --accent:      #00c2ff;
+  --accent-dim:  #004e66;
+  --accent-glow: rgba(0,194,255,0.15);
+  --gold:        #f5a623;
+  --gold-dim:    rgba(245,166,35,0.12);
+  --white:       #f0f4f8;
+  --muted:       #6b7a8d;
+  --border:      rgba(255,255,255,0.07);
+
+  /* Alternating result row colors */
+  --row-a-bg:    #0d1117;
+  --row-a-text:  #e8edf2;
+  --row-b-bg:    #e8edf2;
+  --row-b-text:  #0d1117;
 }
 
-/* HOME */
-#home{
-padding:20px;
-max-width:900px;
-margin:auto;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-input{
-width:100%;
-padding:10px;
-margin:6px 0;
-border-radius:8px;
-border:none;
-font-size:15px;
+/* ─── ANIMATED BACKGROUND ─── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(0,194,255,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 90%, rgba(245,166,35,0.03) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
 }
 
-button{
-background:#1f2937;
-color:white;
-border:none;
-padding:10px 14px;
-border-radius:8px;
-cursor:pointer;
-}
-button:hover{background:#2563eb;}
-
-.stateBtn{
-display:inline-block;
-margin:4px;
-padding:8px 12px;
-border-radius:20px;
-background:#1f2937;
-cursor:pointer;
-}
-.stateBtn.active{background:#2563eb;}
-
-/* WORKSPACE LAYOUT (FLEX FIX) */
-#workspace{
-display:none;
-height:100vh;
-display:flex;
+/* ─── HOME SCREEN ─── */
+#home {
+  position: relative;
+  z-index: 1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 24px 32px;
 }
 
-/* LEFT RESULTS */
-#left{
-width:35%;
-background:#0b1220;
-overflow-y:auto;
-padding:10px;
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 36px;
 }
 
-.result{
-padding:12px;
-border-bottom:1px solid #1f2937;
-cursor:pointer;
-}
-.result:hover{background:#1f2937;}
-
-/* RIGHT CONTACT */
-#right{
-width:65%;
-padding:20px;
-overflow-y:auto;
+.logo-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), #0070a8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 0 24px rgba(0,194,255,0.35);
 }
 
-.card{
-background:#161b22;
-padding:18px;
-border-radius:12px;
-max-width:650px;
+.logo-text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 1px;
 }
 
-.row{margin:4px 0;}
-
-.actions button{
-margin:6px 6px 0 0;
+.logo-text span {
+  color: var(--accent);
+  text-shadow: 0 0 20px rgba(0,194,255,0.5);
 }
 
-.badge{
-background:#065f46;
-padding:6px 10px;
-border-radius:6px;
-display:inline-block;
-margin-top:10px;
+.logo-badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-glow);
+  border: 1px solid var(--accent-dim);
+  padding: 3px 8px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  align-self: flex-start;
+  margin-top: 6px;
 }
 
-.backBtn{
-margin-bottom:12px;
-display:inline-block;
+/* Search box */
+.search-wrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.search-wrap input {
+  width: 100%;
+  padding: 14px 18px 14px 46px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-wrap input:focus {
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.search-wrap input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 16px;
+  pointer-events: none;
+}
+
+/* Status message */
+#loadingMsg {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 8px 2px 16px;
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#loadingMsg.error { color: #f87171; }
+#loadingMsg.success { color: #34d399; }
+
+/* State buttons */
+.states-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+#states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.stateBtn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.stateBtn:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+
+.stateBtn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* Run Search button */
+#searchBtn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--accent), #0070a8);
+  color: #000;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 24px rgba(0,194,255,0.3);
+}
+
+#searchBtn:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: 0 4px 32px rgba(0,194,255,0.5);
+}
+
+#searchBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ─── WORKSPACE ─── */
+#workspace {
+  display: none;
+  height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+#workspace.visible { display: flex; }
+
+/* ─── LEFT PANEL ─── */
+#left {
+  width: 36%;
+  min-width: 280px;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.left-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.left-header-logo {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+#resultCount {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--bg-card);
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+.left-actions {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.left-actions button {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.left-actions button:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+
+.back-btn {
+  flex: none !important;
+  color: var(--accent) !important;
+  border-color: var(--accent-dim) !important;
+}
+
+#resultList {
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* ─── ALTERNATING RESULT ROWS ─── */
+.result {
+  padding: 13px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0,0,0,0.15);
+  transition: filter 0.1s;
+  position: relative;
+}
+
+/* Even rows: dark bg, light text */
+.result:nth-child(even) {
+  background: var(--row-a-bg);
+  color: var(--row-a-text);
+}
+
+/* Odd rows: light bg, dark text */
+.result:nth-child(odd) {
+  background: var(--row-b-bg);
+  color: var(--row-b-text);
+}
+
+.result:nth-child(odd) .result-sub {
+  color: #444;
+}
+
+.result:nth-child(even) .result-sub {
+  color: var(--muted);
+}
+
+.result:hover {
+  filter: brightness(1.08);
+}
+
+.result.active {
+  background: var(--accent-dim) !important;
+  color: var(--accent) !important;
+  border-left: 3px solid var(--accent);
+  box-shadow: inset 0 0 20px var(--accent-glow);
+}
+
+.result.active .result-sub {
+  color: rgba(0,194,255,0.7) !important;
+}
+
+.result-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.result-sub {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.result-score {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  background: var(--gold-dim);
+  color: var(--gold);
+  border: 1px solid rgba(245,166,35,0.25);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ─── RIGHT PANEL ─── */
+#right {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background: var(--bg-deep);
+}
+
+/* ─── DETAIL CARD ─── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  max-width: 680px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #0f1f2e, #0a1520);
+  border-bottom: 1px solid var(--border);
+  padding: 22px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-header::after {
+  content: '📡';
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 40px;
+  opacity: 0.07;
+}
+
+.card-company {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.card-location {
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.card-body {
+  padding: 20px 24px;
+}
+
+/* Info grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.info-item {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.info-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.info-value {
+  font-size: 14px;
+  color: var(--white);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+/* Score badge */
+.score-bar-wrap {
+  margin-bottom: 20px;
+}
+
+.score-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.score-bar-bg {
+  background: var(--bg-panel);
+  border-radius: 6px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.score-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+  border-radius: 6px;
+  transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+}
+
+.score-value {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 18px 0;
+}
+
+/* Action buttons */
+.actions-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.action-btn {
+  padding: 11px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.action-btn:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+  background: var(--accent-glow);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,194,255,0.15);
+}
+
+.action-btn.maps {
+  border-color: rgba(52,211,153,0.3);
+  color: #34d399;
+  background: rgba(52,211,153,0.05);
+}
+
+.action-btn.maps:hover {
+  border-color: #34d399;
+  background: rgba(52,211,153,0.12);
+  color: #34d399;
+  box-shadow: 0 4px 16px rgba(52,211,153,0.15);
+}
+
+.action-btn.route {
+  border-color: rgba(245,166,35,0.3);
+  color: var(--gold);
+  background: var(--gold-dim);
+}
+
+.action-btn.route:hover {
+  border-color: var(--gold);
+  background: rgba(245,166,35,0.18);
+  box-shadow: 0 4px 16px rgba(245,166,35,0.2);
+}
+
+/* Route banner */
+#routeBanner {
+  display: none;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(245,166,35,0.3);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--gold);
+  align-items: center;
+  gap: 10px;
+}
+
+#routeBanner.visible { display: flex; }
+
+#routeBanner button {
+  margin-left: auto;
+  padding: 6px 14px;
+  background: var(--gold);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 </style>
 </head>
-
 <body>
 
-<!-- HOME -->
+<!-- ═══ HOME ═══ -->
 <div id="home">
 
-<h2>Prospect {{{Radar}}} LIVE</h2>
+  <div class="logo-wrap">
+    <div class="logo-icon">📡</div>
+    <div>
+      <div class="logo-text">Prospect <span>Radar</span></div>
+    </div>
+    <div class="logo-badge">LIVE</div>
+  </div>
 
-<input id="kw" placeholder="Keyword search (ANY column)">
-<div id="states"></div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input id="kw" placeholder="Keyword search — company, city, industry..." disabled>
+  </div>
 
-<button onclick="runSearch()">Run Search</button>
+  <div id="loadingMsg">⏳ Connecting to Radar PRO database...</div>
+
+  <div class="states-label">Filter by State</div>
+  <div id="states"></div>
+
+  <button id="searchBtn" onclick="runSearch()" disabled>⚡ Run Search</button>
 
 </div>
 
-<!-- WORKSPACE -->
+<!-- ═══ WORKSPACE ═══ -->
 <div id="workspace">
 
-<div id="left"></div>
+  <div id="left">
+    <div class="left-header">
+      <div class="left-header-logo">📡 Radar PRO</div>
+      <div id="resultCount">0 results</div>
+    </div>
+    <div class="left-actions">
+      <button class="back-btn" onclick="goHome()">⬅ New Search</button>
+      <button onclick="openAllRoute()">🗺️ Route All</button>
+    </div>
+    <div id="resultList"></div>
+  </div>
 
-<div id="right">
-<div id="detail"></div>
-</div>
+  <div id="right">
+    <div id="routeBanner">
+      <span>🗺️ <span id="routeCount">0</span> prospects ready for route planning</span>
+      <button onclick="openAllRoute()">Open in Google Maps</button>
+    </div>
+    <div id="detail"></div>
+  </div>
 
 </div>
 
 <script>
 
-let DATA=[];
-let RESULTS=[];
-let ACTIVE_STATES=[];
+let DATA = [];
+let RESULTS = [];
+let ACTIVE_STATES = [];
+let ACTIVE_INDEX = -1;
 
-const STATE_LIST=["OH","IN","MI","KY","TN","WV","PA","IL"];
+const STATE_LIST = ["OH","IN","MI","KY","TN","WV","PA","IL"];
 
-function initStates(){
-const el=document.getElementById("states");
-STATE_LIST.forEach(s=>{
-const d=document.createElement("span");
-d.className="stateBtn";
-d.innerText=s;
-d.onclick=()=>{
-d.classList.toggle("active");
-if(ACTIVE_STATES.includes(s)){
-ACTIVE_STATES=ACTIVE_STATES.filter(x=>x!==s);
-}else{
-ACTIVE_STATES.push(s);
-}
-};
-el.appendChild(d);
-});
+/* ─── SAFE TEXT HELPER (XSS prevention) ─── */
+function safe(str) {
+  const d = document.createElement("div");
+  d.textContent = str || "";
+  return d.innerHTML;
 }
 
-/* LOAD DATA + FIX CSV HEADER SPACING */
-async function load(){
-
-const r=await fetch("https://radarpro-api.onrender.com/data");
-let raw=await r.json();
-
-DATA = raw.map(row=>{
-let clean={};
-
-Object.keys(row).forEach(k=>{
-clean[k.trim()] = row[k];
-});
-
-if(!clean.State){
-clean.State = clean["State"] || clean["        State"] || "";
+function text(str) {
+  return String(str || "").trim();
 }
 
-clean.Score = Number(clean.Score||0);
-
-return clean;
-});
-
-initStates();
+/* ─── STATE BUTTONS ─── */
+function initStates() {
+  const el = document.getElementById("states");
+  STATE_LIST.forEach(s => {
+    const d = document.createElement("span");
+    d.className = "stateBtn";
+    d.textContent = s;
+    d.onclick = () => {
+      d.classList.toggle("active");
+      ACTIVE_STATES = ACTIVE_STATES.includes(s)
+        ? ACTIVE_STATES.filter(x => x !== s)
+        : [...ACTIVE_STATES, s];
+    };
+    el.appendChild(d);
+  });
 }
 
-function runSearch(){
+/* ─── LOAD DATA ─── */
+async function load() {
+  const loadingMsg = document.getElementById("loadingMsg");
+  const searchBtn  = document.getElementById("searchBtn");
+  const kw         = document.getElementById("kw");
 
-let kw=document.getElementById("kw").value.toLowerCase();
+  try {
+    const r = await fetch("https://radarpro-api.onrender.com/data");
+    if (!r.ok) throw new Error("Server error " + r.status);
 
-RESULTS = DATA.filter(o=>{
+    const payload = await r.json();
 
-if(ACTIVE_STATES.length){
-if(!ACTIVE_STATES.includes(o.State)) return false;
+    /* Support both raw array (old) and {items:[]} (future) */
+    const raw = Array.isArray(payload) ? payload : (payload.items || []);
+
+    DATA = raw.map(row => {
+      const clean = {};
+      Object.keys(row).forEach(k => { clean[k.trim()] = row[k]; });
+      clean.Score = Number(clean.Score || 0);
+      return clean;
+    });
+
+    loadingMsg.className = "success";
+    loadingMsg.textContent = `✅ ${DATA.length.toLocaleString()} prospects loaded — ready to search!`;
+    kw.disabled = false;
+    searchBtn.disabled = false;
+
+    setTimeout(() => { loadingMsg.textContent = ""; }, 4000);
+
+  } catch (err) {
+    console.error(err);
+    loadingMsg.className = "error";
+    loadingMsg.textContent = "❌ Failed to connect. Please refresh and try again.";
+  }
+
+  initStates();
 }
 
-if(kw){
-return Object.values(o).some(v=>String(v).toLowerCase().includes(kw));
+/* ─── SEARCH ─── */
+function runSearch() {
+  const kw = document.getElementById("kw").value.toLowerCase().trim();
+
+  RESULTS = DATA.filter(o => {
+    if (ACTIVE_STATES.length && !ACTIVE_STATES.includes(o.State)) return false;
+    if (kw) return Object.values(o).some(v => String(v).toLowerCase().includes(kw));
+    return true;
+  });
+
+  RESULTS.sort((a, b) => b.Score - a.Score);
+
+  document.getElementById("home").style.display = "none";
+  document.getElementById("workspace").classList.add("visible");
+
+  renderResults();
 }
 
-return true;
-});
+/* ─── RENDER LEFT PANEL ─── */
+function renderResults() {
+  const list    = document.getElementById("resultList");
+  const countEl = document.getElementById("resultCount");
+  const routeCount = document.getElementById("routeCount");
+  const routeBanner = document.getElementById("routeBanner");
 
-/* AUTO SORT BY SCORE DESC */
-RESULTS.sort((a,b)=>b.Score-a.Score);
+  countEl.textContent = `${RESULTS.length.toLocaleString()} result${RESULTS.length !== 1 ? "s" : ""}`;
+  routeCount.textContent = RESULTS.length;
 
-document.getElementById("home").style.display="none";
-document.getElementById("workspace").style.display="flex";
+  if (RESULTS.length > 1) routeBanner.classList.add("visible");
+  else routeBanner.classList.remove("visible");
 
-renderResults();
+  list.innerHTML = "";
+
+  RESULTS.forEach((x, i) => {
+    const div = document.createElement("div");
+    div.className = "result";
+
+    const name = document.createElement("div");
+    name.className = "result-name";
+    name.textContent = x.Company || "—";
+
+    const sub = document.createElement("div");
+    sub.className = "result-sub";
+    sub.textContent = [x.City, x.State].filter(Boolean).join(", ");
+
+    div.appendChild(name);
+    div.appendChild(sub);
+
+    if (x.Score) {
+      const score = document.createElement("div");
+      score.className = "result-score";
+      score.textContent = x.Score;
+      div.appendChild(score);
+    }
+
+    div.onclick = () => openDetail(i);
+    list.appendChild(div);
+  });
+
+  if (RESULTS.length) openDetail(0);
 }
 
-function renderResults(){
+/* ─── OPEN DETAIL CARD ─── */
+function openDetail(i) {
+  ACTIVE_INDEX = i;
+  const x = RESULTS[i];
 
-const left=document.getElementById("left");
+  document.querySelectorAll(".result").forEach((el, idx) => {
+    el.classList.toggle("active", idx === i);
+  });
 
-left.innerHTML = RESULTS.map((x,i)=>`
-<div class="result" onclick="openDetail(${i})">
-<b>${x.Company||""}</b><br>
-${x.City||""}, ${x.State||""}
-</div>
-`).join("");
+  const detail = document.getElementById("detail");
+  detail.innerHTML = "";
 
-if(RESULTS.length) openDetail(0);
+  /* CARD */
+  const card = document.createElement("div");
+  card.className = "card";
+
+  /* Header */
+  const header = document.createElement("div");
+  header.className = "card-header";
+
+  const company = document.createElement("div");
+  company.className = "card-company";
+  company.textContent = text(x.Company);
+  header.appendChild(company);
+
+  const loc = document.createElement("div");
+  loc.className = "card-location";
+  loc.textContent = "📍 " + [text(x.City), text(x.State)].filter(Boolean).join(", ");
+  header.appendChild(loc);
+
+  card.appendChild(header);
+
+  /* Body */
+  const body = document.createElement("div");
+  body.className = "card-body";
+
+  /* Info grid */
+  const grid = document.createElement("div");
+  grid.className = "info-grid";
+
+  const infoFields = [
+    ["📞 Phone",     x.Phone],
+    ["✉️ Email",     x["Company Email"]],
+    ["🌐 Website",   x.Website],
+    ["👥 Employees", x["Employees on Site"]],
+  ];
+
+  infoFields.forEach(([label, val]) => {
+    if (!val) return;
+    const item = document.createElement("div");
+    item.className = "info-item";
+    item.innerHTML = `<div class="info-label">${label}</div><div class="info-value">${safe(val)}</div>`;
+    grid.appendChild(item);
+  });
+
+  body.appendChild(grid);
+
+  /* Score bar */
+  if (x.Score) {
+    const maxScore = Math.max(...RESULTS.map(r => r.Score), 100);
+    const pct = Math.min(100, Math.round((x.Score / maxScore) * 100));
+
+    const scoreWrap = document.createElement("div");
+    scoreWrap.className = "score-bar-wrap";
+    scoreWrap.innerHTML = `
+      <div class="score-label">Sales Match Score</div>
+      <div class="score-bar-bg"><div class="score-bar-fill" style="width:${pct}%"></div></div>
+      <div class="score-value">${x.Score} <span style="font-size:13px;color:var(--muted);font-family:'DM Sans'">/ ${maxScore}</span></div>
+    `;
+    body.appendChild(scoreWrap);
+  }
+
+  /* Divider */
+  const div1 = document.createElement("div");
+  div1.className = "divider";
+  body.appendChild(div1);
+
+  /* Actions */
+  const actLabel = document.createElement("div");
+  actLabel.className = "actions-label";
+  actLabel.textContent = "Quick Actions";
+  body.appendChild(actLabel);
+
+  const actions = document.createElement("div");
+  actions.className = "actions";
+
+  /* Call */
+  if (x.Phone) {
+    const btn = document.createElement("button");
+    btn.className = "action-btn";
+    btn.innerHTML = "📞 Call";
+    btn.onclick = () => window.open("tel:" + x.Phone.replace(/[^0-9+]/g, ""));
+    actions.appendChild(btn);
+  }
+
+  /* Email */
+  if (x["Company Email"]) {
+    const btn = document.createElement("button");
+    btn.className = "action-btn";
+    btn.innerHTML = "✉️ Email";
+    btn.onclick = () => window.open("mailto:" + x["Company Email"]);
+    actions.appendChild(btn);
+  }
+
+  /* Directions */
+  const dirBtn = document.createElement("button");
+  dirBtn.className = "action-btn";
+  dirBtn.innerHTML = "🧭 Directions";
+  dirBtn.onclick = () => {
+    const q = encodeURIComponent([x.Address, x.City, x.State].filter(Boolean).join(" "));
+    window.open("https://www.google.com/maps/dir/?api=1&destination=" + q);
+  };
+  actions.appendChild(dirBtn);
+
+  /* Website */
+  if (x.Website) {
+    const btn = document.createElement("button");
+    btn.className = "action-btn";
+    btn.innerHTML = "🌐 Website";
+    const url = x.Website.startsWith("http") ? x.Website : "https://" + x.Website;
+    btn.onclick = () => window.open(url);
+    actions.appendChild(btn);
+  }
+
+  /* Add to Google My Maps */
+  const mapsBtn = document.createElement("button");
+  mapsBtn.className = "action-btn maps";
+  mapsBtn.innerHTML = "📍 My Maps";
+  mapsBtn.onclick = () => openMyMaps(x);
+  actions.appendChild(mapsBtn);
+
+  /* Plan Route (this prospect + nearby) */
+  const routeBtn = document.createElement("button");
+  routeBtn.className = "action-btn route";
+  routeBtn.innerHTML = "🗺️ Route";
+  routeBtn.onclick = () => openSingleRoute(x);
+  actions.appendChild(routeBtn);
+
+  body.appendChild(actions);
+  card.appendChild(body);
+  detail.appendChild(card);
 }
 
-function openDetail(i){
-
-const x=RESULTS[i];
-
-window.scrollTo(0,0);
-
-document.getElementById("detail").innerHTML=`
-
-<button class="backBtn" onclick="goHome()">⬅ Back to Search</button>
-
-<div class="card">
-
-<h3>${x.Company||""}</h3>
-
-<div class="row">Phone: ${x.Phone||""}</div>
-<div class="row">Email: ${x["Company Email"]||""}</div>
-<div class="row">Website: ${x.Website||""}</div>
-<div class="row">City: ${x.City||""}</div>
-<div class="row">State: ${x.State||""}</div>
-<div class="row">Employees: ${x["Employees on Site"]||""}</div>
-
-<div class="actions">
-
-<button onclick="window.open('tel:${x.Phone||""}')">Call</button>
-
-<button onclick="window.open('mailto:${x["Company Email"]||""}')">Email</button>
-
-<button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.Address+" "+x.City+" "+x.State)}')">Directions</button>
-
-<button onclick="window.open('${x.Website && x.Website.startsWith("http")?x.Website:"https://"+(x.Website||"")}')">Website</button>
-
-</div>
-
-<div class="badge">Sales Match: ${x.Score}</div>
-
-</div>
-`;
+/* ─── GOOGLE MY MAPS ─── */
+function openMyMaps(x) {
+  /* Opens Google My Maps with this location pre-searched */
+  const q = encodeURIComponent([text(x.Company), text(x.Address), text(x.City), text(x.State)].filter(Boolean).join(", "));
+  window.open("https://www.google.com/maps/search/?api=1&query=" + q);
 }
 
-function goHome(){
+/* ─── SINGLE PROSPECT ROUTE ─── */
+function openSingleRoute(x) {
+  const dest = encodeURIComponent([text(x.Address), text(x.City), text(x.State)].filter(Boolean).join(" "));
+  window.open("https://www.google.com/maps/dir/?api=1&destination=" + dest + "&travelmode=driving");
+}
 
-document.getElementById("workspace").style.display="none";
-document.getElementById("home").style.display="block";
+/* ─── ROUTE ALL RESULTS IN GOOGLE MAPS ─── */
+function openAllRoute() {
+  if (!RESULTS.length) return;
 
-document.getElementById("kw").value="";
-ACTIVE_STATES=[];
-document.querySelectorAll(".stateBtn").forEach(b=>b.classList.remove("active"));
+  /* Google Maps supports up to ~10 waypoints in URL */
+  const stops = RESULTS.slice(0, 10);
+
+  const origin = encodeURIComponent(
+    [text(stops[0].Address), text(stops[0].City), text(stops[0].State)].filter(Boolean).join(" ")
+  );
+  const destination = encodeURIComponent(
+    [text(stops[stops.length - 1].Address), text(stops[stops.length - 1].City), text(stops[stops.length - 1].State)].filter(Boolean).join(" ")
+  );
+
+  let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+
+  if (stops.length > 2) {
+    const waypoints = stops.slice(1, -1).map(x =>
+      encodeURIComponent([text(x.Address), text(x.City), text(x.State)].filter(Boolean).join(" "))
+    ).join("|");
+    url += "&waypoints=" + waypoints;
+  }
+
+  window.open(url);
+}
+
+/* ─── GO HOME ─── */
+function goHome() {
+  document.getElementById("workspace").classList.remove("visible");
+  document.getElementById("home").style.display = "block";
+  document.getElementById("kw").value = "";
+  document.getElementById("routeBanner").classList.remove("visible");
+  ACTIVE_STATES = [];
+  ACTIVE_INDEX = -1;
+  document.querySelectorAll(".stateBtn").forEach(b => b.classList.remove("active"));
 }
 
 load();
 
 </script>
-
 </body>
 </html>
