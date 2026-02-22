@@ -7,102 +7,130 @@
 
 <style>
 
-body{
-margin:0;
-background:#0c0f14;
-color:white;
-font-family:Arial;
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0c0f14;
+  color: white;
+  font-family: Arial;
 }
 
 /* HOME */
-#home{
-padding:20px;
-max-width:900px;
-margin:auto;
+#home {
+  padding: 20px;
+  max-width: 900px;
+  margin: auto;
 }
 
-input{
-width:100%;
-padding:10px;
-margin:6px 0;
-border-radius:8px;
-border:none;
-font-size:15px;
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  border-radius: 8px;
+  border: none;
+  font-size: 15px;
 }
 
-button{
-background:#1f2937;
-color:white;
-border:none;
-padding:10px 14px;
-border-radius:8px;
-cursor:pointer;
+button {
+  background: #1f2937;
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
 }
-button:hover{background:#2563eb;}
+button:hover { background: #2563eb; }
 
-.stateBtn{
-display:inline-block;
-margin:4px;
-padding:8px 12px;
-border-radius:20px;
-background:#1f2937;
-cursor:pointer;
+.stateBtn {
+  display: inline-block;
+  margin: 4px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  background: #1f2937;
+  cursor: pointer;
 }
-.stateBtn.active{background:#2563eb;}
+.stateBtn.active { background: #2563eb; }
 
-/* WORKSPACE LAYOUT (FLEX FIX) */
-#workspace{
-display:none;
-height:100vh;
-display:flex;
+/* LOADING STATE */
+#loadingMsg {
+  color: #9ca3af;
+  font-size: 14px;
+  margin: 8px 0;
+  min-height: 20px;
+}
+
+#loadingMsg.error {
+  color: #f87171;
+}
+
+/* WORKSPACE LAYOUT */
+#workspace {
+  display: none;
+  height: 100vh;
+}
+
+#workspace.visible {
+  display: flex;
 }
 
 /* LEFT RESULTS */
-#left{
-width:35%;
-background:#0b1220;
-overflow-y:auto;
-padding:10px;
+#left {
+  width: 35%;
+  background: #0b1220;
+  overflow-y: auto;
+  padding: 10px;
 }
 
-.result{
-padding:12px;
-border-bottom:1px solid #1f2937;
-cursor:pointer;
+#resultCount {
+  color: #9ca3af;
+  font-size: 13px;
+  padding: 6px 4px 10px;
+  border-bottom: 1px solid #1f2937;
+  margin-bottom: 4px;
 }
-.result:hover{background:#1f2937;}
+
+.result {
+  padding: 12px;
+  border-bottom: 1px solid #1f2937;
+  cursor: pointer;
+}
+.result:hover { background: #1f2937; }
+.result.active { background: #1e3a5f; border-left: 3px solid #2563eb; }
 
 /* RIGHT CONTACT */
-#right{
-width:65%;
-padding:20px;
-overflow-y:auto;
+#right {
+  width: 65%;
+  padding: 20px;
+  overflow-y: auto;
 }
 
-.card{
-background:#161b22;
-padding:18px;
-border-radius:12px;
-max-width:650px;
+.card {
+  background: #161b22;
+  padding: 18px;
+  border-radius: 12px;
+  max-width: 650px;
 }
 
-.row{margin:4px 0;}
+.row { margin: 4px 0; }
 
-.actions button{
-margin:6px 6px 0 0;
+.actions button {
+  margin: 6px 6px 0 0;
 }
 
-.badge{
-background:#065f46;
-padding:6px 10px;
-border-radius:6px;
-display:inline-block;
-margin-top:10px;
+.badge {
+  background: #065f46;
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-top: 10px;
 }
 
-.backBtn{
-margin-bottom:12px;
-display:inline-block;
+.backBtn {
+  margin-bottom: 12px;
+  display: inline-block;
 }
 
 </style>
@@ -113,164 +141,236 @@ display:inline-block;
 <!-- HOME -->
 <div id="home">
 
-<h2>Prospect {{{Radar}}} LIVE</h2>
+  <h2>Prospect <span style="color:#2563eb;">Radar</span> LIVE</h2>
 
-<input id="kw" placeholder="Keyword search (ANY column)">
-<div id="states"></div>
+  <input id="kw" placeholder="Keyword search (ANY column)" disabled>
+  <div id="loadingMsg">⏳ Loading data, please wait...</div>
+  <div id="states"></div>
 
-<button onclick="runSearch()">Run Search</button>
+  <button id="searchBtn" onclick="runSearch()" disabled>Run Search</button>
 
 </div>
 
 <!-- WORKSPACE -->
 <div id="workspace">
-
-<div id="left"></div>
-
-<div id="right">
-<div id="detail"></div>
-</div>
-
+  <div id="left">
+    <div id="resultCount"></div>
+    <div id="resultList"></div>
+  </div>
+  <div id="right">
+    <div id="detail"></div>
+  </div>
 </div>
 
 <script>
 
-let DATA=[];
-let RESULTS=[];
-let ACTIVE_STATES=[];
+let DATA = [];
+let RESULTS = [];
+let ACTIVE_STATES = [];
+let ACTIVE_INDEX = -1;
 
-const STATE_LIST=["OH","IN","MI","KY","TN","WV","PA","IL"];
+const STATE_LIST = ["OH","IN","MI","KY","TN","WV","PA","IL"];
 
-function initStates(){
-const el=document.getElementById("states");
-STATE_LIST.forEach(s=>{
-const d=document.createElement("span");
-d.className="stateBtn";
-d.innerText=s;
-d.onclick=()=>{
-d.classList.toggle("active");
-if(ACTIVE_STATES.includes(s)){
-ACTIVE_STATES=ACTIVE_STATES.filter(x=>x!==s);
-}else{
-ACTIVE_STATES.push(s);
-}
-};
-el.appendChild(d);
-});
+function safe(str) {
+  const d = document.createElement("div");
+  d.textContent = str || "";
+  return d.innerHTML;
 }
 
-/* LOAD DATA + FIX CSV HEADER SPACING */
-async function load(){
-
-const r=await fetch("https://radarpro-api.onrender.com/data");
-let raw=await r.json();
-
-DATA = raw.map(row=>{
-let clean={};
-
-Object.keys(row).forEach(k=>{
-clean[k.trim()] = row[k];
-});
-
-if(!clean.State){
-clean.State = clean["State"] || clean["        State"] || "";
+function initStates() {
+  const el = document.getElementById("states");
+  STATE_LIST.forEach(s => {
+    const d = document.createElement("span");
+    d.className = "stateBtn";
+    d.textContent = s;
+    d.onclick = () => {
+      d.classList.toggle("active");
+      if (ACTIVE_STATES.includes(s)) {
+        ACTIVE_STATES = ACTIVE_STATES.filter(x => x !== s);
+      } else {
+        ACTIVE_STATES.push(s);
+      }
+    };
+    el.appendChild(d);
+  });
 }
 
-clean.Score = Number(clean.Score||0);
+/* LOAD DATA FROM API */
+async function load() {
+  const loadingMsg = document.getElementById("loadingMsg");
+  const searchBtn = document.getElementById("searchBtn");
+  const kw = document.getElementById("kw");
 
-return clean;
-});
+  try {
+    const r = await fetch("https://radarpro-api.onrender.com/data");
 
-initStates();
+    if (!r.ok) throw new Error("Server error: " + r.status);
+
+    let raw = await r.json();
+
+    DATA = raw.map(row => {
+      let clean = {};
+      Object.keys(row).forEach(k => {
+        clean[k.trim()] = row[k];
+      });
+      clean.Score = Number(clean.Score || 0);
+      return clean;
+    });
+
+    loadingMsg.textContent = `✅ ${DATA.length} prospects loaded. Ready to search!`;
+    kw.disabled = false;
+    kw.placeholder = "Keyword search (ANY column)";
+    searchBtn.disabled = false;
+
+    setTimeout(() => { loadingMsg.textContent = ""; }, 3000);
+
+  } catch (err) {
+    console.error("Load error:", err);
+    loadingMsg.textContent = "❌ Failed to load data. Please refresh the page.";
+    loadingMsg.classList.add("error");
+  }
+
+  initStates();
 }
 
-function runSearch(){
+function runSearch() {
+  let kw = document.getElementById("kw").value.toLowerCase();
 
-let kw=document.getElementById("kw").value.toLowerCase();
+  RESULTS = DATA.filter(o => {
+    if (ACTIVE_STATES.length) {
+      if (!ACTIVE_STATES.includes(o.State)) return false;
+    }
+    if (kw) {
+      return Object.values(o).some(v => String(v).toLowerCase().includes(kw));
+    }
+    return true;
+  });
 
-RESULTS = DATA.filter(o=>{
+  /* SORT BY SCORE DESC */
+  RESULTS.sort((a, b) => b.Score - a.Score);
 
-if(ACTIVE_STATES.length){
-if(!ACTIVE_STATES.includes(o.State)) return false;
+  document.getElementById("home").style.display = "none";
+  document.getElementById("workspace").classList.add("visible");
+
+  renderResults();
 }
 
-if(kw){
-return Object.values(o).some(v=>String(v).toLowerCase().includes(kw));
+function renderResults() {
+  const list = document.getElementById("resultList");
+  const countEl = document.getElementById("resultCount");
+
+  countEl.textContent = `${RESULTS.length} result${RESULTS.length !== 1 ? "s" : ""} found`;
+
+  list.innerHTML = "";
+
+  RESULTS.forEach((x, i) => {
+    const div = document.createElement("div");
+    div.className = "result";
+    div.innerHTML = `<b>${safe(x.Company)}</b><br>${safe(x.City)}, ${safe(x.State)}`;
+    div.onclick = () => openDetail(i);
+    list.appendChild(div);
+  });
+
+  if (RESULTS.length) openDetail(0);
 }
 
-return true;
-});
+function openDetail(i) {
+  ACTIVE_INDEX = i;
+  const x = RESULTS[i];
 
-/* AUTO SORT BY SCORE DESC */
-RESULTS.sort((a,b)=>b.Score-a.Score);
+  /* HIGHLIGHT ACTIVE IN LEFT PANEL */
+  document.querySelectorAll(".result").forEach((el, idx) => {
+    el.classList.toggle("active", idx === i);
+  });
 
-document.getElementById("home").style.display="none";
-document.getElementById("workspace").style.display="flex";
+  window.scrollTo(0, 0);
 
-renderResults();
+  const detail = document.getElementById("detail");
+  detail.innerHTML = "";
+
+  /* BUILD CARD SAFELY WITHOUT INNERHTML INJECTION */
+  const backBtn = document.createElement("button");
+  backBtn.className = "backBtn";
+  backBtn.textContent = "⬅ Back to Search";
+  backBtn.onclick = goHome;
+  detail.appendChild(backBtn);
+
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const fields = [
+    ["Phone", x.Phone],
+    ["Email", x["Company Email"]],
+    ["Website", x.Website],
+    ["City", x.City],
+    ["State", x.State],
+    ["Employees", x["Employees on Site"]]
+  ];
+
+  const h3 = document.createElement("h3");
+  h3.textContent = x.Company || "";
+  card.appendChild(h3);
+
+  fields.forEach(([label, val]) => {
+    if (val) {
+      const row = document.createElement("div");
+      row.className = "row";
+      row.textContent = `${label}: ${val}`;
+      card.appendChild(row);
+    }
+  });
+
+  /* ACTION BUTTONS */
+  const actions = document.createElement("div");
+  actions.className = "actions";
+
+  if (x.Phone) {
+    const callBtn = document.createElement("button");
+    callBtn.textContent = "Call";
+    callBtn.onclick = () => window.open("tel:" + x.Phone.replace(/[^0-9+]/g, ""));
+    actions.appendChild(callBtn);
+  }
+
+  if (x["Company Email"]) {
+    const emailBtn = document.createElement("button");
+    emailBtn.textContent = "Email";
+    emailBtn.onclick = () => window.open("mailto:" + x["Company Email"]);
+    actions.appendChild(emailBtn);
+  }
+
+  const dirBtn = document.createElement("button");
+  dirBtn.textContent = "Directions";
+  dirBtn.onclick = () => window.open(
+    "https://www.google.com/maps/search/?api=1&query=" +
+    encodeURIComponent((x.Address || "") + " " + (x.City || "") + " " + (x.State || ""))
+  );
+  actions.appendChild(dirBtn);
+
+  if (x.Website) {
+    const webBtn = document.createElement("button");
+    webBtn.textContent = "Website";
+    const url = x.Website.startsWith("http") ? x.Website : "https://" + x.Website;
+    webBtn.onclick = () => window.open(url);
+    actions.appendChild(webBtn);
+  }
+
+  card.appendChild(actions);
+
+  const badge = document.createElement("div");
+  badge.className = "badge";
+  badge.textContent = "Sales Match: " + x.Score;
+  card.appendChild(badge);
+
+  detail.appendChild(card);
 }
 
-function renderResults(){
-
-const left=document.getElementById("left");
-
-left.innerHTML = RESULTS.map((x,i)=>`
-<div class="result" onclick="openDetail(${i})">
-<b>${x.Company||""}</b><br>
-${x.City||""}, ${x.State||""}
-</div>
-`).join("");
-
-if(RESULTS.length) openDetail(0);
-}
-
-function openDetail(i){
-
-const x=RESULTS[i];
-
-window.scrollTo(0,0);
-
-document.getElementById("detail").innerHTML=`
-
-<button class="backBtn" onclick="goHome()">⬅ Back to Search</button>
-
-<div class="card">
-
-<h3>${x.Company||""}</h3>
-
-<div class="row">Phone: ${x.Phone||""}</div>
-<div class="row">Email: ${x["Company Email"]||""}</div>
-<div class="row">Website: ${x.Website||""}</div>
-<div class="row">City: ${x.City||""}</div>
-<div class="row">State: ${x.State||""}</div>
-<div class="row">Employees: ${x["Employees on Site"]||""}</div>
-
-<div class="actions">
-
-<button onclick="window.open('tel:${x.Phone||""}')">Call</button>
-
-<button onclick="window.open('mailto:${x["Company Email"]||""}')">Email</button>
-
-<button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.Address+" "+x.City+" "+x.State)}')">Directions</button>
-
-<button onclick="window.open('${x.Website && x.Website.startsWith("http")?x.Website:"https://"+(x.Website||"")}')">Website</button>
-
-</div>
-
-<div class="badge">Sales Match: ${x.Score}</div>
-
-</div>
-`;
-}
-
-function goHome(){
-
-document.getElementById("workspace").style.display="none";
-document.getElementById("home").style.display="block";
-
-document.getElementById("kw").value="";
-ACTIVE_STATES=[];
-document.querySelectorAll(".stateBtn").forEach(b=>b.classList.remove("active"));
+function goHome() {
+  document.getElementById("workspace").classList.remove("visible");
+  document.getElementById("home").style.display = "block";
+  document.getElementById("kw").value = "";
+  ACTIVE_STATES = [];
+  ACTIVE_INDEX = -1;
+  document.querySelectorAll(".stateBtn").forEach(b => b.classList.remove("active"));
 }
 
 load();
