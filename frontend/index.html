@@ -1764,12 +1764,25 @@ async function runSplash() {
     if (i % 20 === 0) status.textContent = statuses[Math.floor(i/20)];
   }
 
-  // Load data
-  try {
-    const res = await fetch(`${API}/data`);
-    allData = await res.json();
-  } catch(e) {
-    status.textContent = 'Backend offline — retrying...';
+  // Load data — auto retry up to 4 times (backend may be sleeping)
+  let loaded = false;
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      status.textContent = attempt === 1 ? 'Connecting to backend...' : `Waking backend... attempt ${attempt}/4`;
+      fill.style.width = (70 + attempt * 5) + '%';
+      const res = await fetch(`${API}/data`);
+      allData = await res.json();
+      loaded = true;
+      break;
+    } catch(e) {
+      if (attempt < 4) {
+        status.textContent = `Backend sleeping — retrying in 8s... (${attempt}/4)`;
+        await new Promise(r => setTimeout(r, 8000));
+      }
+    }
+  }
+  if (!loaded) {
+    status.textContent = 'Backend offline — search may not work';
     await new Promise(r => setTimeout(r, 1500));
     allData = [];
   }
@@ -2378,6 +2391,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Start splash
   runSplash();
+
+  // Keep backend alive — ping every 9 minutes silently
+  setInterval(() => {
+    fetch(`${API}/health`).catch(() => {});
+  }, 9 * 60 * 1000);
 });
 </script>
 </body>
