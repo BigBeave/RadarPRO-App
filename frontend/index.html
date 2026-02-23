@@ -2,1076 +2,2383 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Radar PRO</title>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>RadarPRO — Sales Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#020a04;--bg2:#041008;--bg3:#061510;
-  --panel:rgba(4,16,8,0.92);--card:#071a0c;
-  --border:rgba(0,255,80,0.15);--border2:rgba(0,255,80,0.28);
-  --accent:#00e050;--accent2:#00ff66;
-  --accent-dim:rgba(0,224,80,0.12);--accent-glow:rgba(0,255,80,0.3);
-  --radar-green:#00ff41;--radar-dim:rgba(0,255,65,0.08);
-  --blue:#3b82f6;--blue2:#60a5fa;
-  --gold:#f59e0b;--gold-dim:rgba(245,158,11,0.12);
-  --red:#ef4444;--muted:#4a7a5a;--steel:#6aaa80;--silver:#a8d4b4;--white:#e8f5ec;
-  --row-dark:#020d05;--row-light:#c8e8d0;
-  --safe-bottom:env(safe-area-inset-bottom,0px);
+/* ============================================================
+   ROOT VARIABLES
+   ============================================================ */
+:root {
+  --green:       #00ff41;
+  --green-dim:   #00cc33;
+  --green-dark:  #006618;
+  --green-glow:  rgba(0,255,65,0.35);
+  --green-faint: rgba(0,255,65,0.08);
+  --black:       #030a03;
+  --panel:       #060f06;
+  --panel2:      #0a140a;
+  --border:      rgba(0,255,65,0.18);
+  --border-bright: rgba(0,255,65,0.45);
+  --text-muted:  rgba(0,255,65,0.5);
+  --text-dim:    rgba(0,255,65,0.35);
+  --silver:      #c8d8c8;
+  --red:         #ff4444;
+  --orange:      #ff8800;
+  --yellow:      #ffdd00;
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;overflow-x:hidden;}
-body{background:var(--bg);color:var(--white);font-family:'DM Sans',sans-serif;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased;}
 
-/* ══════════════════════════════════════
-   ANIMATED MAP BACKGROUND (Canvas-based screensaver)
-══════════════════════════════════════ */
-#mapCanvas{position:fixed;inset:0;z-index:0;opacity:1;}
+/* ============================================================
+   BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Dark overlay so content stays readable */
-#mapOverlay{
-  position:fixed;inset:0;z-index:1;
+html, body {
+  height: 100%;
+  background: var(--black);
+  color: var(--green);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+button { cursor: pointer; }
+a { color: var(--green); }
+
+/* ============================================================
+   SPLASH SCREEN — SATELLITE + RADAR
+   ============================================================ */
+#splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Satellite map tile background */
+#splash-sat {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-95,29,-72,47&bboxSR=4326&size=1600,1000&format=jpg&f=image');
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.45) saturate(0.15);
+  animation: satZoom 6s ease-in-out forwards;
+}
+
+@keyframes satZoom {
+  0%   { transform: scale(1.08); filter: brightness(0.2) saturate(0.1); }
+  100% { transform: scale(1.0);  filter: brightness(0.45) saturate(0.15); }
+}
+
+/* Vignette + green tint overlay */
+#splash-overlay {
+  position: absolute;
+  inset: 0;
   background:
-    radial-gradient(ellipse 80% 80% at 50% 50%, rgba(2,10,4,0.15) 0%, transparent 100%),
-    linear-gradient(180deg, rgba(2,10,4,0.25) 0%, rgba(2,10,4,0.1) 50%, rgba(2,10,4,0.25) 100%);
-  pointer-events:none;
+    radial-gradient(ellipse at center, transparent 20%, rgba(3,10,3,0.7) 100%),
+    linear-gradient(180deg, rgba(3,10,3,0.6) 0%, transparent 15%, transparent 85%, rgba(3,10,3,0.6) 100%);
 }
 
-/* ══ SPLASH ══ */
-#splash{
-  position:fixed;inset:0;z-index:9000;
-  background:radial-gradient(ellipse 80% 80% at 50% 50%, #021505 0%, #010802 100%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
-  transition:opacity 0.7s ease;
+/* Green scan grid */
+#splash-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,255,65,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,65,0.05) 1px, transparent 1px);
+  background-size: 55px 55px;
 }
-#splash.fade{opacity:0;pointer-events:none;}
 
-/* GREEN RADAR LOGO — large splash version */
-.radar-logo-large{position:relative;width:160px;height:160px;flex-shrink:0;}
-.rll-outer{
-  position:absolute;inset:0;border-radius:50%;
-  border:2px solid rgba(0,255,65,0.5);
-  box-shadow:0 0 20px rgba(0,255,65,0.2),inset 0 0 20px rgba(0,255,65,0.05);
+/* Horizontal scan line */
+#splash-scan {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0,255,65,0.6), transparent);
+  box-shadow: 0 0 20px rgba(0,255,65,0.4);
+  animation: scanLine 3s ease-in-out infinite;
+  top: 0;
 }
-.rll-grid-h,.rll-grid-v{position:absolute;background:rgba(0,255,65,0.1);}
-.rll-grid-h{top:50%;left:5%;right:5%;height:1px;transform:translateY(-50%);}
-.rll-grid-v{left:50%;top:5%;bottom:5%;width:1px;transform:translateX(-50%);}
-.rll-ring{position:absolute;border-radius:50%;border:1px solid rgba(0,255,65,0.2);top:50%;left:50%;transform:translate(-50%,-50%);}
-.rll-ring:nth-child(4){width:50px;height:50px;}
-.rll-ring:nth-child(5){width:90px;height:90px;}
-.rll-ring:nth-child(6){width:130px;height:130px;}
-.rll-sweep{
-  position:absolute;inset:0;border-radius:50%;
-  background:conic-gradient(from 0deg,transparent 320deg,rgba(0,255,65,0.08) 340deg,rgba(0,255,65,0.6) 360deg);
-  animation:sweep 2.5s linear infinite;
+
+@keyframes scanLine {
+  0%   { top: 0%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
 }
-@keyframes sweep{to{transform:rotate(360deg);}}
-.rll-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:8px;height:8px;border-radius:50%;background:var(--radar-green);box-shadow:0 0 14px var(--radar-green),0 0 28px rgba(0,255,65,0.4);}
-/* Blip dots that appear as sweep passes */
-.rll-blip{
-  position:absolute;border-radius:50%;
-  background:var(--radar-green);
-  box-shadow:0 0 6px var(--radar-green);
-  animation:blipFade 2.5s ease-out infinite;
+
+/* Radar sweep rings */
+#splash-radar {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(80vw, 700px);
+  height: min(80vw, 700px);
+  pointer-events: none;
 }
-.rll-blip:nth-child(8){width:5px;height:5px;top:30%;left:62%;animation-delay:0.3s;}
-.rll-blip:nth-child(9){width:4px;height:4px;top:55%;left:72%;animation-delay:1.1s;}
-.rll-blip:nth-child(10){width:6px;height:6px;top:65%;left:40%;animation-delay:1.8s;}
-.rll-blip:nth-child(11){width:3px;height:3px;top:38%;left:35%;animation-delay:0.7s;}
-@keyframes blipFade{0%{opacity:1;}60%{opacity:0.6;}100%{opacity:0;}}
 
-.splash-title{font-family:'Rajdhani',sans-serif;font-size:38px;font-weight:700;letter-spacing:3px;color:var(--white);text-shadow:0 0 20px rgba(0,255,65,0.3);}
-.splash-title span{color:var(--radar-green);text-shadow:0 0 12px var(--radar-green);}
-.splash-sub{font-size:12px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;animation:tpulse 1.2s ease-in-out infinite;}
-@keyframes tpulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
-.splash-bar{width:200px;height:2px;background:rgba(0,255,65,0.1);border-radius:1px;overflow:hidden;margin-top:4px;}
-.splash-bar-fill{height:100%;background:linear-gradient(90deg,transparent,var(--radar-green));border-radius:1px;animation:barFill 2.5s linear forwards;}
-@keyframes barFill{from{width:0%;}to{width:100%;}}
-
-/* ══ LOADING OVERLAY ══ */
-#loadingOverlay{display:none;position:fixed;inset:0;background:rgba(1,6,3,0.88);z-index:1000;align-items:center;justify-content:center;flex-direction:column;gap:20px;backdrop-filter:blur(6px);}
-#loadingOverlay.visible{display:flex;}
-/* Green radar spinner */
-.g-radar-spin{width:90px;height:90px;position:relative;}
-.g-radar-spin .grs-outer{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(0,255,65,0.2);box-shadow:0 0 16px rgba(0,255,65,0.1);}
-.g-radar-spin .grs-ring1{position:absolute;inset:16px;border-radius:50%;border:1px solid rgba(0,255,65,0.12);}
-.g-radar-spin .grs-ring2{position:absolute;inset:30px;border-radius:50%;border:1px solid rgba(0,255,65,0.1);}
-.g-radar-spin .grs-sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 310deg,rgba(0,255,65,0.1) 340deg,rgba(0,255,65,0.7) 360deg);animation:sweep 1.4s linear infinite;}
-.g-radar-spin .grs-dot{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:7px;height:7px;border-radius:50%;background:var(--radar-green);box-shadow:0 0 10px var(--radar-green);}
-.g-radar-spin .grs-ping{position:absolute;border-radius:50%;border:1px solid rgba(0,255,65,0.35);animation:grping 1.8s ease-out infinite;}
-.g-radar-spin .grs-ping:nth-child(5){width:14px;height:14px;top:50%;left:50%;margin:-7px 0 0 -7px;}
-.g-radar-spin .grs-ping:nth-child(6){width:14px;height:14px;top:50%;left:50%;margin:-7px 0 0 -7px;animation-delay:0.6s;}
-.g-radar-spin .grs-ping:nth-child(7){width:14px;height:14px;top:50%;left:50%;margin:-7px 0 0 -7px;animation-delay:1.2s;}
-@keyframes grping{0%{width:10px;height:10px;opacity:1;top:50%;left:50%;margin:-5px 0 0 -5px;}100%{width:80px;height:80px;opacity:0;top:50%;left:50%;margin:-40px 0 0 -40px;}}
-.loading-text{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:600;color:var(--accent2);letter-spacing:3px;animation:tpulse 1.4s ease-in-out infinite;}
-.loading-sub{font-size:12px;color:var(--muted);text-align:center;padding:0 20px;letter-spacing:1px;}
-
-/* ══ PAGE TRANSITION OVERLAY ══ */
-#transOverlay{
-  display:none;position:fixed;inset:0;z-index:800;
-  background:rgba(1,6,3,0);
-  pointer-events:none;
-  transition:background 0.3s;
+.splash-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(0,255,65,0.12);
 }
-#transOverlay.flash{background:rgba(0,255,65,0.06);}
 
-/* ══ HOME ══ */
-#home{position:relative;z-index:2;max-width:860px;margin:0 auto;padding:36px 24px 100px;}
-
-/* GREEN RADAR LOGO — small nav version */
-.logo-wrap{display:flex;align-items:center;gap:16px;margin-bottom:32px;}
-.radar-logo-small{position:relative;width:52px;height:52px;flex-shrink:0;}
-.rls-outer{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(0,255,65,0.6);box-shadow:0 0 16px rgba(0,255,65,0.3),inset 0 0 12px rgba(0,255,65,0.05);}
-.rls-grid-h{position:absolute;top:50%;left:8%;right:8%;height:1px;background:rgba(0,255,65,0.2);}
-.rls-grid-v{position:absolute;left:50%;top:8%;bottom:8%;width:1px;background:rgba(0,255,65,0.2);}
-.rls-ring{position:absolute;border-radius:50%;border:1px solid rgba(0,255,65,0.2);top:50%;left:50%;transform:translate(-50%,-50%);}
-.rls-ring:nth-child(4){width:18px;height:18px;}
-.rls-ring:nth-child(5){width:34px;height:34px;}
-.rls-sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 320deg,rgba(0,255,65,0.08) 345deg,rgba(0,255,65,0.7) 360deg);animation:sweep 2.5s linear infinite;}
-.rls-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:5px;height:5px;border-radius:50%;background:var(--radar-green);box-shadow:0 0 8px var(--radar-green);}
-.rls-blip{position:absolute;border-radius:50%;background:var(--radar-green);box-shadow:0 0 4px var(--radar-green);animation:blipFade 2.5s ease-out infinite;}
-.rls-blip:nth-child(7){width:3px;height:3px;top:28%;left:60%;animation-delay:0.4s;}
-.rls-blip:nth-child(8){width:2px;height:2px;top:62%;left:68%;animation-delay:1.3s;}
-.rls-blip:nth-child(9){width:3px;height:3px;top:68%;left:36%;animation-delay:2s;}
-
-.logo-text-wrap{}
-.logo-text{font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;letter-spacing:1.5px;line-height:1;}
-.logo-text .lt-p{color:var(--white);}
-.logo-text .lt-r{color:var(--radar-green);text-shadow:0 0 10px rgba(0,255,65,0.4);}
-.logo-badge{font-size:9px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent2);background:rgba(0,255,65,0.08);border:1px solid rgba(0,255,65,0.25);padding:2px 8px;border-radius:20px;margin-top:4px;display:inline-block;white-space:nowrap;}
-
-/* TABS */
-.tabs{display:flex;gap:8px;margin-bottom:22px;}
-.tab{flex:1;padding:12px 10px;border-radius:12px;border:1.5px solid var(--border);background:rgba(4,16,8,0.7);color:var(--steel);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;letter-spacing:0.5px;cursor:pointer;transition:all 0.2s;text-align:center;backdrop-filter:blur(8px);}
-.tab:hover{border-color:rgba(0,255,65,0.35);color:var(--white);}
-.tab.active{background:rgba(0,255,65,0.1);border-color:rgba(0,255,65,0.5);color:var(--radar-green);box-shadow:0 0 20px rgba(0,255,65,0.15),inset 0 0 12px rgba(0,255,65,0.05);}
-
-.search-panel{display:none;}.search-panel.active{display:block;}
-.section-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--steel);margin-bottom:10px;font-weight:600;}
-
-/* INPUTS */
-.input-wrap{position:relative;margin-bottom:12px;}
-.input-wrap input{width:100%;padding:15px 18px 15px 46px;background:rgba(4,20,8,0.75);border:1.5px solid var(--border2);border-radius:12px;color:var(--white);font-family:'DM Sans',sans-serif;font-size:16px;outline:none;transition:all 0.25s;-webkit-appearance:none;backdrop-filter:blur(8px);}
-.input-wrap input:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(0,255,65,0.1),0 0 20px rgba(0,255,65,0.08);background:rgba(4,24,10,0.85);}
-.input-wrap input:disabled{opacity:0.4;cursor:not-allowed;}
-.input-wrap input::placeholder{color:var(--muted);}
-.iicon{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:17px;pointer-events:none;}
-
-/* RADIUS */
-.radius-label-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-.radius-label-row .section-label{margin-bottom:0;}
-.radius-label-hint{font-size:12px;color:var(--muted);}
-.radius-row{display:flex;gap:12px;align-items:center;margin-bottom:18px;}
-.radius-row input[type=range]{flex:1;height:5px;border-radius:3px;border:none;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background:linear-gradient(90deg,var(--accent2) 23.33%,rgba(0,255,65,0.12) 23.33%);}
-.radius-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--accent2);box-shadow:0 0 14px rgba(0,255,65,0.6);cursor:pointer;}
-.radius-row input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-radius:50%;background:var(--accent2);cursor:pointer;}
-.radius-val{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--accent2);min-width:72px;text-align:right;text-shadow:0 0 8px rgba(0,255,65,0.3);}
-
-#loadingMsg{font-size:13px;color:var(--steel);margin:8px 2px 16px;min-height:20px;}
-#loadingMsg.success{color:var(--accent2);}
-#loadingMsg.error{color:var(--red);}
-
-/* STATES */
-.states-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-.states-header .section-label{margin-bottom:0;}
-.select-all-btn{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--accent2);background:var(--accent-dim);border:1px solid rgba(0,255,65,0.3);padding:4px 10px;border-radius:6px;cursor:pointer;transition:all 0.15s;}
-.select-all-btn:hover{background:rgba(0,255,65,0.18);border-color:var(--accent2);}
-.select-all-btn.all-on{color:var(--red);background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.35);}
-#states{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;}
-.stateBtn{padding:9px 16px;border-radius:8px;background:rgba(4,16,8,0.75);border:1.5px solid var(--border2);color:var(--silver);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all 0.15s;user-select:none;min-width:52px;text-align:center;backdrop-filter:blur(6px);}
-.stateBtn:hover{border-color:rgba(0,255,65,0.5);color:var(--white);}
-.stateBtn.active{background:rgba(0,255,65,0.15);border-color:var(--accent2);color:var(--radar-green);box-shadow:0 0 10px rgba(0,255,65,0.2);}
-
-/* RUN BUTTONS */
-.run-btn{width:100%;padding:16px;border:none;border-radius:13px;font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;-webkit-appearance:none;position:relative;overflow:hidden;}
-.run-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.06),transparent);pointer-events:none;}
-.run-btn.green{background:linear-gradient(135deg,#065f2e,#00a840);color:#001208;box-shadow:0 4px 24px rgba(0,200,80,0.4);}
-.run-btn.green:hover:not(:disabled){box-shadow:0 6px 32px rgba(0,255,65,0.5);transform:translateY(-1px);}
-.run-btn.green:active{transform:scale(0.98);}
-.run-btn.gold{background:linear-gradient(135deg,#b45309,#f59e0b);color:#000;box-shadow:0 4px 24px rgba(245,158,11,0.4);}
-.run-btn.gold:active{transform:scale(0.98);}
-.run-btn:disabled{opacity:0.3;cursor:not-allowed;}
-
-#geocodeStatus{padding:11px 15px;border-radius:10px;background:rgba(0,255,65,0.06);border:1.5px solid rgba(0,255,65,0.25);font-size:13px;color:var(--accent2);margin-bottom:14px;display:none;backdrop-filter:blur(6px);}
-#geocodeStatus.visible{display:block;}
-#geocodeStatus.error{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.4);color:var(--red);}
-
-/* ══ WORKSPACE ══ */
-#workspace{display:none;position:relative;z-index:2;}
-#workspace.visible{display:flex;}
-
-/* LEFT PANEL */
-#left{width:38%;min-width:260px;max-width:420px;background:rgba(2,10,4,0.9);border-right:1.5px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow:hidden;backdrop-filter:blur(12px);}
-.left-top{padding:13px 14px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;background:rgba(2,14,6,0.95);}
-.left-logo-mini{display:flex;align-items:center;gap:8px;flex:1;}
-
-/* Mini radar icon for workspace header */
-.radar-icon-mini{position:relative;width:28px;height:28px;flex-shrink:0;}
-.rim-outer{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(0,255,65,0.5);box-shadow:0 0 8px rgba(0,255,65,0.2);}
-.rim-sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 320deg,rgba(0,255,65,0.15) 345deg,rgba(0,255,65,0.8) 360deg);animation:sweep 2.5s linear infinite;}
-.rim-dot{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:3px;height:3px;border-radius:50%;background:var(--radar-green);box-shadow:0 0 5px var(--radar-green);}
-.left-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:1px;color:var(--accent2);}
-
-#resultCount{font-size:11px;color:var(--steel);background:rgba(0,255,65,0.06);padding:3px 9px;border-radius:20px;border:1px solid var(--border);white-space:nowrap;}
-.left-btns{padding:9px 10px;border-bottom:1.5px solid var(--border);display:flex;gap:7px;flex-shrink:0;}
-.left-btns button{flex:1;padding:8px 6px;border-radius:8px;border:1.5px solid var(--border);background:rgba(4,16,8,0.8);color:var(--steel);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;transition:all 0.15s;white-space:nowrap;min-width:0;font-weight:500;}
-.left-btns button:hover{border-color:rgba(0,255,65,0.4);color:var(--white);}
-.lbtn-back{color:var(--accent2)!important;border-color:rgba(0,255,65,0.3)!important;}
-.lbtn-route{color:var(--gold)!important;border-color:rgba(245,158,11,0.4)!important;}
-.lbtn-export{color:var(--blue2)!important;border-color:rgba(59,130,246,0.4)!important;}
-
-#resultList{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}
-#resultList::-webkit-scrollbar{width:3px;}
-#resultList::-webkit-scrollbar-thumb{background:rgba(0,255,65,0.2);border-radius:2px;}
-
-/* RESULT ROWS */
-.result{padding:14px 14px 13px;cursor:pointer;border-bottom:1px solid rgba(0,255,65,0.06);position:relative;transition:all 0.12s;animation:slideIn 0.3s ease-out both;}
-@keyframes slideIn{from{opacity:0;transform:translateX(-12px);}to{opacity:1;transform:translateX(0);}}
-.result:nth-child(even){background:rgba(0,10,2,0.6);}
-.result:nth-child(odd){background:rgba(180,220,185,0.92);}
-.result:nth-child(even) .result-name{color:#b8ffc8;}
-.result:nth-child(odd) .result-name{color:#021408;}
-.result:nth-child(even) .result-sub{color:#4a7a5a;}
-.result:nth-child(odd) .result-sub{color:#1a4a2a;}
-.result:hover{filter:brightness(1.1);}
-.result.active{background:rgba(0,255,65,0.18)!important;border-left:3px solid var(--radar-green);box-shadow:inset 0 0 20px rgba(0,255,65,0.1);}
-.result.active .result-name{color:var(--radar-green)!important;text-shadow:0 0 8px rgba(0,255,65,0.3);}
-.result.active .result-sub{color:rgba(0,255,65,0.6)!important;}
-/* Beacon ping on active result */
-.result.active::after{content:'';position:absolute;right:48px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:var(--radar-green);box-shadow:0 0 6px var(--radar-green);animation:resultPing 1.5s ease-out infinite;}
-@keyframes resultPing{0%{box-shadow:0 0 0 0 rgba(0,255,65,0.6);}70%{box-shadow:0 0 0 8px rgba(0,255,65,0);}100%{box-shadow:0 0 0 0 rgba(0,255,65,0);}}
-.result-name{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;letter-spacing:0.3px;line-height:1.2;padding-right:60px;}
-.result-sub{font-size:12px;margin-top:3px;padding-right:60px;font-weight:500;}
-.rbadge{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-family:'Rajdhani',sans-serif;font-weight:700;padding:3px 7px;border-radius:5px;letter-spacing:0.5px;}
-.rbadge.score{background:rgba(245,158,11,0.18);color:var(--gold);border:1px solid rgba(245,158,11,0.4);}
-.rbadge.dist{background:rgba(0,255,65,0.1);color:var(--accent2);border:1px solid rgba(0,255,65,0.3);}
-
-/* RIGHT PANEL */
-#right{flex:1;padding:22px;overflow-y:auto;background:transparent;min-height:100vh;}
-#right::-webkit-scrollbar{width:3px;}
-#right::-webkit-scrollbar-thumb{background:rgba(0,255,65,0.15);border-radius:2px;}
-
-/* Route banner */
-#routeBanner{display:none;margin-bottom:16px;padding:12px 16px;background:rgba(245,158,11,0.08);border:1.5px solid rgba(245,158,11,0.3);border-radius:12px;font-size:13px;color:var(--gold);align-items:center;gap:10px;flex-wrap:wrap;backdrop-filter:blur(8px);}
-#routeBanner.visible{display:flex;}
-#routeBanner button{padding:8px 16px;background:linear-gradient(135deg,#b45309,#f59e0b);color:#000;border:none;border-radius:8px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;}
-
-/* ══ STEEL CARD — pop effect ══ */
-.card{
-  background:linear-gradient(145deg,#bdd4c5,#a8c4b4,#94b4a4);
-  border:1.5px solid rgba(0,180,80,0.4);
-  border-radius:18px;max-width:700px;overflow:hidden;margin-bottom:16px;
-  box-shadow:0 4px 8px rgba(0,0,0,0.4),0 8px 24px rgba(0,0,0,0.35),0 0 0 1px rgba(0,200,80,0.15);
-  transform:translateY(0) scale(1);
-  transition:box-shadow 0.4s cubic-bezier(0.4,0,0.2,1),transform 0.4s cubic-bezier(0.4,0,0.2,1);
-  animation:cardIn 0.35s cubic-bezier(0.4,0,0.2,1);
+.splash-sweep {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  animation: sweepSpin 3s linear infinite;
+  background: conic-gradient(from 0deg,
+    rgba(0,255,65,0.0) 0deg,
+    rgba(0,255,65,0.20) 45deg,
+    rgba(0,255,65,0.0) 60deg
+  );
 }
-@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);}}
-.card.popped{
-  box-shadow:0 10px 20px rgba(0,0,0,0.5),0 28px 56px rgba(0,0,0,0.4),0 0 0 2px rgba(0,255,65,0.6),0 0 40px rgba(0,255,65,0.2),0 0 80px rgba(0,255,65,0.08);
-  transform:translateY(-5px) scale(1.006);
+
+@keyframes sweepSpin {
+  from { transform: translate(-50%,-50%) rotate(0deg); }
+  to   { transform: translate(-50%,-50%) rotate(360deg); }
 }
-@keyframes cardBeacon{
-  0%{box-shadow:0 4px 8px rgba(0,0,0,0.4),0 8px 24px rgba(0,0,0,0.35),0 0 0 0 rgba(0,255,65,0.7);}
-  40%{box-shadow:0 10px 20px rgba(0,0,0,0.5),0 28px 56px rgba(0,0,0,0.4),0 0 0 14px rgba(0,255,65,0.12),0 0 40px rgba(0,255,65,0.25);}
-  100%{box-shadow:0 10px 20px rgba(0,0,0,0.5),0 28px 56px rgba(0,0,0,0.4),0 0 0 2px rgba(0,255,65,0.6),0 0 40px rgba(0,255,65,0.2),0 0 80px rgba(0,255,65,0.08);}
+
+.splash-sweep-line {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 50%;
+  height: 1.5px;
+  background: linear-gradient(90deg, rgba(0,255,65,0.8), transparent);
+  transform-origin: left center;
+  animation: sweepSpin 3s linear infinite;
+  box-shadow: 0 0 8px rgba(0,255,65,0.5);
 }
-.card.popped{animation:cardBeacon 0.5s cubic-bezier(0.4,0,0.2,1) forwards;}
 
-.card-hdr{background:linear-gradient(135deg,#071a0c,#041009);border-bottom:1.5px solid rgba(0,200,80,0.2);padding:20px 22px;position:relative;overflow:hidden;}
-.card-hdr::after{content:'📡';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:44px;opacity:0.05;}
-.card-company{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:var(--white);letter-spacing:0.3px;margin-bottom:8px;padding-right:44px;}
-.card-meta{font-size:13px;color:#6aaa80;display:flex;gap:12px;flex-wrap:wrap;}
-.card-body{padding:20px 22px;background:linear-gradient(145deg,#bdd4c5,#a8c4b4);}
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
-.info-item{background:rgba(255,255,255,0.5);border:1.5px solid rgba(0,150,60,0.3);border-radius:10px;padding:12px 14px;backdrop-filter:blur(4px);}
-.info-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#1a5030;margin-bottom:4px;font-weight:700;}
-.info-value{font-size:14px;color:#021408;font-weight:600;word-break:break-all;}
-.score-wrap{margin-bottom:18px;}
-.score-label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-.score-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#1a5030;font-weight:700;}
-.score-num{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#065f2e;}
-.score-bg{background:rgba(0,0,0,0.12);border-radius:6px;height:8px;overflow:hidden;border:1px solid rgba(0,150,60,0.3);}
-.score-fill{height:100%;background:linear-gradient(90deg,#00a840,#f59e0b);border-radius:6px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1);}
-.divider{height:1.5px;background:rgba(0,150,60,0.2);margin:16px 0;}
-.actions-label{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#1a5030;margin-bottom:11px;font-weight:700;}
-.actions{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;}
-.abtn{padding:13px 10px;border-radius:11px;border:1.5px solid rgba(0,150,60,0.35);background:rgba(255,255,255,0.45);color:#021408;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;}
-.abtn:hover{border-color:var(--accent2);background:rgba(0,255,65,0.12);color:#021408;transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,200,80,0.2);}
-.abtn:active{transform:scale(0.96);}
-.abtn.green-btn{border-color:rgba(6,95,46,0.5);color:#021408;background:rgba(0,200,80,0.15);}
-.abtn.green-btn:hover{border-color:#00a840;background:rgba(0,200,80,0.25);}
-.abtn.gold-btn{border-color:rgba(245,158,11,0.5);color:#3d2000;background:rgba(245,158,11,0.15);}
-.abtn.gold-btn:hover{border-color:var(--gold);background:rgba(245,158,11,0.25);}
-
-/* DAY PLANNER */
-.planner{background:linear-gradient(135deg,rgba(2,10,4,0.96),rgba(4,16,8,0.94));border:1.5px solid rgba(0,255,65,0.22);border-radius:16px;max-width:700px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.5),0 0 20px rgba(0,255,65,0.06);animation:cardIn 0.35s cubic-bezier(0.4,0,0.2,1);backdrop-filter:blur(12px);}
-.planner-hdr{background:rgba(0,255,65,0.06);border-bottom:1.5px solid rgba(0,255,65,0.18);padding:20px 22px;}
-.planner-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--accent2);letter-spacing:1px;margin-bottom:4px;text-shadow:0 0 10px rgba(0,255,65,0.3);}
-.planner-sub{font-size:13px;color:var(--steel);}
-.planner-body{padding:20px 22px;}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:20px;}
-.stat{background:rgba(0,255,65,0.05);border:1.5px solid var(--border);border-radius:11px;padding:13px;text-align:center;}
-.stat-n{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:var(--accent2);text-shadow:0 0 8px rgba(0,255,65,0.3);}
-.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px;}
-.stops{margin-bottom:20px;}
-.stop{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,255,65,0.08);}
-.stop:last-child{border-bottom:none;}
-.stop-n{width:28px;height:28px;border-radius:50%;flex-shrink:0;background:rgba(0,255,65,0.1);border:1.5px solid rgba(0,255,65,0.4);color:var(--accent2);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;}
-.stop-i{flex:1;min-width:0;}
-.stop-name{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.stop-d{font-size:12px;color:var(--steel);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;}
-.stop-mi{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--accent2);white-space:nowrap;flex-shrink:0;}
-.planner-btns{display:flex;gap:9px;flex-wrap:wrap;}
-.pbtn{flex:1;min-width:140px;padding:13px;border-radius:10px;border:none;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all 0.15s;}
-.pbtn.primary{background:linear-gradient(135deg,#065f2e,#00a840);color:#001208;box-shadow:0 4px 16px rgba(0,200,80,0.3);}
-.pbtn.primary:active{transform:scale(0.97);}
-.pbtn.secondary{background:rgba(0,255,65,0.06);color:var(--accent2);border:1.5px solid rgba(0,255,65,0.3);}
-
-/* MOBILE DETAIL PANEL */
-#mobileDetailPanel{display:none;position:fixed;inset:0;background:rgba(2,10,4,0.97);z-index:500;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:slideUp 0.3s cubic-bezier(0.4,0,0.2,1);backdrop-filter:blur(12px);}
-#mobileDetailPanel.visible{display:block;}
-@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
-.mobile-detail-top{position:sticky;top:0;z-index:10;background:rgba(2,14,6,0.97);border-bottom:1.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;backdrop-filter:blur(12px);}
-.mobile-back-btn{padding:8px 16px;border-radius:8px;background:var(--accent-dim);border:1.5px solid rgba(0,255,65,0.35);color:var(--accent2);font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;}
-.mobile-detail-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.mobile-detail-body{padding:16px;}
-
-/* MOBILE NAV */
-#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(2,10,4,0.95);border-top:1.5px solid var(--border);padding:10px 16px calc(10px + var(--safe-bottom));z-index:200;gap:8px;justify-content:space-between;backdrop-filter:blur(12px);}
-#mobileNav.visible{display:flex;}
-#mobileNav button{flex:1;padding:10px 6px;border-radius:10px;border:1.5px solid var(--border);background:rgba(4,16,8,0.8);color:var(--steel);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;}
-#mobileNav button span.nav-icon{font-size:18px;}
-#mobileNav button:active{transform:scale(0.95);}
-#mobileNav .mnav-back{color:var(--accent2)!important;border-color:rgba(0,255,65,0.35)!important;}
-#mobileNav .mnav-route{color:var(--gold)!important;border-color:rgba(245,158,11,0.35)!important;}
-#mobileNav .mnav-export{color:var(--blue2)!important;border-color:rgba(59,130,246,0.35)!important;}
-
-/* EXPORT MODAL */
-#exportModal{display:none;position:fixed;inset:0;background:rgba(1,5,2,0.92);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(8px);padding:20px;}
-#exportModal.visible{display:flex;}
-.modal-box{background:rgba(4,20,8,0.97);border:1.5px solid var(--border2);border-radius:20px;padding:28px 24px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,0.7),0 0 30px rgba(0,255,65,0.1);animation:cardIn 0.3s cubic-bezier(0.4,0,0.2,1);}
-.modal-title{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--white);margin-bottom:8px;}
-.modal-sub{font-size:13px;color:var(--steel);margin-bottom:20px;line-height:1.5;}
-.modal-input{width:100%;padding:14px 16px;background:rgba(4,16,8,0.9);border:1.5px solid var(--border2);border-radius:10px;color:var(--white);font-family:'DM Sans',sans-serif;font-size:16px;outline:none;margin-bottom:12px;transition:border-color 0.2s;-webkit-appearance:none;}
-.modal-input:focus{border-color:var(--accent2);}
-#exportError{font-size:13px;color:var(--red);margin-bottom:12px;min-height:18px;}
-.modal-btns{display:flex;gap:10px;}
-.modal-btn{flex:1;padding:13px;border-radius:10px;border:none;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;letter-spacing:1px;cursor:pointer;}
-.modal-btn.confirm{background:linear-gradient(135deg,#065f2e,#00a840);color:#001208;}
-.modal-btn.cancel{background:rgba(255,255,255,0.04);color:var(--muted);border:1.5px solid var(--border);}
-
-/* MOBILE RESPONSIVE */
-@media(max-width:700px){
-  #home{padding:24px 16px 120px;}
-  .logo-wrap{gap:12px;margin-bottom:24px;}
-  .radar-logo-small{width:44px;height:44px;}
-  .logo-text{font-size:26px;}
-  .tabs{gap:7px;}
-  .tab{font-size:14px;padding:12px 8px;}
-  .stateBtn{padding:10px 14px;font-size:14px;}
-  .run-btn{font-size:17px;padding:17px;}
-  #workspace.visible{flex-direction:column;}
-  #left{width:100%;max-width:100%;height:auto;position:relative;border-right:none;border-bottom:1.5px solid var(--border);}
-  #right{display:none;}
-  #mobileNav.visible{display:flex;}
-  .result{padding:16px 14px 15px;}
-  .result-name{font-size:17px;}
-  .result-sub{font-size:13px;}
-  .card-hdr{padding:18px;}
-  .card-company{font-size:22px;}
-  .card-body{padding:16px 18px;}
-  .info-grid{grid-template-columns:1fr;gap:8px;}
-  .actions{grid-template-columns:1fr 1fr;}
-  .abtn{padding:14px 10px;font-size:14px;}
-  .planner-hdr,.planner-body{padding:18px;}
-  .stats{gap:8px;}
-  .stat{padding:11px;}
-  .stat-n{font-size:22px;}
-  .pbtn{font-size:15px;padding:13px;}
-  #routeBanner{display:none!important;}
+/* City blips on splash */
+.splash-blip {
+  position: absolute;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green), 0 0 25px rgba(0,255,65,0.4);
+  animation: blipFade 2s ease-in-out infinite;
 }
-@media(min-width:701px){#mobileDetailPanel{display:none!important;}#mobileNav{display:none!important;}}
-@media(min-width:701px) and (max-width:1024px){#left{width:42%;}}
+
+.splash-blip::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,255,65,0.5);
+  animation: blipRing 2s ease-out infinite;
+}
+
+@keyframes blipFade {
+  0%,100% { opacity:1; } 50% { opacity:0.35; }
+}
+
+@keyframes blipRing {
+  0%   { width:7px; height:7px; opacity:0.8; }
+  100% { width:28px; height:28px; opacity:0; }
+}
+
+/* Logo + text */
+#splash-logo {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: fadeInUp 1s ease 0.5s both;
+}
+
+@keyframes fadeInUp {
+  from { opacity:0; transform: translateY(20px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+#splash-logo svg {
+  width: 90px; height: 90px;
+  filter: drop-shadow(0 0 20px rgba(0,255,65,0.8));
+}
+
+.logo-sweep-anim {
+  animation: sweepSpin 3s linear infinite;
+  transform-origin: 45px 45px;
+}
+
+#splash-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 700;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: var(--green);
+  text-shadow: 0 0 30px rgba(0,255,65,0.8), 0 0 60px rgba(0,255,65,0.3);
+}
+
+#splash-sub {
+  font-size: 0.8rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+#splash-bar-wrap {
+  position: relative;
+  z-index: 2;
+  margin-top: 40px;
+  width: 240px;
+  animation: fadeInUp 1s ease 0.8s both;
+}
+
+#splash-bar-bg {
+  height: 2px;
+  background: rgba(0,255,65,0.15);
+  border-radius: 2px;
+}
+
+#splash-bar-fill {
+  height: 2px;
+  width: 0%;
+  background: var(--green);
+  border-radius: 2px;
+  box-shadow: 0 0 10px var(--green);
+  transition: width 0.1s linear;
+}
+
+#splash-status {
+  margin-top: 10px;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-align: center;
+  font-family: 'Rajdhani', sans-serif;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   PAGE TRANSITION FLASH
+   ============================================================ */
+#flash {
+  position: fixed;
+  inset: 0;
+  background: var(--green);
+  opacity: 0;
+  z-index: 8888;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+/* ============================================================
+   MAIN APP SHELL
+   ============================================================ */
+#app {
+  display: none;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background: var(--black);
+}
+
+#app.visible { display: flex; }
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+#header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(3,10,3,0.97);
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.header-logo {
+  width: 30px; height: 30px;
+  flex-shrink: 0;
+}
+
+.header-logo svg { width: 100%; height: 100%; }
+.header-logo .logo-sweep { animation: sweepSpin 3s linear infinite; transform-origin: 15px 15px; }
+
+#header h1 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--green);
+  text-shadow: 0 0 12px rgba(0,255,65,0.5);
+}
+
+.header-spacer { flex: 1; }
+
+#header-stats {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-align: right;
+  line-height: 1.5;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+#tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: rgba(3,10,3,0.95);
+  flex-shrink: 0;
+}
+
+.tab-btn {
+  padding: 9px 18px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  position: relative;
+  bottom: -1px;
+  transition: color 0.2s;
+}
+
+.tab-btn:hover { color: var(--green); }
+.tab-btn.active { color: var(--green); border-bottom: 2px solid var(--green); }
+
+/* ============================================================
+   MAIN CONTENT AREA
+   ============================================================ */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left panel */
+#left-panel {
+  width: 310px;
+  min-width: 260px;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+  flex-shrink: 0;
+}
+
+/* Right panel */
+#right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--black);
+}
+
+/* ============================================================
+   SEARCH CONTROLS
+   ============================================================ */
+#controls {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel2);
+}
+
+/* Tab content panels */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.search-input-wrap {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.search-input {
+  flex: 1;
+  background: rgba(0,255,65,0.06);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus { border-color: var(--green); }
+.search-input::placeholder { color: var(--text-dim); }
+
+.btn-primary {
+  padding: 7px 14px;
+  background: var(--green-dark);
+  border: 1px solid var(--green);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: var(--green);
+  color: var(--black);
+}
+
+/* State filters */
+#state-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.state-btn {
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+
+.state-btn.active {
+  background: rgba(0,255,65,0.12);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.state-btn:hover { border-color: var(--green); color: var(--green); }
+
+#select-all-btn {
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+
+#select-all-btn:hover, #select-all-btn.active {
+  border-color: var(--green);
+  color: var(--green);
+  background: rgba(0,255,65,0.08);
+}
+
+/* Radius controls */
+.radius-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.radius-row label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: 'Rajdhani', sans-serif;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   RESULTS LIST
+   ============================================================ */
+#results-count {
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  font-family: 'Rajdhani', sans-serif;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#results-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#results-list::-webkit-scrollbar { width: 4px; }
+#results-list::-webkit-scrollbar-track { background: transparent; }
+#results-list::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.2); border-radius: 2px; }
+
+.result-item {
+  padding: 9px 12px;
+  border-bottom: 1px solid rgba(0,255,65,0.06);
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+  animation: slideIn 0.25s ease both;
+}
+
+.result-item:nth-child(odd) { background: rgba(0,255,65,0.02); }
+.result-item:nth-child(even) { background: transparent; }
+
+@keyframes slideIn {
+  from { opacity:0; transform:translateX(-12px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+
+.result-item:hover { background: rgba(0,255,65,0.07); }
+
+.result-item.active {
+  background: rgba(0,255,65,0.1);
+  border-left: 3px solid var(--green);
+}
+
+.result-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-score {
+  position: absolute;
+  top: 9px; right: 10px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Beacon ping dot */
+.result-beacon {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  margin-right: 6px;
+  vertical-align: middle;
+  animation: beaconPulse 1.2s ease-in-out infinite;
+  position: relative;
+}
+
+@keyframes beaconPulse {
+  0%,100% { opacity:1; box-shadow:0 0 8px var(--green); }
+  50% { opacity:0.4; box-shadow:0 0 2px var(--green); }
+}
+
+/* CRM indicators in list */
+.crm-indicators {
+  display: flex;
+  gap: 4px;
+  margin-top: 3px;
+  align-items: center;
+}
+
+.crm-badge {
+  font-size: 0.62rem;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-called   { background: rgba(255,68,68,0.2);  color: #ff6666; border: 1px solid rgba(255,68,68,0.3); }
+.badge-new      { background: rgba(0,255,65,0.1);   color: var(--green); border: 1px solid var(--border); }
+.badge-contacted{ background: rgba(0,150,255,0.15); color: #44aaff; border: 1px solid rgba(0,150,255,0.3); }
+.badge-appt     { background: rgba(255,136,0,0.15); color: #ffaa44; border: 1px solid rgba(255,136,0,0.3); }
+.badge-proposal { background: rgba(200,0,255,0.15); color: #cc66ff; border: 1px solid rgba(200,0,255,0.3); }
+.badge-customer { background: rgba(0,255,65,0.2);   color: #00ff88; border: 1px solid rgba(0,255,65,0.4); font-weight:700; }
+.badge-dead     { background: rgba(100,100,100,0.2);color: #888;     border: 1px solid rgba(100,100,100,0.3); }
+
+.badge-hot  { background: rgba(255,68,68,0.2);  color: #ff6666; border: 1px solid rgba(255,68,68,0.3); }
+.badge-warm { background: rgba(255,136,0,0.15); color: #ffaa44; border: 1px solid rgba(255,136,0,0.3); }
+.badge-cold { background: rgba(0,100,200,0.15); color: #6699cc; border: 1px solid rgba(0,100,200,0.3); }
+
+.badge-followup { background: rgba(255,220,0,0.15); color: #ffdd44; border: 1px solid rgba(255,220,0,0.3); }
+
+/* ============================================================
+   DETAIL CARD
+   ============================================================ */
+#detail-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+#detail-panel::-webkit-scrollbar { width: 4px; }
+#detail-panel::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.2); border-radius: 2px; }
+
+#detail-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--text-dim);
+}
+
+#detail-empty svg { opacity: 0.2; }
+
+#detail-card {
+  display: none;
+  background: linear-gradient(135deg, #0a180a 0%, #060d06 100%);
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  box-shadow:
+    0 0 30px rgba(0,255,65,0.08),
+    inset 0 1px 0 rgba(0,255,65,0.15),
+    4px 6px 20px rgba(0,0,0,0.6);
+}
+
+/* Card header */
+.card-header {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.card-company-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px rgba(0,255,65,0.4);
+  flex: 1;
+}
+
+.card-state-badge {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Score bar */
+.score-section {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.score-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.score-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: rgba(0,255,65,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green-dark), var(--green));
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(0,255,65,0.5);
+  transition: width 0.4s ease;
+}
+
+.score-value {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--green);
+  white-space: nowrap;
+}
+
+/* Info grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  border-bottom: 1px solid var(--border);
+}
+
+.info-cell {
+  padding: 10px 20px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid rgba(0,255,65,0.06);
+}
+
+.info-cell:nth-child(even) { border-right: none; }
+
+.info-cell-label {
+  font-size: 0.65rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-family: 'Rajdhani', sans-serif;
+  margin-bottom: 3px;
+}
+
+.info-cell-value {
+  font-size: 0.85rem;
+  color: var(--silver);
+}
+
+/* Quick action buttons */
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.action-btn {
+  padding: 6px 12px;
+  background: rgba(0,255,65,0.06);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+}
+
+.action-btn:hover {
+  background: rgba(0,255,65,0.15);
+  border-color: var(--green);
+  box-shadow: 0 0 10px rgba(0,255,65,0.15);
+}
+
+.action-btn.danger {
+  color: #ff6666;
+  border-color: rgba(255,68,68,0.3);
+  background: rgba(255,68,68,0.06);
+}
+
+.action-btn.danger:hover {
+  background: rgba(255,68,68,0.15);
+  border-color: #ff4444;
+}
+
+/* ============================================================
+   PHASE 8 — CRM PANEL
+   ============================================================ */
+#crm-section {
+  padding: 16px 20px;
+}
+
+#crm-section h3 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#crm-section h3::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Pipeline status */
+.pipeline-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.pipeline-btn {
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.pipeline-btn:hover { border-color: var(--green); color: var(--green); }
+
+.pipeline-btn.active-new      { background:rgba(0,255,65,0.1);  color:var(--green); border-color:var(--green); }
+.pipeline-btn.active-contacted{ background:rgba(0,150,255,0.12);color:#44aaff; border-color:#44aaff; }
+.pipeline-btn.active-appt     { background:rgba(255,136,0,0.12);color:#ffaa44; border-color:#ffaa44; }
+.pipeline-btn.active-proposal { background:rgba(200,0,255,0.12);color:#cc66ff; border-color:#cc66ff; }
+.pipeline-btn.active-customer { background:rgba(0,255,65,0.2);  color:#00ff88; border-color:#00ff88; }
+.pipeline-btn.active-dead     { background:rgba(100,100,100,0.15);color:#888;  border-color:#666; }
+
+/* Priority / heat tag */
+.heat-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.heat-label {
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-family: 'Rajdhani', sans-serif;
+  margin-right: 4px;
+}
+
+.heat-btn {
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.heat-btn[data-heat="hot"]  { color:#ff6666; border-color:rgba(255,68,68,0.3); }
+.heat-btn[data-heat="warm"] { color:#ffaa44; border-color:rgba(255,136,0,0.3); }
+.heat-btn[data-heat="cold"] { color:#6699cc; border-color:rgba(0,100,200,0.3); }
+
+.heat-btn.active[data-heat="hot"]  { background:rgba(255,68,68,0.15); border-color:#ff4444; }
+.heat-btn.active[data-heat="warm"] { background:rgba(255,136,0,0.12); border-color:#ff8800; }
+.heat-btn.active[data-heat="cold"] { background:rgba(0,100,200,0.12); border-color:#4477bb; }
+
+.heat-btn:hover { opacity: 0.85; }
+
+/* Already called toggle */
+.called-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.called-toggle {
+  width: 38px; height: 20px;
+  background: rgba(0,255,65,0.1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.called-toggle.on {
+  background: rgba(255,68,68,0.2);
+  border-color: rgba(255,68,68,0.5);
+}
+
+.called-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  background: var(--text-dim);
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.called-toggle.on::after {
+  left: 20px;
+  background: #ff6666;
+  box-shadow: 0 0 6px rgba(255,68,68,0.6);
+}
+
+.called-toggle-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.called-toggle.on + .called-toggle-label {
+  color: #ff6666;
+}
+
+/* Follow-up date */
+.followup-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.followup-label {
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-family: 'Rajdhani', sans-serif;
+  white-space: nowrap;
+}
+
+.followup-input {
+  background: rgba(0,255,65,0.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  padding: 5px 9px;
+  outline: none;
+  flex: 1;
+  transition: border-color 0.2s;
+  color-scheme: dark;
+}
+
+.followup-input:focus { border-color: var(--green); }
+
+.btn-save-followup {
+  padding: 5px 10px;
+  background: var(--green-dark);
+  border: 1px solid var(--green);
+  border-radius: 3px;
+  color: var(--green);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+
+.btn-save-followup:hover { background: var(--green); color: var(--black); }
+
+/* Notes section */
+.notes-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.notes-header span {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Quick note tags */
+.note-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.note-tag {
+  padding: 4px 10px;
+  background: rgba(0,255,65,0.05);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.note-tag:hover {
+  background: rgba(0,255,65,0.12);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+/* Custom note input */
+.note-input-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.note-input {
+  flex: 1;
+  background: rgba(0,255,65,0.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  padding: 7px 10px;
+  outline: none;
+  resize: none;
+  transition: border-color 0.2s;
+  min-height: 38px;
+}
+
+.note-input:focus { border-color: var(--green); }
+.note-input::placeholder { color: var(--text-dim); }
+
+.btn-add-note {
+  padding: 7px 12px;
+  background: var(--green-dark);
+  border: 1px solid var(--green);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+  align-self: flex-start;
+}
+
+.btn-add-note:hover { background: var(--green); color: var(--black); }
+
+/* Notes timeline */
+#notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+#notes-list::-webkit-scrollbar { width: 3px; }
+#notes-list::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.2); border-radius: 2px; }
+
+.note-item {
+  background: rgba(0,255,65,0.04);
+  border: 1px solid rgba(0,255,65,0.1);
+  border-left: 3px solid var(--green-dark);
+  border-radius: 4px;
+  padding: 8px 10px;
+  position: relative;
+  animation: fadeInNote 0.2s ease;
+}
+
+@keyframes fadeInNote {
+  from { opacity:0; transform:translateY(-4px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.note-item.tag-note { border-left-color: var(--green); }
+
+.note-timestamp {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.note-text {
+  font-size: 0.82rem;
+  color: var(--silver);
+  line-height: 1.45;
+}
+
+.note-delete {
+  position: absolute;
+  top: 6px; right: 8px;
+  background: transparent;
+  border: none;
+  color: rgba(255,68,68,0.3);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.15s;
+  line-height: 1;
+}
+
+.note-delete:hover { color: #ff4444; }
+
+/* ============================================================
+   DAY PLAN / RADIUS
+   ============================================================ */
+#day-plan-section {
+  padding: 12px 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.day-plan-header {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.day-plan-stop {
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(0,255,65,0.06);
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.stop-num {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.stop-info { flex: 1; }
+.stop-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: 0.5px;
+}
+
+.stop-meta { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+.stop-dist {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   EXPORT MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 5000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal-box {
+  background: var(--panel2);
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  padding: 28px 32px;
+  min-width: 320px;
+  box-shadow: 0 0 40px rgba(0,255,65,0.15);
+}
+
+.modal-box h3 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  color: var(--green);
+}
+
+.modal-box input {
+  width: 100%;
+  background: rgba(0,255,65,0.06);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--green);
+  font-size: 0.9rem;
+  padding: 9px 12px;
+  outline: none;
+  margin-bottom: 14px;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 3px;
+}
+
+.modal-box input:focus { border-color: var(--green); }
+
+.modal-btns { display: flex; gap: 8px; }
+
+/* ============================================================
+   BOTTOM NAV — MOBILE
+   ============================================================ */
+#bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(3,10,3,0.97);
+  border-top: 1px solid var(--border);
+  padding: 8px 0;
+  z-index: 200;
+}
+
+.bottom-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.bottom-nav-btn.active { color: var(--green); }
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+.hidden { display: none !important; }
+
+.loading-spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid rgba(0,255,65,0.2);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast {
+  position: fixed;
+  bottom: 20px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(3,10,3,0.95);
+  border: 1px solid var(--border-bright);
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  color: var(--green);
+  z-index: 9000;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 680px) {
+  #left-panel { width: 100%; max-width: 100%; border-right: none; }
+  #right-panel { display: none; }
+  #right-panel.mobile-show { display: flex; position: fixed; inset: 0; top: 90px; z-index: 300; background: var(--black); }
+  #bottom-nav { display: flex; }
+  #main { padding-bottom: 56px; }
+}
 </style>
 </head>
 <body>
 
-<!-- ANIMATED MAP CANVAS BACKGROUND -->
-<canvas id="mapCanvas"></canvas>
-<div id="mapOverlay"></div>
-
-<!-- SPLASH -->
+<!-- ============================================================
+     SPLASH SCREEN
+     ============================================================ -->
 <div id="splash">
-  <div class="radar-logo-large">
-    <div class="rll-outer"></div>
-    <div class="rll-grid-h"></div>
-    <div class="rll-grid-v"></div>
-    <div class="rll-ring"></div>
-    <div class="rll-ring"></div>
-    <div class="rll-ring"></div>
-    <div class="rll-sweep"></div>
-    <div class="rll-center"></div>
-    <div class="rll-blip"></div>
-    <div class="rll-blip"></div>
-    <div class="rll-blip"></div>
-    <div class="rll-blip"></div>
-  </div>
-  <div class="splash-title">Prospect <span>Radar</span></div>
-  <div class="splash-sub" id="splashSub">Initializing...</div>
-  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
-</div>
+  <div id="splash-sat"></div>
+  <div id="splash-overlay"></div>
+  <div id="splash-grid"></div>
+  <div id="splash-scan"></div>
 
-<!-- LOADING OVERLAY -->
-<div id="loadingOverlay">
-  <div class="g-radar-spin">
-    <div class="grs-outer"></div>
-    <div class="grs-ring1"></div>
-    <div class="grs-ring2"></div>
-    <div class="grs-sweep"></div>
-    <div class="grs-dot"></div>
-    <div class="grs-ping"></div>
-    <div class="grs-ping"></div>
-    <div class="grs-ping"></div>
-  </div>
-  <div class="loading-text" id="loadingOverlayText">SCANNING</div>
-  <div class="loading-sub" id="loadingOverlaySub">Please wait...</div>
-</div>
-
-<!-- PAGE TRANSITION -->
-<div id="transOverlay"></div>
-
-<!-- HOME -->
-<div id="home" style="display:none;">
-  <div class="logo-wrap">
-    <div class="radar-logo-small">
-      <div class="rls-outer"></div>
-      <div class="rls-grid-h"></div>
-      <div class="rls-grid-v"></div>
-      <div class="rls-ring"></div>
-      <div class="rls-ring"></div>
-      <div class="rls-sweep"></div>
-      <div class="rls-center"></div>
-      <div class="rls-blip"></div>
-      <div class="rls-blip"></div>
-      <div class="rls-blip"></div>
-    </div>
-    <div class="logo-text-wrap">
-      <div class="logo-text"><span class="lt-p">Prospect </span><span class="lt-r">Radar</span></div>
-      <div class="logo-badge">LIVE V7</div>
-    </div>
+  <!-- Radar rings + sweep -->
+  <div id="splash-radar">
+    <div class="splash-ring" style="width:100%;height:100%;"></div>
+    <div class="splash-ring" style="width:75%;height:75%;"></div>
+    <div class="splash-ring" style="width:50%;height:50%;"></div>
+    <div class="splash-ring" style="width:25%;height:25%;"></div>
+    <div class="splash-sweep"></div>
+    <div class="splash-sweep-line"></div>
   </div>
 
-  <div class="tabs">
-    <div class="tab active" id="tabKeyword" onclick="switchTab('keyword')">🔍 Keyword Search</div>
-    <div class="tab" id="tabRadius" onclick="switchTab('radius')">📍 Radius + Day Plan</div>
+  <!-- City blips (positioned for OH/IN/KY territory on screen) -->
+  <div class="splash-blip" style="top:38%;left:60%"></div>
+  <div class="splash-blip" style="top:31%;left:54%;animation-delay:0.5s"></div>
+  <div class="splash-blip" style="top:44%;left:57%;animation-delay:0.9s"></div>
+  <div class="splash-blip" style="top:40%;left:65%;animation-delay:0.3s"></div>
+  <div class="splash-blip" style="top:47%;left:62%;animation-delay:1.3s"></div>
+  <div class="splash-blip" style="top:33%;left:48%;animation-delay:0.7s"></div>
+  <div class="splash-blip" style="top:51%;left:52%;animation-delay:1.6s"></div>
+  <div class="splash-blip" style="top:55%;left:59%;animation-delay:1.1s"></div>
+
+  <!-- Logo -->
+  <div id="splash-logo">
+    <svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="45" cy="45" r="42" stroke="#00ff41" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="45" cy="45" r="30" stroke="#00ff41" stroke-width="1.5" opacity="0.25"/>
+      <circle cx="45" cy="45" r="18" stroke="#00ff41" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="45" cy="45" r="6" stroke="#00ff41" stroke-width="1.5" opacity="0.5"/>
+      <g class="logo-sweep-anim">
+        <path d="M45 45 L45 3" stroke="#00ff41" stroke-width="2" stroke-linecap="round"/>
+        <path d="M45 45 L45 3" stroke="#00ff41" stroke-width="18" stroke-linecap="round"
+              opacity="0.08" transform="rotate(-30 45 45)"/>
+      </g>
+      <circle cx="45" cy="45" r="4" fill="#00ff41" opacity="0.9"/>
+    </svg>
+    <div id="splash-title">RADARPRO</div>
+    <div id="splash-sub">Sales Intelligence Platform</div>
   </div>
 
-  <div id="loadingMsg"></div>
-
-  <div class="search-panel active" id="panelKeyword">
-    <div class="input-wrap">
-      <span class="iicon">🔍</span>
-      <input id="kw" placeholder="Search by company, city, industry, or keyword..." disabled autocomplete="off">
+  <!-- Progress bar -->
+  <div id="splash-bar-wrap">
+    <div id="splash-bar-bg">
+      <div id="splash-bar-fill"></div>
     </div>
-    <div class="states-header">
-      <div class="section-label">Filter by State</div>
-      <div class="select-all-btn" id="selectAllBtn" onclick="toggleAllStates()">Select All</div>
-    </div>
-    <div id="states"></div>
-    <button class="run-btn green" id="searchBtn" onclick="runKeywordSearch()" disabled>⚡ Run Search</button>
-  </div>
-
-  <div class="search-panel" id="panelRadius">
-    <div class="input-wrap">
-      <span class="iicon">📍</span>
-      <input id="radiusLocation" placeholder="Enter prospect location — city, zip, or address..." disabled autocomplete="off" autocorrect="off">
-    </div>
-    <div class="input-wrap">
-      <span class="iicon">🏭</span>
-      <input id="radiusKeyword" placeholder="Keyword filter — metal, fabrication, tooling... (optional)" disabled autocomplete="off">
-    </div>
-    <div class="radius-label-row">
-      <div class="section-label">Miles Radius from Location</div>
-      <div class="radius-label-hint">drag to adjust</div>
-    </div>
-    <div class="radius-row">
-      <input type="range" id="radiusSlider" min="5" max="150" value="35" oninput="updateRadius()">
-      <div class="radius-val"><span id="radiusDisplay">35</span> mi</div>
-    </div>
-    <div id="geocodeStatus"></div>
-    <button class="run-btn gold" id="radiusBtn" onclick="runRadiusSearch()" disabled>🗺️ Build My Sales Day Plan</button>
+    <div id="splash-status">Initializing...</div>
   </div>
 </div>
 
-<!-- WORKSPACE -->
-<div id="workspace">
-  <div id="left">
-    <div class="left-top">
-      <div class="left-logo-mini">
-        <div class="radar-icon-mini">
-          <div class="rim-outer"></div>
-          <div class="rim-sweep"></div>
-          <div class="rim-dot"></div>
-        </div>
-        <div class="left-title">Radar PRO</div>
-      </div>
-      <div id="resultCount">—</div>
-    </div>
-    <div class="left-btns">
-      <button class="lbtn-back" onclick="goHome()">⬅ Search</button>
-      <button class="lbtn-route" onclick="openAllRoute()">🗺️ Route All</button>
-      <button class="lbtn-export" onclick="showExportModal()">⬇ Export</button>
-    </div>
-    <div id="resultList"></div>
-  </div>
-  <div id="right">
-    <div id="routeBanner">
-      <span>🗺️ <span id="routeCount">0</span> prospects ready for routing</span>
-      <button onclick="openAllRoute()">Open Full Route in Google Maps</button>
-    </div>
-    <div id="detail"></div>
-  </div>
-</div>
+<!-- ============================================================
+     FLASH OVERLAY
+     ============================================================ -->
+<div id="flash"></div>
 
-<!-- MOBILE DETAIL -->
-<div id="mobileDetailPanel">
-  <div class="mobile-detail-top">
-    <button class="mobile-back-btn" onclick="closeMobileDetail()">← Back</button>
-    <div class="mobile-detail-title" id="mobileDetailTitle">—</div>
-  </div>
-  <div class="mobile-detail-body" id="mobileDetailBody"></div>
-</div>
-
-<!-- MOBILE NAV -->
-<div id="mobileNav">
-  <button class="mnav-back" onclick="goHome()"><span class="nav-icon">⬅</span>Search</button>
-  <button class="mnav-route" onclick="openAllRoute()"><span class="nav-icon">🗺️</span>Route All</button>
-  <button class="mnav-export" onclick="showExportModal()"><span class="nav-icon">⬇</span>Export</button>
-</div>
-
-<!-- EXPORT MODAL -->
-<div id="exportModal">
+<!-- ============================================================
+     EXPORT MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="export-modal">
   <div class="modal-box">
-    <div class="modal-title">🔒 Export Results</div>
-    <div class="modal-sub">Password protected. Enter your access code to download results as CSV.</div>
-    <input class="modal-input" type="password" id="exportPass" placeholder="Enter access password..." onkeydown="if(event.key==='Enter')confirmExport()">
-    <div id="exportError"></div>
+    <h3>⬡ Export CSV</h3>
+    <input type="password" id="export-pw" placeholder="Enter password" autocomplete="off"/>
     <div class="modal-btns">
-      <button class="modal-btn cancel" onclick="closeExportModal()">Cancel</button>
-      <button class="modal-btn confirm" onclick="confirmExport()">Download CSV</button>
+      <button class="btn-primary" onclick="doExport()">Export</button>
+      <button class="action-btn" onclick="closeExport()">Cancel</button>
     </div>
+    <div id="export-err" style="color:#ff4444;font-size:0.78rem;margin-top:10px;display:none;">Incorrect password</div>
   </div>
 </div>
 
+<!-- ============================================================
+     TOAST
+     ============================================================ -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================================================
+     MAIN APP
+     ============================================================ -->
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div class="header-logo">
+      <svg viewBox="0 0 30 30" fill="none">
+        <circle cx="15" cy="15" r="13" stroke="#00ff41" stroke-width="1" opacity="0.3"/>
+        <circle cx="15" cy="15" r="8"  stroke="#00ff41" stroke-width="1" opacity="0.25"/>
+        <circle cx="15" cy="15" r="3.5" stroke="#00ff41" stroke-width="1" opacity="0.4"/>
+        <g class="logo-sweep" style="transform-origin:15px 15px">
+          <path d="M15 15 L15 2" stroke="#00ff41" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M15 15 L15 2" stroke="#00ff41" stroke-width="7" stroke-linecap="round" opacity="0.07" transform="rotate(-25 15 15)"/>
+        </g>
+        <circle cx="15" cy="15" r="2" fill="#00ff41" opacity="0.9"/>
+      </svg>
+    </div>
+    <h1>⬡ RADARPRO</h1>
+    <div class="header-spacer"></div>
+    <div id="header-stats">
+      <span id="stat-loaded">Loading...</span><br>
+      <span id="stat-states">8 States</span>
+    </div>
+    <button class="action-btn" style="margin-left:8px" onclick="openExport()">⬇ CSV</button>
+  </div>
+
+  <!-- TABS -->
+  <div id="tabs">
+    <button class="tab-btn active" onclick="switchTab('keyword')">Keyword Search</button>
+    <button class="tab-btn" onclick="switchTab('radius')">Radius + Day Plan</button>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- LEFT PANEL -->
+    <div id="left-panel">
+
+      <!-- CONTROLS -->
+      <div id="controls">
+
+        <!-- KEYWORD TAB CONTROLS -->
+        <div class="tab-content active" id="ctrl-keyword">
+          <div class="search-input-wrap">
+            <input class="search-input" id="keyword-input" type="text" placeholder="Search companies..." autocomplete="off">
+            <button class="btn-primary" onclick="doKeywordSearch()">SCAN</button>
+          </div>
+
+          <!-- State filters -->
+          <div id="state-filters">
+            <button id="select-all-btn" class="active" onclick="toggleSelectAll()">All</button>
+          </div>
+
+          <!-- Pipeline filter -->
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">
+            <span style="font-size:0.65rem;color:var(--text-dim);font-family:'Rajdhani',sans-serif;letter-spacing:1px;text-transform:uppercase;align-self:center;margin-right:2px;">Filter:</span>
+            <button class="crm-badge badge-new" style="cursor:pointer;padding:2px 7px;" onclick="filterPipeline('all')" id="pf-all">All</button>
+            <button class="crm-badge badge-new"       onclick="filterPipeline('New')"       id="pf-New">New</button>
+            <button class="crm-badge badge-contacted" onclick="filterPipeline('Contacted')" id="pf-Contacted">Contacted</button>
+            <button class="crm-badge badge-appt"      onclick="filterPipeline('Appt Set')"  id="pf-Appt">Appt</button>
+            <button class="crm-badge badge-customer"  onclick="filterPipeline('Customer')"  id="pf-Customer">Customer</button>
+            <button class="crm-badge badge-called"    onclick="filterPipeline('called')"    id="pf-called">Called</button>
+            <button class="crm-badge badge-followup"  onclick="filterPipeline('followup')"  id="pf-followup">Follow-up</button>
+          </div>
+        </div>
+
+        <!-- RADIUS TAB CONTROLS -->
+        <div class="tab-content" id="ctrl-radius">
+          <div class="search-input-wrap">
+            <input class="search-input" id="location-input" type="text" placeholder="City, address, or zip..." autocomplete="off">
+          </div>
+          <div class="radius-row">
+            <label>Radius</label>
+            <input class="search-input" id="radius-input" type="number" value="25" min="1" max="200" style="width:70px">
+            <label>mi &nbsp;·&nbsp; Keyword</label>
+            <input class="search-input" id="radius-keyword" type="text" placeholder="Optional" autocomplete="off" style="flex:1">
+          </div>
+          <button class="btn-primary" style="width:100%" onclick="doRadiusSearch()">⬡ BUILD DAY PLAN</button>
+        </div>
+
+      </div><!-- /controls -->
+
+      <!-- RESULTS COUNT -->
+      <div id="results-count">Ready — enter search above</div>
+
+      <!-- RESULTS LIST -->
+      <div id="results-list"></div>
+
+    </div><!-- /left-panel -->
+
+    <!-- RIGHT PANEL -->
+    <div id="right-panel">
+      <div id="detail-panel">
+
+        <!-- Empty state -->
+        <div id="detail-empty">
+          <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+            <circle cx="30" cy="30" r="28" stroke="#00ff41" stroke-width="1" opacity="0.3"/>
+            <circle cx="30" cy="30" r="18" stroke="#00ff41" stroke-width="1" opacity="0.2"/>
+            <circle cx="30" cy="30" r="8"  stroke="#00ff41" stroke-width="1" opacity="0.3"/>
+            <line x1="30" y1="2" x2="30" y2="58" stroke="#00ff41" stroke-width="0.5" opacity="0.15"/>
+            <line x1="2"  y1="30" x2="58" y2="30" stroke="#00ff41" stroke-width="0.5" opacity="0.15"/>
+          </svg>
+          <span style="font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase;font-size:0.8rem;">Select a prospect to view details</span>
+        </div>
+
+        <!-- Detail card -->
+        <div id="detail-card">
+
+          <!-- Card header -->
+          <div class="card-header">
+            <div>
+              <div class="card-company-name" id="d-company"></div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:3px;" id="d-address"></div>
+            </div>
+            <div class="card-state-badge" id="d-state"></div>
+          </div>
+
+          <!-- Score bar -->
+          <div class="score-section">
+            <span class="score-label">Prospect Score</span>
+            <div class="score-bar-bg">
+              <div class="score-bar-fill" id="d-score-bar"></div>
+            </div>
+            <span class="score-value" id="d-score-val"></span>
+          </div>
+
+          <!-- Info grid -->
+          <div class="info-grid">
+            <div class="info-cell">
+              <div class="info-cell-label">Phone</div>
+              <div class="info-cell-value" id="d-phone"></div>
+            </div>
+            <div class="info-cell">
+              <div class="info-cell-label">Email</div>
+              <div class="info-cell-value" id="d-email" style="word-break:break-all"></div>
+            </div>
+            <div class="info-cell">
+              <div class="info-cell-label">Employees on Site</div>
+              <div class="info-cell-value" id="d-employees"></div>
+            </div>
+            <div class="info-cell">
+              <div class="info-cell-label">Year Established</div>
+              <div class="info-cell-value" id="d-year"></div>
+            </div>
+            <div class="info-cell" style="grid-column:1/-1">
+              <div class="info-cell-label">Website</div>
+              <div class="info-cell-value" id="d-website"></div>
+            </div>
+          </div>
+
+          <!-- Quick actions -->
+          <div class="action-row">
+            <a class="action-btn" id="act-call" href="#">📞 Call</a>
+            <a class="action-btn" id="act-email" href="#">✉ Email</a>
+            <a class="action-btn" id="act-dir" href="#" target="_blank">🧭 Directions</a>
+            <a class="action-btn" id="act-web" href="#" target="_blank">🌐 Website</a>
+            <a class="action-btn" id="act-mymaps" href="#" target="_blank">🗺 My Maps</a>
+            <a class="action-btn" id="act-route" href="#" target="_blank">🚗 Route</a>
+          </div>
+
+          <!-- ====== PHASE 8 CRM SECTION ====== -->
+          <div id="crm-section">
+            <h3>CRM</h3>
+
+            <!-- Pipeline status -->
+            <div style="margin-bottom:8px;">
+              <div style="font-size:0.68rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);font-family:'Rajdhani',sans-serif;margin-bottom:6px;">Pipeline Stage</div>
+              <div class="pipeline-row" id="pipeline-btns">
+                <button class="pipeline-btn" data-stage="New"       onclick="setPipeline('New')">New</button>
+                <button class="pipeline-btn" data-stage="Contacted" onclick="setPipeline('Contacted')">Contacted</button>
+                <button class="pipeline-btn" data-stage="Appt Set"  onclick="setPipeline('Appt Set')">Appt Set</button>
+                <button class="pipeline-btn" data-stage="Proposal"  onclick="setPipeline('Proposal')">Proposal</button>
+                <button class="pipeline-btn" data-stage="Customer"  onclick="setPipeline('Customer')">Customer</button>
+                <button class="pipeline-btn" data-stage="Dead"      onclick="setPipeline('Dead')">Dead</button>
+              </div>
+            </div>
+
+            <!-- Heat / priority -->
+            <div class="heat-row">
+              <span class="heat-label">Priority</span>
+              <button class="heat-btn" data-heat="hot"  onclick="setHeat('hot')">🔥 Hot</button>
+              <button class="heat-btn" data-heat="warm" onclick="setHeat('warm')">🌤 Warm</button>
+              <button class="heat-btn" data-heat="cold" onclick="setHeat('cold')">❄ Cold</button>
+            </div>
+
+            <!-- Already Called -->
+            <div class="called-toggle-wrap">
+              <div class="called-toggle" id="called-toggle" onclick="toggleCalled()"></div>
+              <span class="called-toggle-label" id="called-label">Already Called</span>
+            </div>
+
+            <!-- Follow-up date -->
+            <div class="followup-row">
+              <span class="followup-label">Follow-up Date</span>
+              <input class="followup-input" type="date" id="followup-date">
+              <button class="btn-save-followup" onclick="saveFollowup()">Save</button>
+            </div>
+
+            <!-- Notes -->
+            <div class="notes-header">
+              <span>Notes</span>
+            </div>
+
+            <!-- Quick tag notes -->
+            <div class="note-tags">
+              <button class="note-tag" onclick="addTagNote('Left voicemail')">📞 Left voicemail</button>
+              <button class="note-tag" onclick="addTagNote('Spoke to owner')">🤝 Spoke to owner</button>
+              <button class="note-tag" onclick="addTagNote('Send literature')">📄 Send literature</button>
+              <button class="note-tag" onclick="addTagNote('Call back requested')">🔁 Call back</button>
+              <button class="note-tag" onclick="addTagNote('Not interested')">✗ Not interested</button>
+            </div>
+
+            <!-- Custom note input -->
+            <div class="note-input-row">
+              <input class="note-input" type="text" id="note-input" placeholder="Add a note..." autocomplete="off">
+              <button class="btn-add-note" onclick="addCustomNote()">+ Add</button>
+            </div>
+
+            <!-- Notes timeline -->
+            <div id="notes-list"></div>
+
+          </div><!-- /crm-section -->
+
+        </div><!-- /detail-card -->
+
+      </div><!-- /detail-panel -->
+
+      <!-- Day Plan (shown for radius tab) -->
+      <div id="day-plan-section" class="hidden">
+        <div class="day-plan-header">
+          <span id="dp-title">Day Plan</span>
+          <a id="dp-maps-link" class="action-btn" href="#" target="_blank">Open in Maps</a>
+        </div>
+        <div id="dp-stops"></div>
+      </div>
+
+    </div><!-- /right-panel -->
+
+  </div><!-- /main -->
+
+</div><!-- /app -->
+
+<!-- Bottom nav mobile -->
+<div id="bottom-nav">
+  <button class="bottom-nav-btn active" onclick="mobileShowPanel('list')">📋<br>List</button>
+  <button class="bottom-nav-btn" onclick="mobileShowPanel('detail')">🏢<br>Detail</button>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
 <script>
-const API="https://radarpro-api.onrender.com";
-const EXPORT_PASSWORD="radar2026";
-const MAX_SCORE=20;
+'use strict';
 
-let DATA=[],RESULTS=[],ACTIVE_STATES=[],ACTIVE_INDEX=-1,CURRENT_MODE="keyword",RADIUS_CENTER=null,ALL_SELECTED=false;
-const STATE_LIST=["OH","IN","MI","KY","TN","WV","PA","AL"];
+// ============================================================
+// CONFIG
+// ============================================================
+const API = 'https://radarpro-api.onrender.com';
+const MAX_SCORE = 20;
+const EXPORT_PASSWORD = 'radar2026';
+const STATES = ['OH','IN','MI','KY','TN','WV','PA','AL'];
+const QUICK_TAGS = ['Left voicemail','Spoke to owner','Send literature','Call back requested','Not interested'];
+const PIPELINE_STAGES = ['New','Contacted','Appt Set','Proposal','Customer','Dead'];
 
-function isMobile(){return window.innerWidth<=700;}
-function safe(s){const d=document.createElement("div");d.textContent=s||"";return d.innerHTML;}
-function txt(s){return String(s||"").trim();}
+// ============================================================
+// STATE
+// ============================================================
+let allData = [];
+let filteredData = [];
+let selectedStates = new Set(STATES);
+let activeResultKey = null;
+let currentProspect = null;
+let currentTab = 'keyword';
+let pipelineFilter = 'all';
 
-/* ══════════════════════════════════
-   ANIMATED MAP BACKGROUND (Canvas)
-   Draws a stylized US map with radar sweep + blips
-   Slowly pans/zooms like a screensaver
-══════════════════════════════════ */
-(function initMapBackground(){
-  const canvas=document.getElementById("mapCanvas");
-  const ctx=canvas.getContext("2d");
-  let W,H,t=0;
+// CRM storage key helpers
+const crmKey = (company, city, state) => `crm_${company}_${city}_${state}`.replace(/[^a-zA-Z0-9_]/g,'_').substring(0,80);
 
-  // Simplified US state outline points (normalized 0-1)
-  const US_OUTLINE=[
-    [0.08,0.28],[0.12,0.18],[0.18,0.12],[0.25,0.08],[0.35,0.06],[0.45,0.05],
-    [0.55,0.06],[0.62,0.08],[0.68,0.10],[0.72,0.08],[0.78,0.06],[0.84,0.08],
-    [0.90,0.12],[0.94,0.18],[0.96,0.25],[0.94,0.32],[0.92,0.38],[0.90,0.44],
-    [0.88,0.50],[0.86,0.55],[0.84,0.60],[0.82,0.65],[0.78,0.68],[0.74,0.70],
-    [0.70,0.72],[0.66,0.74],[0.62,0.75],[0.58,0.74],[0.54,0.72],[0.50,0.70],
-    [0.46,0.68],[0.42,0.67],[0.38,0.65],[0.34,0.62],[0.30,0.60],[0.26,0.58],
-    [0.22,0.54],[0.18,0.50],[0.14,0.46],[0.10,0.42],[0.08,0.36],[0.08,0.28]
-  ];
-
-  // City dots (prospect concentrations)
-  const CITIES=[
-    {x:0.72,y:0.38,r:3,name:"OH"},{x:0.68,y:0.40,r:2.5,name:"IN"},
-    {x:0.66,y:0.32,r:2.5,name:"MI"},{x:0.74,y:0.44,r:2,name:"WV"},
-    {x:0.76,y:0.48,r:2,name:"KY"},{x:0.72,y:0.55,r:2,name:"TN"},
-    {x:0.78,y:0.36,r:2,name:"PA"},{x:0.62,y:0.62,r:2,name:"AL"},
-    // Other major metros
-    {x:0.87,y:0.35,r:3,name:"NYC"},{x:0.42,y:0.30,r:3,name:"CHI"},
-    {x:0.18,y:0.42,r:3,name:"LA"},{x:0.14,y:0.28,r:2,name:"SEA"},
-    {x:0.88,y:0.60,r:2.5,name:"ATL"},{x:0.52,y:0.52,r:2,name:"DAL"},
-    {x:0.24,y:0.52,r:2,name:"PHX"},{x:0.38,y:0.25,r:2,name:"DEN"},
-  ];
-
-  // Moving blips
-  let blips=[];
-  function spawnBlip(){
-    const city=CITIES[Math.floor(Math.random()*CITIES.length)];
-    blips.push({x:city.x+(Math.random()-0.5)*0.08,y:city.y+(Math.random()-0.5)*0.08,life:1,maxLife:1,r:Math.random()*3+1.5});
-  }
-
-  // Screensaver pan/zoom state
-  let panX=0,panY=0,panVX=0.00008,panVY=0.00005,zoom=1,zoomDir=0.0001;
-  let lastBlipTime=0;
-
-  function resize(){
-    W=canvas.width=window.innerWidth;
-    H=canvas.height=window.innerHeight;
-  }
-
-  function draw(ts){
-    requestAnimationFrame(draw);
-    t=ts*0.001;
-
-    // Screensaver pan bounce
-    panX+=panVX;panY+=panVY;
-    zoom+=zoomDir;
-    if(zoom>1.08||zoom<0.96){zoomDir*=-1;}
-    if(panX>0.04||panX<-0.04)panVX*=-1;
-    if(panY>0.04||panY<-0.04)panVY*=-1;
-
-    ctx.clearRect(0,0,W,H);
-
-    ctx.save();
-    ctx.translate(W/2+panX*W,H/2+panY*H);
-    ctx.scale(zoom,zoom);
-    ctx.translate(-W/2,-H/2);
-
-    // Background — deep green-black
-    ctx.fillStyle="#010a03";
-    ctx.fillRect(0,0,W,H);
-
-    // Grid lines — much brighter
-    ctx.strokeStyle="rgba(0,255,65,0.12)";
-    ctx.lineWidth=1;
-    const gridSize=Math.max(W,H)/14;
-    for(let x=0;x<W;x+=gridSize){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-    for(let y=0;y<H;y+=gridSize){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-
-    // US map scale/position
-    const mapW=W*0.78,mapH=H*0.72,mapX=(W-mapW)*0.5,mapY=(H-mapH)*0.42;
-
-    // Draw US outline (filled with glow)
-    ctx.beginPath();
-    US_OUTLINE.forEach(([px,py],i)=>{
-      const sx=mapX+px*mapW,sy=mapY+py*mapH;
-      i===0?ctx.moveTo(sx,sy):ctx.lineTo(sx,sy);
-    });
-    ctx.closePath();
-    ctx.fillStyle="rgba(0,80,30,0.28)";
-    ctx.fill();
-    // Glow border
-    ctx.shadowColor="rgba(0,255,65,0.4)";
-    ctx.shadowBlur=8;
-    ctx.strokeStyle="rgba(0,255,65,0.55)";
-    ctx.lineWidth=2;
-    ctx.stroke();
-    ctx.shadowBlur=0;
-
-    // State region lines — more visible
-    ctx.strokeStyle="rgba(0,255,65,0.14)";
-    ctx.lineWidth=0.8;
-    for(let i=0;i<8;i++){
-      const x=mapX+mapW*(0.12+i*0.1);
-      ctx.beginPath();ctx.moveTo(x,mapY+mapH*0.05);ctx.lineTo(x,mapY+mapH*0.78);ctx.stroke();
-    }
-    for(let i=0;i<5;i++){
-      const y=mapY+mapH*(0.1+i*0.16);
-      ctx.beginPath();ctx.moveTo(mapX+mapW*0.05,y);ctx.lineTo(mapX+mapW*0.96,y);ctx.stroke();
-    }
-
-    // City dots — bright and glowing
-    CITIES.forEach(c=>{
-      const cx=mapX+c.x*mapW,cy=mapY+c.y*mapH;
-      const pulse=(Math.sin(t*1.8+c.x*12)+1)*0.5;
-      // Outer pulse ring
-      ctx.beginPath();ctx.arc(cx,cy,c.r*3+pulse*5,0,Math.PI*2);
-      ctx.strokeStyle=`rgba(0,255,65,${0.15+pulse*0.12})`;ctx.lineWidth=1;ctx.stroke();
-      // Inner ring
-      ctx.beginPath();ctx.arc(cx,cy,c.r*1.8,0,Math.PI*2);
-      ctx.strokeStyle=`rgba(0,255,65,${0.3+pulse*0.2})`;ctx.lineWidth=0.8;ctx.stroke();
-      // Core dot with glow
-      ctx.shadowColor="rgba(0,255,65,0.8)";
-      ctx.shadowBlur=c.r*4;
-      ctx.beginPath();ctx.arc(cx,cy,c.r,0,Math.PI*2);
-      ctx.fillStyle=`rgba(0,255,65,${0.8+pulse*0.2})`;ctx.fill();
-      ctx.shadowBlur=0;
-    });
-
-    // Full-screen radar sweep — much more visible
-    const sweepAngle=(t*0.45)%(Math.PI*2);
-    ctx.save();
-    ctx.translate(W*0.5,H*0.5);
-    ctx.rotate(sweepAngle);
-    // Bright sweep beam
-    const grad=ctx.createLinearGradient(0,0,Math.max(W,H)*0.8,0);
-    grad.addColorStop(0,"rgba(0,255,65,0.25)");
-    grad.addColorStop(0.3,"rgba(0,255,65,0.08)");
-    grad.addColorStop(1,"rgba(0,255,65,0)");
-    ctx.fillStyle=grad;
-    ctx.beginPath();ctx.moveTo(0,0);
-    for(let a=-0.45;a<=0.45;a+=0.04){
-      const r=Math.max(W,H)*1.2;
-      ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);
-    }
-    ctx.closePath();ctx.fill();
-    // Leading edge bright line
-    ctx.strokeStyle="rgba(0,255,65,0.5)";
-    ctx.lineWidth=1.5;
-    ctx.shadowColor="rgba(0,255,65,0.6)";ctx.shadowBlur=6;
-    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.max(W,H)*1.2,0);ctx.stroke();
-    ctx.shadowBlur=0;
-    ctx.restore();
-
-    // Radar rings from center — brighter
-    [0.12,0.24,0.37,0.50,0.63].forEach((rf,i)=>{
-      const r=Math.min(W,H)*rf;
-      const alpha=0.12+Math.sin(t*0.6+i*0.8)*0.05;
-      ctx.beginPath();ctx.arc(W*0.5,H*0.5,r,0,Math.PI*2);
-      ctx.strokeStyle=`rgba(0,255,65,${alpha})`;ctx.lineWidth=1;ctx.stroke();
-    });
-    // Center crosshairs
-    ctx.strokeStyle="rgba(0,255,65,0.1)";ctx.lineWidth=0.8;
-    ctx.beginPath();ctx.moveTo(W*0.5,0);ctx.lineTo(W*0.5,H);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(0,H*0.5);ctx.lineTo(W,H*0.5);ctx.stroke();
-
-    // Moving blips — bigger and brighter
-    if(t-lastBlipTime>0.35){spawnBlip();lastBlipTime=t;}
-    blips=blips.filter(b=>b.life>0);
-    blips.forEach(b=>{
-      b.life-=0.007;
-      const cx=mapX+b.x*mapW,cy=mapY+b.y*mapH;
-      const a=b.life;
-      ctx.shadowColor="rgba(0,255,65,0.9)";ctx.shadowBlur=8;
-      ctx.beginPath();ctx.arc(cx,cy,b.r*1.2,0,Math.PI*2);
-      ctx.fillStyle=`rgba(0,255,65,${Math.min(a*1.2,1)})`;ctx.fill();
-      ctx.shadowBlur=0;
-      // ping ring
-      const pingR=b.r*(1+(1-b.life)*6);
-      ctx.beginPath();ctx.arc(cx,cy,pingR,0,Math.PI*2);
-      ctx.strokeStyle=`rgba(0,255,65,${a*0.5})`;ctx.lineWidth=1;ctx.stroke();
-    });
-
-    ctx.restore();
-  }
-
-  resize();
-  window.addEventListener("resize",resize);
-  requestAnimationFrame(draw);
-})();
-
-/* ══ SPLASH ══ */
-function runSplash(){
-  const sub=document.getElementById("splashSub");
-  const msgs=["Initializing...","Loading prospect database...","Calibrating radar systems...","All systems online ✓"];
-  let i=0;
-  const iv=setInterval(()=>{i++;if(i<msgs.length)sub.textContent=msgs[i];else clearInterval(iv);},650);
-  setTimeout(()=>{
-    document.getElementById("splash").classList.add("fade");
-    setTimeout(()=>{document.getElementById("splash").style.display="none";document.getElementById("home").style.display="block";},700);
-  },2800);
+function getCRM(prospect) {
+  try {
+    const key = crmKey(prospect.Company, prospect.City, prospect.State);
+    return JSON.parse(localStorage.getItem(key) || '{}');
+  } catch { return {}; }
 }
 
-/* OVERLAY */
-function showOverlay(t,s){document.getElementById("loadingOverlayText").textContent=t||"SCANNING";document.getElementById("loadingOverlaySub").textContent=s||"";document.getElementById("loadingOverlay").classList.add("visible");}
-function hideOverlay(){document.getElementById("loadingOverlay").classList.remove("visible");}
-
-/* PAGE TRANSITION */
-function flashTransition(cb){
-  const el=document.getElementById("transOverlay");
-  el.style.display="block";el.classList.add("flash");
-  setTimeout(()=>{el.classList.remove("flash");setTimeout(()=>{el.style.display="none";if(cb)cb();},300);},150);
+function saveCRM(prospect, data) {
+  try {
+    const key = crmKey(prospect.Company, prospect.City, prospect.State);
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch(e) { console.warn('localStorage unavailable'); }
 }
 
-/* TABS */
-function switchTab(m){
-  CURRENT_MODE=m;
-  ["keyword","radius"].forEach(t=>{
-    const T=t.charAt(0).toUpperCase()+t.slice(1);
-    document.getElementById("tab"+T).classList.toggle("active",t===m);
-    document.getElementById("panel"+T).classList.toggle("active",t===m);
+function updateCRMField(field, value) {
+  if (!currentProspect) return;
+  const crm = getCRM(currentProspect);
+  crm[field] = value;
+  saveCRM(currentProspect, crm);
+}
+
+// ============================================================
+// SPLASH SEQUENCE
+// ============================================================
+const statuses = [
+  'Calibrating radar array...',
+  'Connecting to data backend...',
+  'Loading prospect database...',
+  'Initializing territory map...',
+  'Ready for deployment.'
+];
+
+async function runSplash() {
+  const fill   = document.getElementById('splash-bar-fill');
+  const status = document.getElementById('splash-status');
+
+  // Animate progress bar
+  for (let i = 0; i <= 100; i++) {
+    await new Promise(r => setTimeout(r, 22));
+    fill.style.width = i + '%';
+    if (i % 20 === 0) status.textContent = statuses[Math.floor(i/20)];
+  }
+
+  // Load data
+  try {
+    const res = await fetch(`${API}/data`);
+    allData = await res.json();
+  } catch(e) {
+    status.textContent = 'Backend offline — retrying...';
+    await new Promise(r => setTimeout(r, 1500));
+    allData = [];
+  }
+
+  document.getElementById('stat-loaded').textContent =
+    allData.length.toLocaleString() + ' prospects loaded';
+
+  // Flash transition
+  await new Promise(r => setTimeout(r, 300));
+  const flash = document.getElementById('flash');
+  flash.style.opacity = '1';
+  await new Promise(r => setTimeout(r, 150));
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  flash.style.opacity = '0';
+
+  // Init UI
+  buildStateFilters();
+}
+
+// ============================================================
+// STATE FILTER BUTTONS
+// ============================================================
+function buildStateFilters() {
+  const wrap = document.getElementById('state-filters');
+  // Clear existing state buttons (keep Select All)
+  const existing = wrap.querySelectorAll('.state-btn');
+  existing.forEach(b => b.remove());
+
+  STATES.forEach(st => {
+    const btn = document.createElement('button');
+    btn.className = 'state-btn active';
+    btn.textContent = st;
+    btn.dataset.state = st;
+    btn.onclick = () => toggleState(st, btn);
+    wrap.appendChild(btn);
   });
 }
 
-/* RADIUS */
-function updateRadius(){
-  const v=document.getElementById("radiusSlider").value;
-  document.getElementById("radiusDisplay").textContent=v;
-  const pct=(v-5)/(150-5)*100;
-  document.getElementById("radiusSlider").style.background=
-    `linear-gradient(90deg,var(--accent2) ${pct}%,rgba(0,255,65,0.1) ${pct}%)`;
-}
-
-/* STATES */
-function initStates(){
-  const el=document.getElementById("states");
-  STATE_LIST.forEach(s=>{
-    const d=document.createElement("span");d.className="stateBtn";d.textContent=s;
-    d.onclick=()=>{d.classList.toggle("active");ACTIVE_STATES=ACTIVE_STATES.includes(s)?ACTIVE_STATES.filter(x=>x!==s):[...ACTIVE_STATES,s];updateSelectAllBtn();};
-    el.appendChild(d);
-  });
-}
-function toggleAllStates(){
-  ALL_SELECTED=!ALL_SELECTED;
-  document.querySelectorAll(".stateBtn").forEach(b=>b.classList.toggle("active",ALL_SELECTED));
-  ACTIVE_STATES=ALL_SELECTED?[...STATE_LIST]:[];
+function toggleState(state, btn) {
+  if (selectedStates.has(state)) {
+    selectedStates.delete(state);
+    btn.classList.remove('active');
+  } else {
+    selectedStates.add(state);
+    btn.classList.add('active');
+  }
   updateSelectAllBtn();
 }
-function updateSelectAllBtn(){
-  const btn=document.getElementById("selectAllBtn");
-  ALL_SELECTED=ACTIVE_STATES.length===STATE_LIST.length;
-  btn.textContent=ALL_SELECTED?"Clear All":"Select All";
-  btn.classList.toggle("all-on",ALL_SELECTED);
+
+function toggleSelectAll() {
+  const allSelected = selectedStates.size === STATES.length;
+  if (allSelected) {
+    selectedStates.clear();
+    document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('active'));
+  } else {
+    STATES.forEach(s => selectedStates.add(s));
+    document.querySelectorAll('.state-btn').forEach(b => b.classList.add('active'));
+  }
+  updateSelectAllBtn();
 }
 
-/* LOAD */
-async function load(){
-  const msg=document.getElementById("loadingMsg");
-  try{
-    const r=await fetch(API+"/data");
-    if(!r.ok)throw new Error();
-    const raw=await r.json();
-    const arr=Array.isArray(raw)?raw:(raw.items||[]);
-    DATA=arr.map(row=>{
-      const c={};Object.keys(row).forEach(k=>{c[k.trim()]=row[k];});
-      c.Score=Math.min(Number(c.Score||0),MAX_SCORE);
-      c.Lat=parseFloat(c.Lat)||null;c.Lon=parseFloat(c.Lon)||null;
-      return c;
+function updateSelectAllBtn() {
+  const btn = document.getElementById('select-all-btn');
+  btn.classList.toggle('active', selectedStates.size === STATES.length);
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', (tab === 'keyword' && i===0) || (tab === 'radius' && i===1));
+  });
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById(`ctrl-${tab}`).classList.add('active');
+
+  if (tab === 'keyword') {
+    document.getElementById('day-plan-section').classList.add('hidden');
+    document.getElementById('detail-panel').style.display = '';
+  } else {
+    document.getElementById('detail-panel').style.display = '';
+  }
+}
+
+// ============================================================
+// KEYWORD SEARCH
+// ============================================================
+async function doKeywordSearch() {
+  const kw = document.getElementById('keyword-input').value.trim();
+  const stateList = [...selectedStates].join(',');
+  const countEl = document.getElementById('results-count');
+
+  countEl.innerHTML = '<span class="loading-spinner"></span> Scanning...';
+  document.getElementById('results-list').innerHTML = '';
+
+  try {
+    let url = kw
+      ? `${API}/search?q=${encodeURIComponent(kw)}`
+      : `${API}/data`;
+    const res = await fetch(url);
+    let data = await res.json();
+
+    // Filter by selected states
+    if (selectedStates.size < STATES.length) {
+      data = data.filter(p => selectedStates.has(p.State));
+    }
+
+    filteredData = data;
+    applyPipelineFilter();
+  } catch(e) {
+    countEl.textContent = 'Error connecting to backend.';
+  }
+}
+
+function filterPipeline(stage) {
+  pipelineFilter = stage;
+  // Update filter button styles
+  document.querySelectorAll('[id^="pf-"]').forEach(b => {
+    b.style.opacity = '0.5';
+    b.style.fontWeight = '600';
+  });
+  const activeBtn = document.getElementById('pf-' + (stage === 'all' ? 'all' : stage.replace(' ','').replace(/\s+/g,'')));
+  if (activeBtn) { activeBtn.style.opacity = '1'; activeBtn.style.outline = '1px solid var(--green)'; }
+  applyPipelineFilter();
+}
+
+function applyPipelineFilter() {
+  let data = [...filteredData];
+
+  if (pipelineFilter !== 'all') {
+    data = data.filter(p => {
+      const crm = getCRM(p);
+      if (pipelineFilter === 'called') return !!crm.called;
+      if (pipelineFilter === 'followup') return !!crm.followup;
+      return (crm.pipeline || 'New') === pipelineFilter;
     });
-    const gps=DATA.filter(d=>d.Lat&&d.Lon).length;
-    msg.className="success";
-    msg.textContent=`✅ ${DATA.length.toLocaleString()} prospects — ${gps.toLocaleString()} GPS-enabled`;
-    [document.getElementById("kw"),document.getElementById("radiusLocation"),document.getElementById("radiusKeyword")].forEach(i=>i.disabled=false);
-    [document.getElementById("searchBtn"),document.getElementById("radiusBtn")].forEach(b=>b.disabled=false);
-    setTimeout(()=>{msg.textContent="";},6000);
-  }catch(e){msg.className="error";msg.textContent="❌ Connection failed. Please refresh.";}
-  initStates();updateRadius();
+  }
+
+  renderResults(data);
 }
 
-/* KEYWORD SEARCH */
-function runKeywordSearch(){
-  const kw=document.getElementById("kw").value.toLowerCase().trim();
-  showOverlay("SCANNING","Filtering prospects...");
-  setTimeout(()=>{
-    RESULTS=DATA.filter(o=>{
-      if(ACTIVE_STATES.length&&!ACTIVE_STATES.includes(o.State))return false;
-      if(kw)return Object.values(o).some(v=>String(v).toLowerCase().includes(kw));
-      return true;
-    }).sort((a,b)=>b.Score-a.Score);
-    CURRENT_MODE="keyword";
-    hideOverlay();
-    flashTransition(showWorkspace);
-  },500);
-}
+// ============================================================
+// RADIUS SEARCH
+// ============================================================
+async function doRadiusSearch() {
+  const loc  = document.getElementById('location-input').value.trim();
+  const mi   = parseFloat(document.getElementById('radius-input').value) || 25;
+  const kw   = document.getElementById('radius-keyword').value.trim();
+  const countEl = document.getElementById('results-count');
 
-/* RADIUS SEARCH */
-async function runRadiusSearch(){
-  const location=document.getElementById("radiusLocation").value.trim();
-  const keyword=document.getElementById("radiusKeyword").value.trim();
-  const miles=document.getElementById("radiusSlider").value;
-  const status=document.getElementById("geocodeStatus");
-  if(!location){status.className="visible error";status.textContent="⚠️ Please enter a prospect location, zip, or address.";return;}
-  status.className="";
-  showOverlay("LOCATING","Finding "+location+"...");
-  document.getElementById("radiusBtn").disabled=true;
-  try{
-    const gr=await fetch(API+"/geocode?q="+encodeURIComponent(location));
-    const gd=await gr.json();
-    if(!gd.found){hideOverlay();status.className="visible error";status.textContent="❌ Location not found.";document.getElementById("radiusBtn").disabled=false;return;}
-    RADIUS_CENTER={lat:gd.lat,lon:gd.lon,label:location};
-    document.getElementById("loadingOverlayText").textContent="SCANNING RADIUS";
-    document.getElementById("loadingOverlaySub").textContent="Searching "+miles+" miles around "+location+"...";
-    let url=API+"/radius?lat="+gd.lat+"&lon="+gd.lon+"&miles="+miles;
-    if(keyword)url+="&keyword="+encodeURIComponent(keyword);
-    const rr=await fetch(url);const rd=await rr.json();
-    RESULTS=rd.results||[];CURRENT_MODE="radius";
-    hideOverlay();document.getElementById("radiusBtn").disabled=false;
-    flashTransition(showWorkspace);
-  }catch(e){
-    hideOverlay();status.className="visible error";status.textContent="❌ Search failed.";document.getElementById("radiusBtn").disabled=false;
+  if (!loc) { showToast('Enter a location first'); return; }
+
+  countEl.innerHTML = '<span class="loading-spinner"></span> Geocoding...';
+
+  try {
+    // Geocode
+    const geo = await fetch(`${API}/geocode?q=${encodeURIComponent(loc)}`);
+    const geoData = await geo.json();
+    if (!geoData.lat) { countEl.textContent = 'Location not found.'; return; }
+
+    countEl.innerHTML = '<span class="loading-spinner"></span> Searching radius...';
+
+    let url = `${API}/radius?lat=${geoData.lat}&lon=${geoData.lon}&miles=${mi}`;
+    if (kw) url += `&keyword=${encodeURIComponent(kw)}`;
+    const res = await fetch(url);
+    let data = await res.json();
+
+    filteredData = data;
+    renderResults(data);
+
+    // Show day plan
+    buildDayPlan(data.slice(0,10), loc, geoData);
+
+    document.getElementById('day-plan-section').classList.remove('hidden');
+    document.getElementById('detail-panel').style.display = 'none';
+
+  } catch(e) {
+    countEl.textContent = 'Search error — check connection.';
   }
 }
 
-/* SHOW WORKSPACE */
-function showWorkspace(){
-  document.getElementById("home").style.display="none";
-  document.getElementById("workspace").classList.add("visible");
-  if(isMobile())document.getElementById("mobileNav").classList.add("visible");
-  renderResults();
-}
+// ============================================================
+// RENDER RESULTS
+// ============================================================
+function renderResults(data) {
+  const list    = document.getElementById('results-list');
+  const countEl = document.getElementById('results-count');
 
-/* RENDER */
-function renderResults(){
-  const list=document.getElementById("resultList");
-  const countEl=document.getElementById("resultCount");
-  const routeCount=document.getElementById("routeCount");
-  const routeBanner=document.getElementById("routeBanner");
-  const detail=document.getElementById("detail");
-  countEl.textContent=RESULTS.length.toLocaleString()+" results";
-  routeCount.textContent=Math.min(RESULTS.length,10);
-  if(RESULTS.length>1&&!isMobile())routeBanner.classList.add("visible");
-  else routeBanner.classList.remove("visible");
-  detail.innerHTML="";list.innerHTML="";
-  RESULTS.forEach((x,i)=>{
-    const div=document.createElement("div");div.className="result";
-    div.style.animationDelay=Math.min(i*0.02,0.5)+"s";
-    const name=document.createElement("div");name.className="result-name";name.textContent=x.Company||"—";
-    const sub=document.createElement("div");sub.className="result-sub";sub.textContent=[x.City,x.State].filter(Boolean).join(", ");
-    div.appendChild(name);div.appendChild(sub);
-    if(CURRENT_MODE==="radius"&&x._distance!=null){const b=document.createElement("div");b.className="rbadge dist";b.textContent=x._distance+" mi";div.appendChild(b);}
-    else if(x.Score){const b=document.createElement("div");b.className="rbadge score";b.textContent=x.Score+"/"+MAX_SCORE;div.appendChild(b);}
-    div.onclick=()=>openDetail(i);
-    list.appendChild(div);
+  list.innerHTML = '';
+  countEl.textContent = `${data.length.toLocaleString()} results`;
+
+  if (!data.length) {
+    list.innerHTML = '<div style="padding:20px;color:var(--text-dim);font-size:0.82rem;text-align:center;">No results found</div>';
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  data.forEach((p, i) => {
+    const crm   = getCRM(p);
+    const isActive = activeResultKey === crmKey(p.Company, p.City, p.State);
+
+    const div = document.createElement('div');
+    div.className = 'result-item' + (isActive ? ' active' : '');
+    div.style.animationDelay = Math.min(i * 18, 300) + 'ms';
+
+    // CRM badge HTML
+    let badges = '';
+    if (crm.called) badges += `<span class="crm-badge badge-called">Called</span>`;
+    const stage = crm.pipeline || '';
+    if (stage && stage !== 'New') badges += `<span class="crm-badge badge-${stage.toLowerCase().replace(' ','-')}">${stage}</span>`;
+    if (crm.heat) badges += `<span class="crm-badge badge-${crm.heat}">${crm.heat}</span>`;
+    if (crm.followup) {
+      const today = new Date().toISOString().split('T')[0];
+      if (crm.followup >= today) badges += `<span class="crm-badge badge-followup">📅 ${crm.followup}</span>`;
+    }
+
+    div.innerHTML = `
+      <div class="result-name">${isActive ? '<span class="result-beacon"></span>' : ''}${esc(p.Company)}</div>
+      <div class="result-meta">${esc(p.City)}, ${esc(p.State)} ${p.Score !== undefined ? '· ' + p.Score + '/' + MAX_SCORE : ''}</div>
+      ${badges ? `<div class="crm-indicators">${badges}</div>` : ''}
+      <div class="result-score">${p._dist ? p._dist.toFixed(1) + ' mi' : ''}</div>
+    `;
+
+    div.onclick = () => selectProspect(p, div);
+    frag.appendChild(div);
   });
-  if(CURRENT_MODE==="radius"&&RESULTS.length>0)showDayPlanner();
-  else if(RESULTS.length>0&&!isMobile())openDetail(0);
+
+  list.appendChild(frag);
 }
 
-/* BUILD CARD */
-function buildCard(x){
-  const pct=Math.min(100,Math.round((x.Score/MAX_SCORE)*100));
-  const card=document.createElement("div");card.className="card";
-  const hdr=document.createElement("div");hdr.className="card-hdr";
-  const co=document.createElement("div");co.className="card-company";co.textContent=txt(x.Company);hdr.appendChild(co);
-  const meta=document.createElement("div");meta.className="card-meta";
-  meta.innerHTML=`<span>📍 ${safe([txt(x.City),txt(x.State)].filter(Boolean).join(", "))}</span>`+
-    (x._distance?`<span>📏 ${x._distance} mi</span>`:"")+
-    (x["Employees on Site"]?`<span>👥 ${safe(x["Employees on Site"])}</span>`:"");
-  hdr.appendChild(meta);card.appendChild(hdr);
-  const body=document.createElement("div");body.className="card-body";
-  const grid=document.createElement("div");grid.className="info-grid";
-  [["📞 Phone",x.Phone],["✉️ Email",x["Company Email"]],["🌐 Website",x.Website],["📅 Founded",x["Year Established"]]].forEach(([l,v])=>{
-    if(!v)return;const item=document.createElement("div");item.className="info-item";
-    item.innerHTML=`<div class="info-label">${l}</div><div class="info-value">${safe(v)}</div>`;grid.appendChild(item);
+// ============================================================
+// SELECT PROSPECT
+// ============================================================
+function selectProspect(p, el) {
+  // Deactivate old
+  document.querySelectorAll('.result-item.active').forEach(r => r.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  activeResultKey = crmKey(p.Company, p.City, p.State);
+  currentProspect = p;
+
+  // Show card
+  document.getElementById('detail-empty').style.display = 'none';
+  const card = document.getElementById('detail-card');
+  card.style.display = 'block';
+
+  // Populate static fields
+  document.getElementById('d-company').textContent   = p.Company || '—';
+  document.getElementById('d-address').textContent   = [p.Address, p.City, p.State].filter(Boolean).join(', ');
+  document.getElementById('d-state').textContent     = p.State || '—';
+  document.getElementById('d-phone').textContent     = p.Phone || '—';
+  document.getElementById('d-email').textContent     = p['Company Email'] || '—';
+  document.getElementById('d-employees').textContent = p['Employees on Site'] || '—';
+  document.getElementById('d-year').textContent      = p['Year Established'] || '—';
+
+  const site = p.Website ? p.Website.trim() : '';
+  document.getElementById('d-website').innerHTML = site
+    ? `<a href="${ensureHttp(site)}" target="_blank" style="color:var(--green-dim)">${site}</a>`
+    : '—';
+
+  // Score
+  const score = parseInt(p.Score) || 0;
+  document.getElementById('d-score-bar').style.width = (score / MAX_SCORE * 100) + '%';
+  document.getElementById('d-score-val').textContent = `${score} / ${MAX_SCORE}`;
+
+  // Action buttons
+  const addr = encodeURIComponent([p.Address, p.City, p.State].filter(Boolean).join(', '));
+  document.getElementById('act-call').href    = p.Phone ? `tel:${p.Phone.replace(/\D/g,'')}` : '#';
+  document.getElementById('act-email').href   = p['Company Email'] ? `mailto:${p['Company Email']}` : '#';
+  document.getElementById('act-dir').href     = `https://www.google.com/maps/dir/?api=1&destination=${addr}`;
+  document.getElementById('act-web').href     = site ? ensureHttp(site) : '#';
+  document.getElementById('act-mymaps').href  = `https://www.google.com/maps/search/?api=1&query=${addr}`;
+  document.getElementById('act-route').href   = `https://www.google.com/maps/dir/?api=1&destination=${addr}`;
+
+  // Load CRM data
+  loadCRMPanel(p);
+
+  // Mobile: show detail
+  if (window.innerWidth <= 680) mobileShowPanel('detail');
+}
+
+// ============================================================
+// CRM PANEL LOAD
+// ============================================================
+function loadCRMPanel(p) {
+  const crm = getCRM(p);
+
+  // Pipeline
+  document.querySelectorAll('.pipeline-btn').forEach(btn => {
+    const stage = btn.dataset.stage;
+    const active = (crm.pipeline || 'New') === stage;
+    btn.className = 'pipeline-btn' + (active ? ` active-${stage.toLowerCase().replace(' ','-')}` : '');
   });
-  body.appendChild(grid);
-  if(x.Score){
-    const sw=document.createElement("div");sw.className="score-wrap";
-    sw.innerHTML=`<div class="score-label-row"><div class="score-label">Sales Match Score</div><div class="score-num">${x.Score} / ${MAX_SCORE}</div></div><div class="score-bg"><div class="score-fill" style="width:${pct}%"></div></div>`;
-    body.appendChild(sw);
-  }
-  const dv=document.createElement("div");dv.className="divider";body.appendChild(dv);
-  const al=document.createElement("div");al.className="actions-label";al.textContent="Quick Actions";body.appendChild(al);
-  const acts=document.createElement("div");acts.className="actions";
-  [
-    x.Phone?["📞 Call","",()=>window.open("tel:"+x.Phone.replace(/[^0-9+]/g,""))]:null,
-    x["Company Email"]?["✉️ Email","",()=>window.open("mailto:"+x["Company Email"])]:null,
-    ["🧭 Directions","",()=>window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent([x.Address,x.City,x.State].filter(Boolean).join(" "))+"&travelmode=driving")],
-    x.Website?["🌐 Website","",()=>{const u=x.Website.startsWith("http")?x.Website:"https://"+x.Website;window.open(u);}]:null,
-    ["📍 My Maps","green-btn",()=>window.open("https://www.google.com/maps/search/?api=1&query="+encodeURIComponent([txt(x.Company),txt(x.Address),txt(x.City),txt(x.State)].filter(Boolean).join(", ")))],
-    ["🗺️ Route","gold-btn",()=>window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent([txt(x.Address),txt(x.City),txt(x.State)].filter(Boolean).join(" "))+"&travelmode=driving")],
-  ].filter(Boolean).forEach(([label,cls,fn])=>{const b=document.createElement("button");b.className="abtn"+(cls?" "+cls:"");b.innerHTML=label;b.onclick=fn;acts.appendChild(b);});
-  body.appendChild(acts);card.appendChild(body);
-  setTimeout(()=>card.classList.add("popped"),60);
-  return card;
+
+  // Heat
+  document.querySelectorAll('.heat-btn').forEach(btn => {
+    btn.classList.toggle('active', crm.heat === btn.dataset.heat);
+  });
+
+  // Called toggle
+  const toggle = document.getElementById('called-toggle');
+  const label  = document.getElementById('called-label');
+  toggle.classList.toggle('on', !!crm.called);
+  label.textContent = crm.called ? 'Already Called ✓' : 'Already Called';
+
+  // Follow-up
+  document.getElementById('followup-date').value = crm.followup || '';
+
+  // Notes
+  renderNotes(crm.notes || []);
 }
 
-/* OPEN DETAIL */
-function openDetail(i){
-  ACTIVE_INDEX=i;const x=RESULTS[i];
-  document.querySelectorAll(".result").forEach((el,idx)=>el.classList.toggle("active",idx===i));
-  if(isMobile()){
-    const panel=document.getElementById("mobileDetailPanel");
-    document.getElementById("mobileDetailTitle").textContent=txt(x.Company);
-    const body=document.getElementById("mobileDetailBody");
-    body.innerHTML="";body.appendChild(buildCard(x));
-    panel.classList.add("visible");panel.scrollTop=0;
-  }else{
-    const detail=document.getElementById("detail");detail.innerHTML="";detail.appendChild(buildCard(x));
-  }
+// ============================================================
+// PIPELINE
+// ============================================================
+function setPipeline(stage) {
+  if (!currentProspect) return;
+  const crm = getCRM(currentProspect);
+  crm.pipeline = stage;
+  saveCRM(currentProspect, crm);
+
+  // Update button styles
+  document.querySelectorAll('.pipeline-btn').forEach(btn => {
+    const s = btn.dataset.stage;
+    const active = s === stage;
+    btn.className = 'pipeline-btn' + (active ? ` active-${s.toLowerCase().replace(' ','-')}` : '');
+  });
+
+  // Refresh badge in list
+  refreshResultItem(currentProspect);
+  showToast(`Stage: ${stage}`);
 }
 
-function closeMobileDetail(){document.getElementById("mobileDetailPanel").classList.remove("visible");}
+// ============================================================
+// HEAT
+// ============================================================
+function setHeat(heat) {
+  if (!currentProspect) return;
+  const crm = getCRM(currentProspect);
+  crm.heat = crm.heat === heat ? null : heat; // toggle off if same
+  saveCRM(currentProspect, crm);
 
-/* DAY PLANNER */
-function showDayPlanner(){
-  const stops=RESULTS.slice(0,10);
-  const totalMiles=stops.reduce((s,x)=>s+(x._distance||0),0);
-  const estHours=Math.round((totalMiles/45)*10)/10;
-  const pc=document.createElement("div");pc.className="planner";
-  pc.innerHTML=`
-    <div class="planner-hdr">
-      <div class="planner-title">🗺️ Sales Day Plan</div>
-      <div class="planner-sub">${safe(txt(RADIUS_CENTER?RADIUS_CENTER.label:"Location"))} · ${document.getElementById("radiusSlider").value} mi radius · ${RESULTS.length.toLocaleString()} prospects found</div>
+  document.querySelectorAll('.heat-btn').forEach(btn => {
+    btn.classList.toggle('active', crm.heat === btn.dataset.heat);
+  });
+
+  refreshResultItem(currentProspect);
+  showToast(crm.heat ? `Priority: ${crm.heat}` : 'Priority cleared');
+}
+
+// ============================================================
+// CALLED TOGGLE
+// ============================================================
+function toggleCalled() {
+  if (!currentProspect) return;
+  const crm = getCRM(currentProspect);
+  crm.called = !crm.called;
+  saveCRM(currentProspect, crm);
+
+  const toggle = document.getElementById('called-toggle');
+  const label  = document.getElementById('called-label');
+  toggle.classList.toggle('on', crm.called);
+  label.textContent = crm.called ? 'Already Called ✓' : 'Already Called';
+
+  refreshResultItem(currentProspect);
+  showToast(crm.called ? 'Marked as Called' : 'Unmarked as Called');
+}
+
+// ============================================================
+// FOLLOW-UP
+// ============================================================
+function saveFollowup() {
+  if (!currentProspect) return;
+  const date = document.getElementById('followup-date').value;
+  updateCRMField('followup', date);
+  refreshResultItem(currentProspect);
+  showToast(date ? `Follow-up set: ${date}` : 'Follow-up cleared');
+}
+
+// ============================================================
+// NOTES
+// ============================================================
+function addTagNote(text) {
+  addNote(text, true);
+}
+
+function addCustomNote() {
+  const input = document.getElementById('note-input');
+  const text = input.value.trim();
+  if (!text) return;
+  addNote(text, false);
+  input.value = '';
+}
+
+function addNote(text, isTag) {
+  if (!currentProspect) return;
+  const crm = getCRM(currentProspect);
+  if (!crm.notes) crm.notes = [];
+
+  const note = {
+    id:        Date.now(),
+    text:      text,
+    tag:       isTag,
+    timestamp: new Date().toLocaleString('en-US', {
+      month:'short', day:'numeric', year:'numeric',
+      hour:'numeric', minute:'2-digit', hour12:true
+    })
+  };
+
+  crm.notes.unshift(note); // newest first
+  saveCRM(currentProspect, crm);
+  renderNotes(crm.notes);
+  showToast('Note added');
+}
+
+function deleteNote(id) {
+  if (!currentProspect) return;
+  const crm = getCRM(currentProspect);
+  crm.notes = (crm.notes || []).filter(n => n.id !== id);
+  saveCRM(currentProspect, crm);
+  renderNotes(crm.notes);
+}
+
+function renderNotes(notes) {
+  const list = document.getElementById('notes-list');
+  if (!notes || !notes.length) {
+    list.innerHTML = '<div style="color:var(--text-dim);font-size:0.78rem;padding:8px 0;">No notes yet</div>';
+    return;
+  }
+
+  list.innerHTML = notes.map(n => `
+    <div class="note-item${n.tag ? ' tag-note' : ''}">
+      <div class="note-timestamp">${n.timestamp}</div>
+      <div class="note-text">${esc(n.text)}</div>
+      <button class="note-delete" onclick="deleteNote(${n.id})" title="Delete note">✕</button>
     </div>
-    <div class="planner-body">
-      <div class="stats">
-        <div class="stat"><div class="stat-n">${stops.length}</div><div class="stat-l">Top Stops</div></div>
-        <div class="stat"><div class="stat-n">${Math.round(totalMiles)}</div><div class="stat-l">Est. Miles</div></div>
-        <div class="stat"><div class="stat-n">${estHours}h</div><div class="stat-l">Drive Time</div></div>
-      </div>
-      <div class="stops">
-        ${stops.map((x,i)=>`<div class="stop"><div class="stop-n">${i+1}</div><div class="stop-i"><div class="stop-name">${safe(x.Company)}</div><div class="stop-d">${safe([x.Address,x.City,x.State].filter(Boolean).join(", "))}${x.Phone?" · "+safe(x.Phone):""}</div></div><div class="stop-mi">${x._distance} mi</div></div>`).join("")}
-      </div>
-      <div class="planner-btns">
-        <button class="pbtn primary" onclick="openAllRoute()">🧭 Open Route in Google Maps</button>
-        <button class="pbtn secondary" onclick="openDetail(0)">📋 View First Prospect</button>
-      </div>
-    </div>`;
-  if(isMobile()){
-    document.getElementById("mobileDetailTitle").textContent="Sales Day Plan";
-    const body=document.getElementById("mobileDetailBody");body.innerHTML="";body.appendChild(pc);
-    document.getElementById("mobileDetailPanel").classList.add("visible");
-  }else{const detail=document.getElementById("detail");detail.innerHTML="";detail.appendChild(pc);}
+  `).join('');
 }
 
-/* ROUTE ALL */
-function openAllRoute(){
-  if(!RESULTS.length)return;
-  const stops=RESULTS.slice(0,10);
-  const origin=encodeURIComponent([txt(stops[0].Address),txt(stops[0].City),txt(stops[0].State)].filter(Boolean).join(" "));
-  const dest=encodeURIComponent([txt(stops[stops.length-1].Address),txt(stops[stops.length-1].City),txt(stops[stops.length-1].State)].filter(Boolean).join(" "));
-  let url=`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=driving`;
-  if(stops.length>2){const wps=stops.slice(1,-1).map(x=>encodeURIComponent([txt(x.Address),txt(x.City),txt(x.State)].filter(Boolean).join(" "))).join("|");url+="&waypoints="+wps;}
-  window.open(url);
+// ============================================================
+// REFRESH RESULT ITEM IN LIST (after CRM change)
+// ============================================================
+function refreshResultItem(p) {
+  // Re-render full list to reflect badge changes
+  applyPipelineFilter();
+  // Re-select the current item
+  setTimeout(() => {
+    const items = document.querySelectorAll('.result-item');
+    items.forEach(item => {
+      if (item.querySelector('.result-name')?.textContent?.includes(p.Company)) {
+        item.classList.add('active');
+      }
+    });
+  }, 50);
 }
 
-/* GO HOME */
-function goHome(){
-  flashTransition(()=>{
-    document.getElementById("workspace").classList.remove("visible");
-    document.getElementById("mobileDetailPanel").classList.remove("visible");
-    document.getElementById("mobileNav").classList.remove("visible");
-    document.getElementById("home").style.display="block";
-    document.getElementById("kw").value="";
-    document.getElementById("radiusLocation").value="";
-    document.getElementById("radiusKeyword").value="";
-    document.getElementById("routeBanner").classList.remove("visible");
-    document.getElementById("geocodeStatus").className="";
-    ACTIVE_STATES=[];ACTIVE_INDEX=-1;RADIUS_CENTER=null;ALL_SELECTED=false;
-    document.querySelectorAll(".stateBtn").forEach(b=>b.classList.remove("active"));
-    updateSelectAllBtn();
+// ============================================================
+// DAY PLAN
+// ============================================================
+function buildDayPlan(stops, originLabel, originGeo) {
+  const container = document.getElementById('dp-stops');
+  const titleEl   = document.getElementById('dp-title');
+  const mapsLink  = document.getElementById('dp-maps-link');
+
+  titleEl.textContent = `Day Plan — ${stops.length} stops near ${originLabel}`;
+  container.innerHTML = '';
+
+  if (!stops.length) {
+    container.innerHTML = '<div style="padding:20px;color:var(--text-dim)">No results in radius</div>';
+    return;
+  }
+
+  let totalDist = 0;
+  const waypoints = [];
+
+  stops.forEach((p, i) => {
+    const dist = p._dist || 0;
+    totalDist += dist;
+    const addr = [p.Address, p.City, p.State].filter(Boolean).join(', ');
+    waypoints.push(encodeURIComponent(addr));
+
+    const row = document.createElement('div');
+    row.className = 'day-plan-stop';
+    row.innerHTML = `
+      <div class="stop-num">${i+1}</div>
+      <div class="stop-info">
+        <div class="stop-name">${esc(p.Company)}</div>
+        <div class="stop-meta">${esc(p.City)}, ${esc(p.State)} — Score: ${p.Score||'—'}/${MAX_SCORE}</div>
+      </div>
+      <div class="stop-dist">${dist.toFixed(1)} mi</div>
+    `;
+    row.onclick = () => selectProspect(p, null);
+    row.style.cursor = 'pointer';
+    container.appendChild(row);
   });
+
+  // Summary row
+  const summary = document.createElement('div');
+  summary.className = 'day-plan-stop';
+  summary.innerHTML = `
+    <div class="stop-num" style="color:var(--green)">∑</div>
+    <div class="stop-info">
+      <div class="stop-name" style="font-size:0.85rem">Est. ${totalDist.toFixed(0)} miles · ~${Math.round(totalDist/35*60)} min drive time</div>
+    </div>
+  `;
+  container.appendChild(summary);
+
+  // Google Maps route link
+  const origin = encodeURIComponent(originLabel);
+  const dest = waypoints[waypoints.length - 1];
+  const wps = waypoints.slice(0, -1).join('|');
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${wps}&travelmode=driving`;
+  mapsLink.href = mapsUrl;
 }
 
-/* EXPORT */
-function showExportModal(){document.getElementById("exportPass").value="";document.getElementById("exportError").textContent="";document.getElementById("exportModal").classList.add("visible");setTimeout(()=>document.getElementById("exportPass").focus(),200);}
-function closeExportModal(){document.getElementById("exportModal").classList.remove("visible");}
-function confirmExport(){
-  const pass=document.getElementById("exportPass").value;
-  const errEl=document.getElementById("exportError");
-  if(pass!==EXPORT_PASSWORD){errEl.textContent="❌ Incorrect password.";document.getElementById("exportPass").value="";return;}
-  errEl.textContent="";closeExportModal();downloadCSV();
-}
-function downloadCSV(){
-  if(!RESULTS.length)return;
-  const cols=["Company","Address","City","State","Phone","Company Email","Website","Employees on Site","Score","Lat","Lon","_distance"];
-  const header=cols.map(c=>'"'+c+'"').join(",");
-  const rows=RESULTS.map(r=>cols.map(c=>'"'+String(r[c]||"").replace(/"/g,'""')+'"').join(","));
-  const blob=new Blob([[header,...rows].join("\n")],{type:"text/csv"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");a.href=url;a.download="RadarPRO_"+new Date().toISOString().slice(0,10)+".csv";a.click();URL.revokeObjectURL(url);
+// ============================================================
+// EXPORT
+// ============================================================
+function openExport()  { document.getElementById('export-modal').classList.add('open'); }
+function closeExport() { document.getElementById('export-modal').classList.remove('open'); document.getElementById('export-err').style.display='none'; }
+
+function doExport() {
+  const pw = document.getElementById('export-pw').value;
+  if (pw !== EXPORT_PASSWORD) {
+    document.getElementById('export-err').style.display = 'block';
+    return;
+  }
+
+  const data = filteredData.length ? filteredData : allData;
+  const headers = ['Company','Address','City','State','Phone','Company Email','Website','Year Established','Employees on Site','Score','Lat','Lon'];
+  const rows = [headers.join(',')];
+
+  data.forEach(p => {
+    rows.push(headers.map(h => `"${(p[h]||'').toString().replace(/"/g,'""')}"`).join(','));
+  });
+
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `RadarPRO_Export_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  closeExport();
+  showToast(`Exported ${data.length.toLocaleString()} records`);
 }
 
-runSplash();
-load();
+// ============================================================
+// MOBILE NAV
+// ============================================================
+function mobileShowPanel(which) {
+  const right = document.getElementById('right-panel');
+  const btns  = document.querySelectorAll('.bottom-nav-btn');
+
+  if (which === 'detail') {
+    right.classList.add('mobile-show');
+    btns[0].classList.remove('active');
+    btns[1].classList.add('active');
+  } else {
+    right.classList.remove('mobile-show');
+    btns[0].classList.add('active');
+    btns[1].classList.remove('active');
+  }
+}
+
+// ============================================================
+// UTILITY
+// ============================================================
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function ensureHttp(url) {
+  if (!url) return '#';
+  return /^https?:\/\//i.test(url) ? url : 'https://' + url;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// Enter key support
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('keyword-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doKeywordSearch();
+  });
+  document.getElementById('location-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doRadiusSearch();
+  });
+  document.getElementById('note-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addCustomNote();
+  });
+  document.getElementById('export-pw').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doExport();
+  });
+
+  // Start splash
+  runSplash();
+});
 </script>
 </body>
 </html>
