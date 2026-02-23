@@ -1874,36 +1874,34 @@ function switchTab(tab) {
 // ============================================================
 async function doKeywordSearch() {
   const kw = document.getElementById('keyword-input').value.trim();
-  const stateList = [...selectedStates].join(',');
   const countEl = document.getElementById('results-count');
 
   countEl.innerHTML = '<span class="loading-spinner"></span> Scanning...';
   document.getElementById('results-list').innerHTML = '';
 
   try {
-    let data;
-    if (kw) {
-      // Try /search first, fall back to /data with client-side filter
-      try {
-        const res = await fetch(`${API}/search?q=${encodeURIComponent(kw)}`);
-        if (!res.ok) throw new Error('no search endpoint');
-        data = await res.json();
-      } catch {
-        const res = await fetch(`${API}/data`);
-        const all = await res.json();
-        const kwl = kw.toLowerCase();
-        data = all.filter(p =>
-          (p.Company||'').toLowerCase().includes(kwl) ||
-          (p.City||'').toLowerCase().includes(kwl) ||
-          (p.Address||'').toLowerCase().includes(kwl)
-        );
-      }
-    } else {
+    // Always fetch /data and filter client-side (/search doesn't exist on backend)
+    if (!allData.length) {
       const res = await fetch(`${API}/data`);
-      data = await res.json();
+      allData = await res.json();
+      document.getElementById('stat-loaded').textContent =
+        allData.length.toLocaleString() + ' prospects loaded';
     }
 
-    // Filter by selected states
+    let data = [...allData];
+
+    // Keyword filter
+    if (kw) {
+      const kwl = kw.toLowerCase();
+      data = data.filter(p =>
+        (p.Company||'').toLowerCase().includes(kwl) ||
+        (p.City||'').toLowerCase().includes(kwl) ||
+        (p.Address||'').toLowerCase().includes(kwl) ||
+        (p['Business Description']||'').toLowerCase().includes(kwl)
+      );
+    }
+
+    // State filter
     if (selectedStates.size < STATES.length) {
       data = data.filter(p => selectedStates.has(p.State));
     }
@@ -1911,7 +1909,7 @@ async function doKeywordSearch() {
     filteredData = data;
     applyPipelineFilter();
   } catch(e) {
-    countEl.textContent = 'Error connecting to backend.';
+    countEl.textContent = 'Error connecting to backend — ' + e.message;
   }
 }
 
