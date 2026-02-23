@@ -1881,11 +1881,27 @@ async function doKeywordSearch() {
   document.getElementById('results-list').innerHTML = '';
 
   try {
-    let url = kw
-      ? `${API}/search?q=${encodeURIComponent(kw)}`
-      : `${API}/data`;
-    const res = await fetch(url);
-    let data = await res.json();
+    let data;
+    if (kw) {
+      // Try /search first, fall back to /data with client-side filter
+      try {
+        const res = await fetch(`${API}/search?q=${encodeURIComponent(kw)}`);
+        if (!res.ok) throw new Error('no search endpoint');
+        data = await res.json();
+      } catch {
+        const res = await fetch(`${API}/data`);
+        const all = await res.json();
+        const kwl = kw.toLowerCase();
+        data = all.filter(p =>
+          (p.Company||'').toLowerCase().includes(kwl) ||
+          (p.City||'').toLowerCase().includes(kwl) ||
+          (p.Address||'').toLowerCase().includes(kwl)
+        );
+      }
+    } else {
+      const res = await fetch(`${API}/data`);
+      data = await res.json();
+    }
 
     // Filter by selected states
     if (selectedStates.size < STATES.length) {
