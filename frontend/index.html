@@ -1894,16 +1894,13 @@ async function doKeywordSearch() {
     if (kw) {
       const kwl = kw.toLowerCase();
       data = data.filter(p =>
-        (p.Company||'').toLowerCase().includes(kwl) ||
-        (p.City||'').toLowerCase().includes(kwl) ||
-        (p.Address||'').toLowerCase().includes(kwl) ||
-        (p['Business Description']||'').toLowerCase().includes(kwl)
+        Object.values(p).some(v => v && String(v).toLowerCase().includes(kwl))
       );
     }
 
-    // State filter
-    if (selectedStates.size < STATES.length) {
-      data = data.filter(p => selectedStates.has(p.State));
+    // State filter — only apply if some but not all states selected
+    if (selectedStates.size > 0 && selectedStates.size < STATES.length) {
+      data = data.filter(p => selectedStates.has(p.State) || selectedStates.has(p['State Tag']));
     }
 
     filteredData = data;
