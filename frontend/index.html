@@ -2530,36 +2530,66 @@ window.initMap = function() {
 };
 
 function updateMapLocation(p) {
-  if (!window.google || !google.maps || !geocoder) return;
-  const fullAddr = [p.Address, p.City, p.State].filter(Boolean).join(', ');
-  if (fullAddr.length < 4) return;
+  if (!window.google || !google.maps) return;
 
   const statusEl = document.getElementById('pano-msg');
-  statusEl.style.display = 'flex';
-  statusEl.querySelector('span').textContent = 'STREAMING...';
+  if (statusEl) {
+    statusEl.style.display = 'flex';
+    const span = statusEl.querySelector('span');
+    if (span) span.textContent = 'STREAMING...';
+  }
+
+  const processLocation = (loc) => {
+    if (!map || !marker) return;
+    map.panTo(loc); map.setZoom(17);
+    marker.setPosition(loc); marker.setAnimation(google.maps.Animation.DROP);
+
+    const sv = new google.maps.StreetViewService();
+    sv.getPanorama({ location: loc, radius: 65 }, (data, svstat) => {
+      if (svstat === 'OK') {
+        if (statusEl) statusEl.style.display = 'none';
+        panorama.setPano(data.location.pano);
+        panorama.setVisible(true);
+        const head = google.maps.geometry.spherical.computeHeading(data.location.latLng, loc);
+        panorama.setPov({ heading: head, pitch: 0 });
+      } else {
+        panorama.setVisible(false);
+        if (statusEl) {
+          statusEl.style.display = 'flex';
+          const span = statusEl.querySelector('span');
+          if (span) span.textContent = 'NO FAÇADE DATA';
+        }
+      }
+    });
+  };
+
+  // ATTEMPT 1: Use hardcoded dataset coordinates if available
+  if (p.Lat && p.Lon) {
+    const latVal = parseFloat(p.Lat);
+    const lonVal = parseFloat(p.Lon);
+    if (!isNaN(latVal) && !isNaN(lonVal) && latVal !== 0 && lonVal !== 0) {
+      processLocation({ lat: latVal, lng: lonVal });
+      return;
+    }
+  }
+
+  // ATTEMPT 2: Fallback to Geocoder service
+  if (!geocoder) {
+    if (statusEl) statusEl.querySelector('span').textContent = 'COORDS NOT FOUND';
+    return;
+  }
+
+  const fullAddr = [p.Address, p.City, p.State].filter(Boolean).join(', ');
+  if (fullAddr.length < 4) {
+    if (statusEl) statusEl.querySelector('span').textContent = 'COORDS NOT FOUND';
+    return;
+  }
 
   geocoder.geocode({ address: fullAddr }, (res, stat) => {
     if (stat === 'OK' && res[0]) {
-      const loc = res[0].geometry.location;
-      map.panTo(loc); map.setZoom(17);
-      marker.setPosition(loc); marker.setAnimation(google.maps.Animation.DROP);
-
-      const sv = new google.maps.StreetViewService();
-      sv.getPanorama({ location: loc, radius: 65 }, (data, svstat) => {
-        if (svstat === 'OK') {
-          statusEl.style.display = 'none';
-          panorama.setPano(data.location.pano);
-          panorama.setVisible(true);
-          const head = google.maps.geometry.spherical.computeHeading(data.location.latLng, loc);
-          panorama.setPov({ heading: head, pitch: 0 });
-        } else {
-          panorama.setVisible(false);
-          statusEl.style.display = 'flex';
-          statusEl.querySelector('span').textContent = 'NO FAÇADE DATA';
-        }
-      });
+      processLocation(res[0].geometry.location);
     } else {
-      statusEl.querySelector('span').textContent = 'COORDS NOT FOUND';
+      if (statusEl) statusEl.querySelector('span').textContent = 'COORDS NOT FOUND';
     }
   });
 }
