@@ -391,9 +391,60 @@ a { color: var(--green); }
 #right-panel {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   overflow: hidden;
   background: var(--black);
+}
+
+/* Visual Stack Splitting */
+#detail-and-content-stack {
+  flex: 0 0 42%;
+  min-width: 380px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--panel);
+}
+
+#map-visualization-stack {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  position: relative;
+}
+
+#google-map {
+  flex: 1.3;
+  background: #0a0d0a;
+  border-bottom: 1px solid var(--border);
+}
+
+#street-view-pano {
+  flex: 0.7;
+  background: #000;
+  position: relative;
+}
+
+.pano-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 2px;
+  font-size: 0.75rem;
+  background: #050505;
+  z-index: 10;
+}
+
+.pano-placeholder svg {
+  margin-bottom: 10px;
+  opacity: 0.4;
 }
 
 /* ============================================================
@@ -1351,7 +1402,9 @@ a { color: var(--green); }
 @media (max-width: 680px) {
   #left-panel { width: 100%; max-width: 100%; border-right: none; }
   #right-panel { display: none; }
-  #right-panel.mobile-show { display: flex; position: fixed; inset: 0; top: 90px; z-index: 300; background: var(--black); }
+  #right-panel.mobile-show { display: flex; flex-direction: column !important; position: fixed; inset: 0; top: 90px; z-index: 300; background: var(--black); }
+  #detail-and-content-stack { flex: 1; min-width: 100%; border-right: none; }
+  #map-visualization-stack { display: none; }
   #bottom-nav { display: flex; }
   #main { padding-bottom: 56px; }
 }
@@ -1534,7 +1587,10 @@ a { color: var(--green); }
 
     <!-- RIGHT PANEL -->
     <div id="right-panel">
-      <div id="detail-panel">
+      
+      <!-- CONTENT COLUMN -->
+      <div id="detail-and-content-stack">
+        <div id="detail-panel">
 
         <!-- Empty state -->
         <div id="detail-empty">
@@ -1678,6 +1734,18 @@ a { color: var(--green); }
         </div>
         <div id="dp-stops"></div>
       </div>
+      </div> <!-- /detail-and-content-stack -->
+
+      <!-- VISUAL INTELLIGENCE ENGINE -->
+      <div id="map-visualization-stack">
+        <div id="google-map"></div>
+        <div id="street-view-pano">
+          <div class="pano-placeholder" id="pano-msg">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:10px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <span>SELECT PROSPECT FOR VISUAL ENGINE</span>
+          </div>
+        </div>
+      </div>
 
     </div><!-- /right-panel -->
 
@@ -1717,6 +1785,10 @@ let activeResultKey = null;
 let currentProspect = null;
 let currentTab = 'keyword';
 let pipelineFilter = 'all';
+
+// Maps Variables
+let map, panorama, marker, geocoder;
+const GOOGLE_MAPS_API_KEY = 'AIzaSyBkVk_B6cBwC9k4S7CL0nCPhsY75euyYoM';
 
 // CRM storage key helpers
 const crmKey = (company, city, state) => `crm_${company}_${city}_${state}`.replace(/[^a-zA-Z0-9_]/g,'_').substring(0,80);
@@ -2075,6 +2147,9 @@ function selectProspect(p, el) {
 
   // Mobile: show detail
   if (window.innerWidth <= 680) mobileShowPanel('detail');
+
+  // Visual Pan Update
+  updateMapLocation(p);
 }
 
 // ============================================================
@@ -2407,7 +2482,87 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(() => {
     fetch(`${API}/health`).catch(() => {});
   }, 9 * 60 * 1000);
+
+  // Initialize maps system load
+  loadGoogleMapsScript();
 });
+
+// ============================================================
+// VISUAL INTELLIGENCE ENGINE Implementation
+// ============================================================
+function loadGoogleMapsScript() {
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=geometry&callback=initMap`;
+  script.async = true; script.defer = true;
+  document.head.appendChild(script);
+}
+
+window.initMap = function() {
+  const cbus = { lat: 39.9612, lng: -82.9988 };
+  geocoder = new google.maps.Geocoder();
+
+  const visualTheme = [
+    {"elementType":"geometry","stylers":[{"color":"#0f1a0f"}]},
+    {"elementType":"labels.text.stroke","stylers":[{"color":"#0f1a0f"},{"weight":3}]},
+    {"elementType":"labels.text.fill","stylers":[{"color":"#00ff41"}]},
+    {"featureType":"administrative","elementType":"geometry","stylers":[{"color":"#1c331c"}]},
+    {"featureType":"water","elementType":"geometry","stylers":[{"color":"#030a03"}]},
+    {"featureType":"road","elementType":"geometry","stylers":[{"color":"#1f301f"}]},
+    {"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#0c140c"}]},
+    {"featureType":"road","elementType":"labels.text.fill","stylers":[{"color":"#6da36d"}]},
+    {"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#3c6b3c"}]},
+    {"featureType":"poi","elementType":"geometry","stylers":[{"color":"#091209"}]}
+  ];
+
+  map = new google.maps.Map(document.getElementById('google-map'), {
+    center: cbus, zoom: 6, styles: visualTheme,
+    disableDefaultUI: false, zoomControl: true, mapTypeControl: false, streetViewControl: false,
+  });
+
+  panorama = new google.maps.StreetViewPanorama(document.getElementById('street-view-pano'), {
+    position: cbus, visible: false, disableDefaultUI: true, zoomControl: true
+  });
+
+  marker = new google.maps.Marker({
+    position: cbus, map: map, animation: google.maps.Animation.DROP,
+    icon: { path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW, fillColor: '#00ff41', fillOpacity: 1, strokeWeight: 2, strokeColor: '#fff', scale: 7 }
+  });
+};
+
+function updateMapLocation(p) {
+  if (!window.google || !google.maps || !geocoder) return;
+  const fullAddr = [p.Address, p.City, p.State].filter(Boolean).join(', ');
+  if (fullAddr.length < 4) return;
+
+  const statusEl = document.getElementById('pano-msg');
+  statusEl.style.display = 'flex';
+  statusEl.querySelector('span').textContent = 'STREAMING...';
+
+  geocoder.geocode({ address: fullAddr }, (res, stat) => {
+    if (stat === 'OK' && res[0]) {
+      const loc = res[0].geometry.location;
+      map.panTo(loc); map.setZoom(17);
+      marker.setPosition(loc); marker.setAnimation(google.maps.Animation.DROP);
+
+      const sv = new google.maps.StreetViewService();
+      sv.getPanorama({ location: loc, radius: 65 }, (data, svstat) => {
+        if (svstat === 'OK') {
+          statusEl.style.display = 'none';
+          panorama.setPano(data.location.pano);
+          panorama.setVisible(true);
+          const head = google.maps.geometry.spherical.computeHeading(data.location.latLng, loc);
+          panorama.setPov({ heading: head, pitch: 0 });
+        } else {
+          panorama.setVisible(false);
+          statusEl.style.display = 'flex';
+          statusEl.querySelector('span').textContent = 'NO FAÇADE DATA';
+        }
+      });
+    } else {
+      statusEl.querySelector('span').textContent = 'COORDS NOT FOUND';
+    }
+  });
+}
 </script>
 </body>
 </html>
