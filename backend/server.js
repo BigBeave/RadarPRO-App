@@ -8,10 +8,8 @@ const rateLimit = require("express-rate-limit");
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-/* ✅ CORS - LOCKED TO FRONTEND ONLY */
-app.use(cors({
-  origin: "https://radarpro-dashboard.onrender.com"
-}));
+/* ✅ CORS - ALLOW DESKTOP + CLOUD FRONTENDS */
+app.use(cors());
 
 /* ✅ RATE LIMITING */
 const limiter = rateLimit({
