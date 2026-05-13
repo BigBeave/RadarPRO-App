@@ -1408,6 +1408,45 @@ a { color: var(--green); }
   #bottom-nav { display: flex; }
   #main { padding-bottom: 56px; }
 }
+
+/* Map Visualization Switcher */
+.map-tabs-bar {
+  display: flex;
+  background: #090d09;
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+  height: 38px;
+  flex-shrink: 0;
+}
+.map-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  padding: 0 12px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-right: 1px solid var(--border);
+}
+.map-tab:last-child { border-right: none; }
+.map-tab:hover {
+  background: rgba(0, 255, 65, 0.05);
+  color: #fff;
+}
+.map-tab.active {
+  background: rgba(0, 255, 65, 0.08);
+  color: var(--green);
+  box-shadow: inset 0 -2px 0 var(--green);
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
 </style>
 </head>
 <body>
@@ -1738,12 +1777,26 @@ a { color: var(--green); }
 
       <!-- VISUAL INTELLIGENCE ENGINE -->
       <div id="map-visualization-stack">
-        <div id="google-map"></div>
-        <div id="street-view-pano">
-          <div class="pano-placeholder" id="pano-msg">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:10px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-            <span>SELECT PROSPECT FOR VISUAL ENGINE</span>
+        <!-- Navigation Tabs -->
+        <div class="map-tabs-bar">
+          <button id="map-tab-live" class="map-tab active" onclick="switchMapView('live')">📊 LIVE VIEWER</button>
+          <button id="map-tab-work" class="map-tab" onclick="switchMapView('work')">🗺️ WORK MAP</button>
+        </div>
+
+        <!-- Container 1: Split Interactive Suite -->
+        <div id="live-radar-views" style="display: flex; flex-direction: column; flex: 1;">
+          <div id="google-map"></div>
+          <div id="street-view-pano">
+            <div class="pano-placeholder" id="pano-msg">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:10px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <span>SELECT PROSPECT FOR VISUAL ENGINE</span>
+            </div>
           </div>
+        </div>
+
+        <!-- Container 2: Embedded Work Map -->
+        <div id="work-map-view" style="display: none; flex: 1; width: 100%; background: #000; overflow: hidden;">
+          <iframe src="https://www.google.com/maps/d/embed?mid=1jFfPrcVRq70dNlGne3blgJ4N2NNqfnM&ehbc=2E312F" style="width: 100%; height: 100%; border: none; background: #000;" allowfullscreen></iframe>
         </div>
       </div>
 
@@ -2439,6 +2492,35 @@ function mobileShowPanel(which) {
 }
 
 // ============================================================
+// MAP VISUALIZATION SWITCHER
+// ============================================================
+function switchMapView(mode) {
+  const liveView = document.getElementById('live-radar-views');
+  const workView = document.getElementById('work-map-view');
+  const tabLive = document.getElementById('map-tab-live');
+  const tabWork = document.getElementById('map-tab-work');
+
+  if (mode === 'work') {
+    liveView.style.display = 'none';
+    workView.style.display = 'block';
+    tabLive.classList.remove('active');
+    tabWork.classList.add('active');
+  } else {
+    workView.style.display = 'none';
+    liveView.style.display = 'flex';
+    tabWork.classList.remove('active');
+    tabLive.classList.add('active');
+    // Auto recalculate layout so Google Map doesn't break/gray out
+    if (window.google && window.map) {
+      google.maps.event.trigger(map, 'resize');
+      // Re-pan to marker to ensure focus
+      if (window.marker) map.panTo(marker.getPosition());
+    }
+}
+}
+
+// ============================================================
+
 // UTILITY
 // ============================================================
 function esc(str) {
