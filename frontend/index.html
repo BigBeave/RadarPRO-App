@@ -2034,7 +2034,8 @@ async function doRadiusSearch() {
     let url = `${API}/radius?lat=${geoData.lat}&lon=${geoData.lon}&miles=${mi}`;
     if (kw) url += `&keyword=${encodeURIComponent(kw)}`;
     const res = await fetch(url);
-    let data = await res.json();
+    let rawData = await res.json();
+    let data = rawData.results || []; // Extract the array of prospects from the backend response wrapper
 
     filteredData = data;
     renderResults(data);
