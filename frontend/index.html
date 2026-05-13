@@ -1,632 +1,2599 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radar PRO | Advanced Mapping Suite</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --bg-deep: #0d1117;
-            --bg-panel: #161b22;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --text-main: #e6edf3;
-            --text-muted: #8b949e;
-            --border: #30363d;
-            --success: #238636;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>RadarPRO — Sales Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ROOT VARIABLES
+   ============================================================ */
+:root {
+  --green:       #00ff41;
+  --green-dim:   #00cc33;
+  --green-dark:  #006618;
+  --green-glow:  rgba(0,255,65,0.35);
+  --green-faint: rgba(0,255,65,0.08);
+  --black:       #030a03;
+  --panel:       #060f06;
+  --panel2:      #0a140a;
+  --border:      rgba(0,255,65,0.18);
+  --border-bright: rgba(0,255,65,0.45);
+  --text-muted:  rgba(0,255,65,0.5);
+  --text-dim:    rgba(0,255,65,0.35);
+  --silver:      #c8d8c8;
+  --red:         #ff4444;
+  --orange:      #ff8800;
+  --yellow:      #ffdd00;
+}
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-deep);
-            color: var(--text-main);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+/* ============================================================
+   BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Header */
-        header {
-            height: 60px;
-            background: var(--bg-panel);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            padding: 0 24px;
-            justify-content: space-between;
-            z-index: 100;
-        }
+html, body {
+  height: 100%;
+  background: var(--black);
+  color: var(--green);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  overflow: hidden;
+}
 
-        .logo {
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+button { cursor: pointer; }
+a { color: var(--green); }
 
-        .logo span { color: white; font-weight: 400; }
+/* ============================================================
+   SPLASH SCREEN — SATELLITE + RADAR
+   ============================================================ */
+#splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
 
-        /* Container Layout */
-        #app-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
+/* Satellite map tile background */
+#splash-sat {
+  position: absolute;
+  inset: 0;
+  background-image: url('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=-95,29,-72,47&bboxSR=4326&size=1600,1000&format=jpg&f=image');
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.45) saturate(0.15);
+  animation: satZoom 6s ease-in-out forwards;
+}
 
-        /* Left Sidebar - Search and List */
-        #sidebar {
-            width: 380px;
-            background: var(--bg-panel);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            z-index: 50;
-            transition: transform 0.3s ease;
-        }
+@keyframes satZoom {
+  0%   { transform: scale(1.08); filter: brightness(0.2) saturate(0.1); }
+  100% { transform: scale(1.0);  filter: brightness(0.45) saturate(0.15); }
+}
 
-        .search-controls {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
-        }
+/* Vignette + green tint overlay */
+#splash-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, transparent 20%, rgba(3,10,3,0.7) 100%),
+    linear-gradient(180deg, rgba(3,10,3,0.6) 0%, transparent 15%, transparent 85%, rgba(3,10,3,0.6) 100%);
+}
 
-        .search-input {
-            width: 100%;
-            padding: 12px 16px;
-            background: var(--bg-deep);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: white;
-            font-size: 14px;
-            margin-bottom: 12px;
-            transition: border-color 0.2s;
-        }
-        .search-input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
+/* Green scan grid */
+#splash-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,255,65,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,65,0.05) 1px, transparent 1px);
+  background-size: 55px 55px;
+}
 
-        .state-filters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-bottom: 16px;
-        }
+/* Horizontal scan line */
+#splash-scan {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0,255,65,0.6), transparent);
+  box-shadow: 0 0 20px rgba(0,255,65,0.4);
+  animation: scanLine 3s ease-in-out infinite;
+  top: 0;
+}
 
-        .state-pill {
-            padding: 4px 10px;
-            font-size: 12px;
-            border-radius: 12px;
-            background: var(--bg-deep);
-            border: 1px solid var(--border);
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.2s;
-        }
-        .state-pill.active {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: white;
-        }
+@keyframes scanLine {
+  0%   { top: 0%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
 
-        .btn-primary {
-            width: 100%;
-            padding: 12px;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-primary:hover { background: var(--accent-hover); }
+/* Radar sweep rings */
+#splash-radar {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(80vw, 700px);
+  height: min(80vw, 700px);
+  pointer-events: none;
+}
 
-        #results-list {
-            flex: 1;
-            overflow-y: auto;
-        }
+.splash-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid rgba(0,255,65,0.12);
+}
 
-        .result-card {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            transition: background 0.2s;
-            position: relative;
-        }
-        .result-card:hover { background: rgba(255,255,255,0.03); }
-        .result-card.selected {
-            background: rgba(59, 130, 246, 0.1);
-            border-left: 3px solid var(--accent);
-        }
-        .result-card .company-name {
-            font-weight: 600;
-            font-size: 15px;
-            margin-bottom: 4px;
-        }
-        .result-card .location {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-        .result-card .score-badge {
-            position: absolute;
-            right: 20px;
-            top: 16px;
-            font-size: 11px;
-            font-weight: bold;
-            background: #238636;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
+.splash-sweep {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  animation: sweepSpin 3s linear infinite;
+  background: conic-gradient(from 0deg,
+    rgba(0,255,65,0.0) 0deg,
+    rgba(0,255,65,0.20) 45deg,
+    rgba(0,255,65,0.0) 60deg
+  );
+}
 
-        /* Main Content - Split Screen */
-        #content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
+@keyframes sweepSpin {
+  from { transform: translate(-50%,-50%) rotate(0deg); }
+  to   { transform: translate(-50%,-50%) rotate(360deg); }
+}
 
-        /* Map Integration Area */
-        #map-container {
-            flex: 1;
-            background: var(--bg-deep);
-            position: relative;
-        }
-        #map {
-            width: 100%;
-            height: 100%;
-        }
+.splash-sweep-line {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 50%;
+  height: 1.5px;
+  background: linear-gradient(90deg, rgba(0,255,65,0.8), transparent);
+  transform-origin: left center;
+  animation: sweepSpin 3s linear infinite;
+  box-shadow: 0 0 8px rgba(0,255,65,0.5);
+}
 
-        /* Floating Detail Overlay (Google Style) */
-        #detail-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 360px;
-            background: var(--bg-panel);
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 1px solid var(--border);
-            display: none; /* Toggled via JS */
-            flex-direction: column;
-            max-height: calc(100% - 40px);
-            z-index: 70;
-            overflow: hidden;
-            animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+/* City blips on splash */
+.splash-blip {
+  position: absolute;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green), 0 0 25px rgba(0,255,65,0.4);
+  animation: blipFade 2s ease-in-out infinite;
+}
 
-        @keyframes slideIn {
-            from { transform: translateX(-20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
+.splash-blip::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,255,65,0.5);
+  animation: blipRing 2s ease-out infinite;
+}
 
-        .street-view-placeholder {
-            width: 100%;
-            height: 160px;
-            background: #000;
-            background-size: cover;
-            background-position: center;
-            position: relative;
-        }
-        
-        .close-detail {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            border: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        }
+@keyframes blipFade {
+  0%,100% { opacity:1; } 50% { opacity:0.35; }
+}
 
-        .detail-body {
-            padding: 20px;
-            overflow-y: auto;
-        }
+@keyframes blipRing {
+  0%   { width:7px; height:7px; opacity:0.8; }
+  100% { width:28px; height:28px; opacity:0; }
+}
 
-        .detail-body h2 {
-            font-size: 18px;
-            margin-bottom: 16px;
-        }
+/* Logo + text */
+#splash-logo {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: fadeInUp 1s ease 0.5s both;
+}
 
-        .detail-info-row {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 12px;
-            font-size: 14px;
-            align-items: flex-start;
-        }
-        .info-icon { color: var(--accent); width: 20px; text-align: center; }
-        .info-text { color: var(--text-muted); word-break: break-word; }
-        .info-text strong { color: var(--text-main); display: block; }
+@keyframes fadeInUp {
+  from { opacity:0; transform: translateY(20px); }
+  to   { opacity:1; transform: translateY(0); }
+}
 
-        .action-bar {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border);
-        }
+#splash-logo svg {
+  width: 90px; height: 90px;
+  filter: drop-shadow(0 0 20px rgba(0,255,65,0.8));
+}
 
-        .action-btn {
-            padding: 10px;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 600;
-            text-decoration: none;
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            background: var(--bg-deep);
-            transition: all 0.2s;
-        }
-        .action-btn:hover {
-            background: var(--border);
-        }
-        .action-btn.primary {
-            background: var(--accent);
-            color: white;
-            border: none;
-        }
-        .action-btn.primary:hover { background: var(--accent-hover); }
+.logo-sweep-anim {
+  animation: sweepSpin 3s linear infinite;
+  transform-origin: 45px 45px;
+}
 
-        /* Map Overlay loading state */
-        #map-overlay-msg {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.8);
-            padding: 12px 24px;
-            border-radius: 20px;
-            font-size: 14px;
-            color: #fff;
-            border: 1px solid var(--border);
-            pointer-events: none;
-        }
+#splash-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 700;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: var(--green);
+  text-shadow: 0 0 30px rgba(0,255,65,0.8), 0 0 60px rgba(0,255,65,0.3);
+}
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            #sidebar { width: 100%; position: absolute; left: 0; top: 60px; bottom: 0; }
-            #sidebar.hidden { transform: translateX(-100%); }
-            #detail-panel { left: 10px; right: 10px; width: auto; }
-        }
-    </style>
+#splash-sub {
+  font-size: 0.8rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+#splash-bar-wrap {
+  position: relative;
+  z-index: 2;
+  margin-top: 40px;
+  width: 240px;
+  animation: fadeInUp 1s ease 0.8s both;
+}
+
+#splash-bar-bg {
+  height: 2px;
+  background: rgba(0,255,65,0.15);
+  border-radius: 2px;
+}
+
+#splash-bar-fill {
+  height: 2px;
+  width: 0%;
+  background: var(--green);
+  border-radius: 2px;
+  box-shadow: 0 0 10px var(--green);
+  transition: width 0.1s linear;
+}
+
+#splash-status {
+  margin-top: 10px;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-align: center;
+  font-family: 'Rajdhani', sans-serif;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   PAGE TRANSITION FLASH
+   ============================================================ */
+#flash {
+  position: fixed;
+  inset: 0;
+  background: var(--green);
+  opacity: 0;
+  z-index: 8888;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+/* ============================================================
+   MAIN APP SHELL
+   ============================================================ */
+#app {
+  display: none;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background: var(--black);
+}
+
+#app.visible { display: flex; }
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+#header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(3,10,3,0.97);
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.header-logo {
+  width: 30px; height: 30px;
+  flex-shrink: 0;
+}
+
+.header-logo svg { width: 100%; height: 100%; }
+.header-logo .logo-sweep { animation: sweepSpin 3s linear infinite; transform-origin: 15px 15px; }
+
+#header h1 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--green);
+  text-shadow: 0 0 12px rgba(0,255,65,0.5);
+}
+
+.header-spacer { flex: 1; }
+
+#header-stats {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-align: right;
+  line-height: 1.5;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+#tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: rgba(3,10,3,0.95);
+  flex-shrink: 0;
+}
+
+.tab-btn {
+  padding: 9px 18px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  position: relative;
+  bottom: -1px;
+  transition: color 0.2s;
+}
+
+.tab-btn:hover { color: var(--green); }
+.tab-btn.active { color: var(--green); border-bottom: 2px solid var(--green); }
+
+/* ============================================================
+   MAIN CONTENT AREA
+   ============================================================ */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left panel */
+#left-panel {
+  width: 310px;
+  min-width: 260px;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+  flex-shrink: 0;
+}
+
+/* Right panel */
+#right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  background: var(--black);
+}
+
+/* Visual Stack Splitting */
+#detail-and-content-stack {
+  flex: 0 0 42%;
+  min-width: 380px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--panel);
+}
+
+#map-visualization-stack {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  position: relative;
+}
+
+#google-map {
+  flex: 1.3;
+  background: #0a0d0a;
+  border-bottom: 1px solid var(--border);
+}
+
+#street-view-pano {
+  flex: 0.7;
+  background: #000;
+  position: relative;
+}
+
+.pano-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 2px;
+  font-size: 0.75rem;
+  background: #050505;
+  z-index: 10;
+}
+
+.pano-placeholder svg {
+  margin-bottom: 10px;
+  opacity: 0.4;
+}
+
+/* ============================================================
+   SEARCH CONTROLS
+   ============================================================ */
+#controls {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel2);
+}
+
+/* Tab content panels */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.search-input-wrap {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.search-input {
+  flex: 1;
+  background: rgba(0,255,65,0.06);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus { border-color: var(--green); }
+.search-input::placeholder { color: var(--text-dim); }
+
+.btn-primary {
+  padding: 7px 14px;
+  background: var(--green-dark);
+  border: 1px solid var(--green);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: var(--green);
+  color: var(--black);
+}
+
+/* State filters */
+#state-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.state-btn {
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+
+.state-btn.active {
+  background: rgba(0,255,65,0.12);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.state-btn:hover { border-color: var(--green); color: var(--green); }
+
+#select-all-btn {
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+
+#select-all-btn:hover, #select-all-btn.active {
+  border-color: var(--green);
+  color: var(--green);
+  background: rgba(0,255,65,0.08);
+}
+
+/* Radius controls */
+.radius-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.radius-row label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: 'Rajdhani', sans-serif;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   RESULTS LIST
+   ============================================================ */
+#results-count {
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  font-family: 'Rajdhani', sans-serif;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#results-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#results-list::-webkit-scrollbar { width: 4px; }
+#results-list::-webkit-scrollbar-track { background: transparent; }
+#results-list::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.2); border-radius: 2px; }
+
+.result-item {
+  padding: 9px 12px;
+  border-bottom: 1px solid rgba(0,255,65,0.06);
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+  animation: slideIn 0.25s ease both;
+}
+
+.result-item:nth-child(odd) { background: rgba(0,255,65,0.02); }
+.result-item:nth-child(even) { background: transparent; }
+
+@keyframes slideIn {
+  from { opacity:0; transform:translateX(-12px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+
+.result-item:hover { background: rgba(0,255,65,0.07); }
+
+.result-item.active {
+  background: rgba(0,255,65,0.1);
+  border-left: 3px solid var(--green);
+}
+
+.result-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-score {
+  position: absolute;
+  top: 9px; right: 10px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Beacon ping dot */
+.result-beacon {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  margin-right: 6px;
+  vertical-align: middle;
+  animation: beaconPulse 1.2s ease-in-out infinite;
+  position: relative;
+}
+
+@keyframes beaconPulse {
+  0%,100% { opacity:1; box-shadow:0 0 8px var(--green); }
+  50% { opacity:0.4; box-shadow:0 0 2px var(--green); }
+}
+
+/* CRM indicators in list */
+.crm-indicators {
+  display: flex;
+  gap: 4px;
+  margin-top: 3px;
+  align-items: center;
+}
+
+.crm-badge {
+  font-size: 0.62rem;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-called   { background: rgba(255,68,68,0.2);  color: #ff6666; border: 1px solid rgba(255,68,68,0.3); }
+.badge-new      { background: rgba(0,255,65,0.1);   color: var(--green); border: 1px solid var(--border); }
+.badge-contacted{ background: rgba(0,150,255,0.15); color: #44aaff; border: 1px solid rgba(0,150,255,0.3); }
+.badge-appt     { background: rgba(255,136,0,0.15); color: #ffaa44; border: 1px solid rgba(255,136,0,0.3); }
+.badge-proposal { background: rgba(200,0,255,0.15); color: #cc66ff; border: 1px solid rgba(200,0,255,0.3); }
+.badge-customer { background: rgba(0,255,65,0.2);   color: #00ff88; border: 1px solid rgba(0,255,65,0.4); font-weight:700; }
+.badge-dead     { background: rgba(100,100,100,0.2);color: #888;     border: 1px solid rgba(100,100,100,0.3); }
+
+.badge-hot  { background: rgba(255,68,68,0.2);  color: #ff6666; border: 1px solid rgba(255,68,68,0.3); }
+.badge-warm { background: rgba(255,136,0,0.15); color: #ffaa44; border: 1px solid rgba(255,136,0,0.3); }
+.badge-cold { background: rgba(0,100,200,0.15); color: #6699cc; border: 1px solid rgba(0,100,200,0.3); }
+
+.badge-followup { background: rgba(255,220,0,0.15); color: #ffdd44; border: 1px solid rgba(255,220,0,0.3); }
+
+/* ============================================================
+   DETAIL CARD
+   ============================================================ */
+#detail-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+#detail-panel::-webkit-scrollbar { width: 4px; }
+#detail-panel::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.2); border-radius: 2px; }
+
+#detail-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--text-dim);
+}
+
+#detail-empty svg { opacity: 0.2; }
+
+#detail-card {
+  display: none;
+  background: linear-gradient(135deg, #0a180a 0%, #060d06 100%);
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  box-shadow:
+    0 0 30px rgba(0,255,65,0.08),
+    inset 0 1px 0 rgba(0,255,65,0.15),
+    4px 6px 20px rgba(0,0,0,0.6);
+}
+
+/* Card header */
+.card-header {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.card-company-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px rgba(0,255,65,0.4);
+  flex: 1;
+}
+
+.card-state-badge {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Score bar */
+.score-section {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.score-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.score-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: rgba(0,255,65,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green-dark), var(--green));
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(0,255,65,0.5);
+  transition: width 0.4s ease;
+}
+
+.score-value {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--green);
+  white-space: nowrap;
+}
+
+/* Info grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  border-bottom: 1px solid var(--border);
+}
+
+.info-cell {
+  padding: 10px 20px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid rgba(0,255,65,0.06);
+}
+
+.info-cell:nth-child(even) { border-right: none; }
+
+.info-cell-label {
+  font-size: 0.65rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-family: 'Rajdhani', sans-serif;
+  margin-bottom: 3px;
+}
+
+.info-cell-value {
+  font-size: 0.85rem;
+  color: var(--silver);
+}
+
+/* Quick action buttons */
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.action-btn {
+  padding: 6px 12px;
+  background: rgba(0,255,65,0.06);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+}
+
+.action-btn:hover {
+  background: rgba(0,255,65,0.15);
+  border-color: var(--green);
+  box-shadow: 0 0 10px rgba(0,255,65,0.15);
+}
+
+.action-btn.danger {
+  color: #ff6666;
+  border-color: rgba(255,68,68,0.3);
+  background: rgba(255,68,68,0.06);
+}
+
+.action-btn.danger:hover {
+  background: rgba(255,68,68,0.15);
+  border-color: #ff4444;
+}
+
+/* ============================================================
+   PHASE 8 — CRM PANEL
+   ============================================================ */
+#crm-section {
+  padding: 16px 20px;
+}
+
+#crm-section h3 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#crm-section h3::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Pipeline status */
+.pipeline-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.pipeline-btn {
+  padding: 5px 10px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.pipeline-btn:hover { border-color: var(--green); color: var(--green); }
+
+.pipeline-btn.active-new      { background:rgba(0,255,65,0.1);  color:var(--green); border-color:var(--green); }
+.pipeline-btn.active-contacted{ background:rgba(0,150,255,0.12);color:#44aaff; border-color:#44aaff; }
+.pipeline-btn.active-appt     { background:rgba(255,136,0,0.12);color:#ffaa44; border-color:#ffaa44; }
+.pipeline-btn.active-proposal { background:rgba(200,0,255,0.12);color:#cc66ff; border-color:#cc66ff; }
+.pipeline-btn.active-customer { background:rgba(0,255,65,0.2);  color:#00ff88; border-color:#00ff88; }
+.pipeline-btn.active-dead     { background:rgba(100,100,100,0.15);color:#888;  border-color:#666; }
+
+/* Priority / heat tag */
+.heat-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.heat-label {
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-family: 'Rajdhani', sans-serif;
+  margin-right: 4px;
+}
+
+.heat-btn {
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.heat-btn[data-heat="hot"]  { color:#ff6666; border-color:rgba(255,68,68,0.3); }
+.heat-btn[data-heat="warm"] { color:#ffaa44; border-color:rgba(255,136,0,0.3); }
+.heat-btn[data-heat="cold"] { color:#6699cc; border-color:rgba(0,100,200,0.3); }
+
+.heat-btn.active[data-heat="hot"]  { background:rgba(255,68,68,0.15); border-color:#ff4444; }
+.heat-btn.active[data-heat="warm"] { background:rgba(255,136,0,0.12); border-color:#ff8800; }
+.heat-btn.active[data-heat="cold"] { background:rgba(0,100,200,0.12); border-color:#4477bb; }
+
+.heat-btn:hover { opacity: 0.85; }
+
+/* Already called toggle */
+.called-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.called-toggle {
+  width: 38px; height: 20px;
+  background: rgba(0,255,65,0.1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.called-toggle.on {
+  background: rgba(255,68,68,0.2);
+  border-color: rgba(255,68,68,0.5);
+}
+
+.called-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  background: var(--text-dim);
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.called-toggle.on::after {
+  left: 20px;
+  background: #ff6666;
+  box-shadow: 0 0 6px rgba(255,68,68,0.6);
+}
+
+.called-toggle-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.called-toggle.on + .called-toggle-label {
+  color: #ff6666;
+}
+
+/* Follow-up date */
+.followup-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.followup-label {
+  font-size: 0.68rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-family: 'Rajdhani', sans-serif;
+  white-space: nowrap;
+}
+
+.followup-input {
+  background: rgba(0,255,65,0.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  padding: 5px 9px;
+  outline: none;
+  flex: 1;
+  transition: border-color 0.2s;
+  color-scheme: dark;
+}
+
+.followup-input:focus { border-color: var(--green); }
+
+.btn-save-followup {
+  padding: 5px 10px;
+  background: var(--green-dark);
+  border: 1px solid var(--green);
+  border-radius: 3px;
+  color: var(--green);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+
+.btn-save-followup:hover { background: var(--green); color: var(--black); }
+
+/* Notes section */
+.notes-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.notes-header span {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Quick note tags */
+.note-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.note-tag {
+  padding: 4px 10px;
+  background: rgba(0,255,65,0.05);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.note-tag:hover {
+  background: rgba(0,255,65,0.12);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+/* Custom note input */
+.note-input-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.note-input {
+  flex: 1;
+  background: rgba(0,255,65,0.05);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  padding: 7px 10px;
+  outline: none;
+  resize: none;
+  transition: border-color 0.2s;
+  min-height: 38px;
+}
+
+.note-input:focus { border-color: var(--green); }
+.note-input::placeholder { color: var(--text-dim); }
+
+.btn-add-note {
+  padding: 7px 12px;
+  background: var(--green-dark);
+  border: 1px solid var(--green);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+  align-self: flex-start;
+}
+
+.btn-add-note:hover { background: var(--green); color: var(--black); }
+
+/* Notes timeline */
+#notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+#notes-list::-webkit-scrollbar { width: 3px; }
+#notes-list::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.2); border-radius: 2px; }
+
+.note-item {
+  background: rgba(0,255,65,0.04);
+  border: 1px solid rgba(0,255,65,0.1);
+  border-left: 3px solid var(--green-dark);
+  border-radius: 4px;
+  padding: 8px 10px;
+  position: relative;
+  animation: fadeInNote 0.2s ease;
+}
+
+@keyframes fadeInNote {
+  from { opacity:0; transform:translateY(-4px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.note-item.tag-note { border-left-color: var(--green); }
+
+.note-timestamp {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.note-text {
+  font-size: 0.82rem;
+  color: var(--silver);
+  line-height: 1.45;
+}
+
+.note-delete {
+  position: absolute;
+  top: 6px; right: 8px;
+  background: transparent;
+  border: none;
+  color: rgba(255,68,68,0.3);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.15s;
+  line-height: 1;
+}
+
+.note-delete:hover { color: #ff4444; }
+
+/* ============================================================
+   DAY PLAN / RADIUS
+   ============================================================ */
+#day-plan-section {
+  padding: 12px 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.day-plan-header {
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.day-plan-stop {
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(0,255,65,0.06);
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.stop-num {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.stop-info { flex: 1; }
+.stop-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--green);
+  letter-spacing: 0.5px;
+}
+
+.stop-meta { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+.stop-dist {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   EXPORT MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 5000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal-box {
+  background: var(--panel2);
+  border: 1px solid var(--border-bright);
+  border-radius: 8px;
+  padding: 28px 32px;
+  min-width: 320px;
+  box-shadow: 0 0 40px rgba(0,255,65,0.15);
+}
+
+.modal-box h3 {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  color: var(--green);
+}
+
+.modal-box input {
+  width: 100%;
+  background: rgba(0,255,65,0.06);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--green);
+  font-size: 0.9rem;
+  padding: 9px 12px;
+  outline: none;
+  margin-bottom: 14px;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 3px;
+}
+
+.modal-box input:focus { border-color: var(--green); }
+
+.modal-btns { display: flex; gap: 8px; }
+
+/* ============================================================
+   BOTTOM NAV — MOBILE
+   ============================================================ */
+#bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(3,10,3,0.97);
+  border-top: 1px solid var(--border);
+  padding: 8px 0;
+  z-index: 200;
+}
+
+.bottom-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.bottom-nav-btn.active { color: var(--green); }
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+.hidden { display: none !important; }
+
+.loading-spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid rgba(0,255,65,0.2);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast {
+  position: fixed;
+  bottom: 20px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(3,10,3,0.95);
+  border: 1px solid var(--border-bright);
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  color: var(--green);
+  z-index: 9000;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 680px) {
+  #left-panel { width: 100%; max-width: 100%; border-right: none; }
+  #right-panel { display: none; }
+  #right-panel.mobile-show { display: flex; flex-direction: column !important; position: fixed; inset: 0; top: 90px; z-index: 300; background: var(--black); }
+  #detail-and-content-stack { flex: 1; min-width: 100%; border-right: none; }
+  #map-visualization-stack { display: none; }
+  #bottom-nav { display: flex; }
+  #main { padding-bottom: 56px; }
+}
+</style>
 </head>
 <body>
 
-    <header>
-        <div class="logo">📡 RADAR <span>PRO</span></div>
-        <div id="status-msg" style="font-size:12px;color:var(--text-muted)">Connected to Prospect Engine</div>
-    </header>
+<!-- ============================================================
+     SPLASH SCREEN
+     ============================================================ -->
+<div id="splash">
+  <div id="splash-sat"></div>
+  <div id="splash-overlay"></div>
+  <div id="splash-grid"></div>
+  <div id="splash-scan"></div>
 
-    <div id="app-container">
-        
-        <!-- SIDEBAR -->
-        <aside id="sidebar">
-            <div class="search-controls">
-                <input type="text" id="search-box" class="search-input" placeholder="Filter by keyword...">
-                <div class="state-filters" id="state-pill-container"></div>
-                <button class="btn-primary" onclick="applyFilters()">Update Radar Results</button>
-            </div>
-            
-            <div id="results-list">
-                <div style="padding:20px;color:var(--text-muted);text-align:center;">Loading prospects...</div>
-            </div>
-        </aside>
+  <!-- Radar rings + sweep -->
+  <div id="splash-radar">
+    <div class="splash-ring" style="width:100%;height:100%;"></div>
+    <div class="splash-ring" style="width:75%;height:75%;"></div>
+    <div class="splash-ring" style="width:50%;height:50%;"></div>
+    <div class="splash-ring" style="width:25%;height:25%;"></div>
+    <div class="splash-sweep"></div>
+    <div class="splash-sweep-line"></div>
+  </div>
 
-        <!-- MAIN VISUALIZATION AREA -->
-        <main id="content">
-            
-            <div id="map-container">
-                <div id="map"></div>
-                <div id="map-overlay-msg">Enter Google Maps API Key in code to activate interactive suite</div>
-            </div>
+  <!-- City blips (positioned for OH/IN/KY territory on screen) -->
+  <div class="splash-blip" style="top:38%;left:60%"></div>
+  <div class="splash-blip" style="top:31%;left:54%;animation-delay:0.5s"></div>
+  <div class="splash-blip" style="top:44%;left:57%;animation-delay:0.9s"></div>
+  <div class="splash-blip" style="top:40%;left:65%;animation-delay:0.3s"></div>
+  <div class="splash-blip" style="top:47%;left:62%;animation-delay:1.3s"></div>
+  <div class="splash-blip" style="top:33%;left:48%;animation-delay:0.7s"></div>
+  <div class="splash-blip" style="top:51%;left:52%;animation-delay:1.6s"></div>
+  <div class="splash-blip" style="top:55%;left:59%;animation-delay:1.1s"></div>
 
-            <!-- DYNAMIC DETAIL CARD -->
-            <div id="detail-panel">
-                <button class="close-detail" onclick="closeDetail()">×</button>
-                <div id="streetview-thumb" class="street-view-placeholder"></div>
-                
-                <div class="detail-body" id="detail-content">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
+  <!-- Logo -->
+  <div id="splash-logo">
+    <svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="45" cy="45" r="42" stroke="#00ff41" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="45" cy="45" r="30" stroke="#00ff41" stroke-width="1.5" opacity="0.25"/>
+      <circle cx="45" cy="45" r="18" stroke="#00ff41" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="45" cy="45" r="6" stroke="#00ff41" stroke-width="1.5" opacity="0.5"/>
+      <g class="logo-sweep-anim">
+        <path d="M45 45 L45 3" stroke="#00ff41" stroke-width="2" stroke-linecap="round"/>
+        <path d="M45 45 L45 3" stroke="#00ff41" stroke-width="18" stroke-linecap="round"
+              opacity="0.08" transform="rotate(-30 45 45)"/>
+      </g>
+      <circle cx="45" cy="45" r="4" fill="#00ff41" opacity="0.9"/>
+    </svg>
+    <div id="splash-title">RADARPRO</div>
+    <div id="splash-sub">Sales Intelligence Platform</div>
+  </div>
 
-        </main>
+  <!-- Progress bar -->
+  <div id="splash-bar-wrap">
+    <div id="splash-bar-bg">
+      <div id="splash-bar-fill"></div>
     </div>
+    <div id="splash-status">Initializing...</div>
+  </div>
+</div>
 
-    <!-- GOOGLE MAPS API - Note: USER NEEDS TO REPLACE API_KEY HERE -->
-    <!-- Adding async deferred loading as per best practice instructions -->
-    <script>
-        // CONFIGURATION 
-        const GOOGLE_MAPS_API_KEY = 'AIzaSyBkVk_B6cBwC9k4S7CL0nCPhsY75euyYoM'; // Replace this placeholder with real API key!
-        
-        let map;
-        let markers = [];
-        let geocoder;
-        let activeInfoWindow;
-        let masterData = [];
-        let filteredData = [];
-        let activeStates = [];
-        const STATE_POOL = ["OH", "IN", "MI", "KY", "TN", "WV", "PA", "IL"];
+<!-- ============================================================
+     FLASH OVERLAY
+     ============================================================ -->
+<div id="flash"></div>
 
-        // 1. STARTUP
-        async function init() {
-            setupFilters();
-            await loadProspectData();
-            
-            // Trigger runtime load of Google Maps if Key exists
-            if (GOOGLE_MAPS_API_KEY && GOOGLE_MAPS_API_KEY !== 'YOUR_API_KEY_HERE') {
-                loadGoogleMapsScript();
-                document.getElementById('map-overlay-msg').style.display = 'none';
-            }
+<!-- ============================================================
+     EXPORT MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal-box">
+    <h3>⬡ Export CSV</h3>
+    <input type="password" id="export-pw" placeholder="Enter password" autocomplete="off"/>
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="doExport()">Export</button>
+      <button class="action-btn" onclick="closeExport()">Cancel</button>
+    </div>
+    <div id="export-err" style="color:#ff4444;font-size:0.78rem;margin-top:10px;display:none;">Incorrect password</div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TOAST
+     ============================================================ -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================================================
+     MAIN APP
+     ============================================================ -->
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div class="header-logo">
+      <svg viewBox="0 0 30 30" fill="none">
+        <circle cx="15" cy="15" r="13" stroke="#00ff41" stroke-width="1" opacity="0.3"/>
+        <circle cx="15" cy="15" r="8"  stroke="#00ff41" stroke-width="1" opacity="0.25"/>
+        <circle cx="15" cy="15" r="3.5" stroke="#00ff41" stroke-width="1" opacity="0.4"/>
+        <g class="logo-sweep" style="transform-origin:15px 15px">
+          <path d="M15 15 L15 2" stroke="#00ff41" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M15 15 L15 2" stroke="#00ff41" stroke-width="7" stroke-linecap="round" opacity="0.07" transform="rotate(-25 15 15)"/>
+        </g>
+        <circle cx="15" cy="15" r="2" fill="#00ff41" opacity="0.9"/>
+      </svg>
+    </div>
+    <h1>⬡ RADARPRO</h1>
+    <div class="header-spacer"></div>
+    <div id="header-stats">
+      <span id="stat-loaded">Loading...</span><br>
+      <span id="stat-states">8 States</span>
+    </div>
+    <button class="action-btn" style="margin-left:8px" onclick="openExport()">⬇ CSV</button>
+  </div>
+
+  <!-- TABS -->
+  <div id="tabs">
+    <button class="tab-btn active" onclick="switchTab('keyword')">Keyword Search</button>
+    <button class="tab-btn" onclick="switchTab('radius')">Radius + Day Plan</button>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- LEFT PANEL -->
+    <div id="left-panel">
+
+      <!-- CONTROLS -->
+      <div id="controls">
+
+        <!-- KEYWORD TAB CONTROLS -->
+        <div class="tab-content active" id="ctrl-keyword">
+          <div class="search-input-wrap">
+            <input class="search-input" id="keyword-input" type="text" placeholder="Search companies..." autocomplete="off">
+            <button class="btn-primary" onclick="doKeywordSearch()">SCAN</button>
+          </div>
+
+          <!-- State filters -->
+          <div id="state-filters">
+            <button id="select-all-btn" class="active" onclick="toggleSelectAll()">All</button>
+          </div>
+
+          <!-- Pipeline filter -->
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">
+            <span style="font-size:0.65rem;color:var(--text-dim);font-family:'Rajdhani',sans-serif;letter-spacing:1px;text-transform:uppercase;align-self:center;margin-right:2px;">Filter:</span>
+            <button class="crm-badge badge-new" style="cursor:pointer;padding:2px 7px;" onclick="filterPipeline('all')" id="pf-all">All</button>
+            <button class="crm-badge badge-new"       onclick="filterPipeline('New')"       id="pf-New">New</button>
+            <button class="crm-badge badge-contacted" onclick="filterPipeline('Contacted')" id="pf-Contacted">Contacted</button>
+            <button class="crm-badge badge-appt"      onclick="filterPipeline('Appt Set')"  id="pf-Appt">Appt</button>
+            <button class="crm-badge badge-customer"  onclick="filterPipeline('Customer')"  id="pf-Customer">Customer</button>
+            <button class="crm-badge badge-called"    onclick="filterPipeline('called')"    id="pf-called">Called</button>
+            <button class="crm-badge badge-followup"  onclick="filterPipeline('followup')"  id="pf-followup">Follow-up</button>
+          </div>
+        </div>
+
+        <!-- RADIUS TAB CONTROLS -->
+        <div class="tab-content" id="ctrl-radius">
+          <div class="search-input-wrap">
+            <input class="search-input" id="location-input" type="text" placeholder="City, address, or zip..." autocomplete="off">
+          </div>
+          <div class="radius-row">
+            <label>Radius</label>
+            <input class="search-input" id="radius-input" type="number" value="25" min="1" max="200" style="width:70px">
+            <label>mi &nbsp;·&nbsp; Keyword</label>
+            <input class="search-input" id="radius-keyword" type="text" placeholder="Optional" autocomplete="off" style="flex:1">
+          </div>
+          <button class="btn-primary" style="width:100%" onclick="doRadiusSearch()">⬡ BUILD DAY PLAN</button>
+        </div>
+
+      </div><!-- /controls -->
+
+      <!-- RESULTS COUNT -->
+      <div id="results-count">Ready — enter search above</div>
+
+      <!-- RESULTS LIST -->
+      <div id="results-list"></div>
+
+    </div><!-- /left-panel -->
+
+    <!-- RIGHT PANEL -->
+    <div id="right-panel">
+      
+      <!-- CONTENT COLUMN -->
+      <div id="detail-and-content-stack">
+        <div id="detail-panel">
+
+        <!-- Empty state -->
+        <div id="detail-empty">
+          <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+            <circle cx="30" cy="30" r="28" stroke="#00ff41" stroke-width="1" opacity="0.3"/>
+            <circle cx="30" cy="30" r="18" stroke="#00ff41" stroke-width="1" opacity="0.2"/>
+            <circle cx="30" cy="30" r="8"  stroke="#00ff41" stroke-width="1" opacity="0.3"/>
+            <line x1="30" y1="2" x2="30" y2="58" stroke="#00ff41" stroke-width="0.5" opacity="0.15"/>
+            <line x1="2"  y1="30" x2="58" y2="30" stroke="#00ff41" stroke-width="0.5" opacity="0.15"/>
+          </svg>
+          <span style="font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase;font-size:0.8rem;">Select a prospect to view details</span>
+        </div>
+
+        <!-- Detail card -->
+        <div id="detail-card">
+
+          <!-- Card header -->
+          <div class="card-header">
+            <div>
+              <div class="card-company-name" id="d-company"></div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:3px;" id="d-address"></div>
+            </div>
+            <div class="card-state-badge" id="d-state"></div>
+          </div>
+
+          <!-- Score bar -->
+          <div class="score-section">
+            <span class="score-label">Prospect Score</span>
+            <div class="score-bar-bg">
+              <div class="score-bar-fill" id="d-score-bar"></div>
+            </div>
+            <span class="score-value" id="d-score-val"></span>
+          </div>
+
+          <!-- Info grid -->
+          <div class="info-grid">
+            <div class="info-cell">
+              <div class="info-cell-label">Phone</div>
+              <div class="info-cell-value" id="d-phone"></div>
+            </div>
+            <div class="info-cell">
+              <div class="info-cell-label">Email</div>
+              <div class="info-cell-value" id="d-email" style="word-break:break-all"></div>
+            </div>
+            <div class="info-cell">
+              <div class="info-cell-label">Employees on Site</div>
+              <div class="info-cell-value" id="d-employees"></div>
+            </div>
+            <div class="info-cell">
+              <div class="info-cell-label">Year Established</div>
+              <div class="info-cell-value" id="d-year"></div>
+            </div>
+            <div class="info-cell" style="grid-column:1/-1">
+              <div class="info-cell-label">Website</div>
+              <div class="info-cell-value" id="d-website"></div>
+            </div>
+          </div>
+
+          <!-- Quick actions -->
+          <div class="action-row">
+            <a class="action-btn" id="act-call" href="#">📞 Call</a>
+            <a class="action-btn" id="act-email" href="#">✉ Email</a>
+            <a class="action-btn" id="act-dir" href="#" target="_blank">🧭 Directions</a>
+            <a class="action-btn" id="act-web" href="#" target="_blank">🌐 Website</a>
+            <a class="action-btn" id="act-mymaps" href="#" target="_blank">🗺 My Maps</a>
+            <a class="action-btn" id="act-route" href="#" target="_blank">🚗 Route</a>
+          </div>
+
+          <!-- ====== PHASE 8 CRM SECTION ====== -->
+          <div id="crm-section">
+            <h3>CRM</h3>
+
+            <!-- Pipeline status -->
+            <div style="margin-bottom:8px;">
+              <div style="font-size:0.68rem;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);font-family:'Rajdhani',sans-serif;margin-bottom:6px;">Pipeline Stage</div>
+              <div class="pipeline-row" id="pipeline-btns">
+                <button class="pipeline-btn" data-stage="New"       onclick="setPipeline('New')">New</button>
+                <button class="pipeline-btn" data-stage="Contacted" onclick="setPipeline('Contacted')">Contacted</button>
+                <button class="pipeline-btn" data-stage="Appt Set"  onclick="setPipeline('Appt Set')">Appt Set</button>
+                <button class="pipeline-btn" data-stage="Proposal"  onclick="setPipeline('Proposal')">Proposal</button>
+                <button class="pipeline-btn" data-stage="Customer"  onclick="setPipeline('Customer')">Customer</button>
+                <button class="pipeline-btn" data-stage="Dead"      onclick="setPipeline('Dead')">Dead</button>
+              </div>
+            </div>
+
+            <!-- Heat / priority -->
+            <div class="heat-row">
+              <span class="heat-label">Priority</span>
+              <button class="heat-btn" data-heat="hot"  onclick="setHeat('hot')">🔥 Hot</button>
+              <button class="heat-btn" data-heat="warm" onclick="setHeat('warm')">🌤 Warm</button>
+              <button class="heat-btn" data-heat="cold" onclick="setHeat('cold')">❄ Cold</button>
+            </div>
+
+            <!-- Already Called -->
+            <div class="called-toggle-wrap">
+              <div class="called-toggle" id="called-toggle" onclick="toggleCalled()"></div>
+              <span class="called-toggle-label" id="called-label">Already Called</span>
+            </div>
+
+            <!-- Follow-up date -->
+            <div class="followup-row">
+              <span class="followup-label">Follow-up Date</span>
+              <input class="followup-input" type="date" id="followup-date">
+              <button class="btn-save-followup" onclick="saveFollowup()">Save</button>
+            </div>
+
+            <!-- Notes -->
+            <div class="notes-header">
+              <span>Notes</span>
+            </div>
+
+            <!-- Quick tag notes -->
+            <div class="note-tags">
+              <button class="note-tag" onclick="addTagNote('Left voicemail')">📞 Left voicemail</button>
+              <button class="note-tag" onclick="addTagNote('Spoke to owner')">🤝 Spoke to owner</button>
+              <button class="note-tag" onclick="addTagNote('Send literature')">📄 Send literature</button>
+              <button class="note-tag" onclick="addTagNote('Call back requested')">🔁 Call back</button>
+              <button class="note-tag" onclick="addTagNote('Not interested')">✗ Not interested</button>
+            </div>
+
+            <!-- Custom note input -->
+            <div class="note-input-row">
+              <input class="note-input" type="text" id="note-input" placeholder="Add a note..." autocomplete="off">
+              <button class="btn-add-note" onclick="addCustomNote()">+ Add</button>
+            </div>
+
+            <!-- Notes timeline -->
+            <div id="notes-list"></div>
+
+          </div><!-- /crm-section -->
+
+        </div><!-- /detail-card -->
+
+      </div><!-- /detail-panel -->
+
+      <!-- Day Plan (shown for radius tab) -->
+      <div id="day-plan-section" class="hidden">
+        <div class="day-plan-header">
+          <span id="dp-title">Day Plan</span>
+          <a id="dp-maps-link" class="action-btn" href="#" target="_blank">Open in Maps</a>
+        </div>
+        <div id="dp-stops"></div>
+      </div>
+      </div> <!-- /detail-and-content-stack -->
+
+      <!-- VISUAL INTELLIGENCE ENGINE -->
+      <div id="map-visualization-stack">
+        <div id="google-map"></div>
+        <div id="street-view-pano">
+          <div class="pano-placeholder" id="pano-msg">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:10px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <span>SELECT PROSPECT FOR VISUAL ENGINE</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /right-panel -->
+
+  </div><!-- /main -->
+
+</div><!-- /app -->
+
+<!-- Bottom nav mobile -->
+<div id="bottom-nav">
+  <button class="bottom-nav-btn active" onclick="mobileShowPanel('list')">📋<br>List</button>
+  <button class="bottom-nav-btn" onclick="mobileShowPanel('detail')">🏢<br>Detail</button>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+'use strict';
+
+// ============================================================
+// CONFIG
+// ============================================================
+const API = 'https://radarpro-api.onrender.com';
+const MAX_SCORE = 20;
+const EXPORT_PASSWORD = 'radar2026';
+const STATES = ['OH','IN','MI','KY','TN','WV','PA','AL'];
+const QUICK_TAGS = ['Left voicemail','Spoke to owner','Send literature','Call back requested','Not interested'];
+const PIPELINE_STAGES = ['New','Contacted','Appt Set','Proposal','Customer','Dead'];
+
+// ============================================================
+// STATE
+// ============================================================
+let allData = [];
+let filteredData = [];
+let selectedStates = new Set(STATES);
+let activeResultKey = null;
+let currentProspect = null;
+let currentTab = 'keyword';
+let pipelineFilter = 'all';
+
+// Maps Variables
+let map, panorama, marker, geocoder;
+const GOOGLE_MAPS_API_KEY = 'AIzaSyBkVk_B6cBwC9k4S7CL0nCPhsY75euyYoM';
+
+// CRM storage key helpers
+const crmKey = (company, city, state) => `crm_${company}_${city}_${state}`.replace(/[^a-zA-Z0-9_]/g,'_').substring(0,80);
+
+function getCRM(prospect) {
+  try {
+    const key = crmKey(prospect.Company, prospect.City, prospect.State);
+    return JSON.parse(localStorage.getItem(key) || '{}');
+  } catch { return {}; }
+}
+
+function saveCRM(prospect, data) {
+  try {
+    const key = crmKey(prospect.Company, prospect.City, prospect.State);
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch(e) { console.warn('localStorage unavailable'); }
+}
+
+function updateCRMField(field, value) {
+  if (!currentProspect) return;
+  const crm = getCRM(currentProspect);
+  crm[field] = value;
+  saveCRM(currentProspect, crm);
+}
+
+// ============================================================
+// SPLASH SEQUENCE
+// ============================================================
+const statuses = [
+  'Calibrating radar array...',
+  'Connecting to data backend...',
+  'Loading prospect database...',
+  'Initializing territory map...',
+  'Ready for deployment.'
+];
+
+async function runSplash() {
+  const fill   = document.getElementById('splash-bar-fill');
+  const status = document.getElementById('splash-status');
+
+  // Animate progress bar
+  for (let i = 0; i <= 100; i++) {
+    await new Promise(r => setTimeout(r, 22));
+    fill.style.width = i + '%';
+    if (i % 20 === 0) status.textContent = statuses[Math.floor(i/20)];
+  }
+
+  // Load data — auto retry up to 10 times (backend may be sleeping on Render cold-start)
+  let loaded = false;
+  const MAX_ATTEMPTS = 10;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      status.textContent = attempt === 1 ? 'Connecting to backend...' : `Waking API backend... attempt ${attempt}/${MAX_ATTEMPTS}`;
+      fill.style.width = (70 + (attempt * 3)) + '%';
+      const res = await fetch(`${API}/data`);
+      allData = await res.json();
+      loaded = true;
+      break;
+    } catch(e) {
+      if (attempt < MAX_ATTEMPTS) {
+        status.textContent = `Backend sleeping — retrying in 8s... (${attempt}/${MAX_ATTEMPTS})`;
+        await new Promise(r => setTimeout(r, 8000));
+      }
+    }
+  }
+  if (!loaded) {
+    status.textContent = 'Backend offline — search may not work';
+    await new Promise(r => setTimeout(r, 1500));
+    allData = [];
+  }
+
+  document.getElementById('stat-loaded').textContent =
+    allData.length.toLocaleString() + ' prospects loaded';
+
+  // Flash transition
+  await new Promise(r => setTimeout(r, 300));
+  const flash = document.getElementById('flash');
+  flash.style.opacity = '1';
+  await new Promise(r => setTimeout(r, 150));
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  flash.style.opacity = '0';
+
+  // Init UI
+  buildStateFilters();
+}
+
+// ============================================================
+// STATE FILTER BUTTONS
+// ============================================================
+function buildStateFilters() {
+  const wrap = document.getElementById('state-filters');
+  // Clear existing state buttons (keep Select All)
+  const existing = wrap.querySelectorAll('.state-btn');
+  existing.forEach(b => b.remove());
+
+  STATES.forEach(st => {
+    const btn = document.createElement('button');
+    btn.className = 'state-btn active';
+    btn.textContent = st;
+    btn.dataset.state = st;
+    btn.onclick = () => toggleState(st, btn);
+    wrap.appendChild(btn);
+  });
+}
+
+function toggleState(state, btn) {
+  if (selectedStates.has(state)) {
+    selectedStates.delete(state);
+    btn.classList.remove('active');
+  } else {
+    selectedStates.add(state);
+    btn.classList.add('active');
+  }
+  updateSelectAllBtn();
+}
+
+function toggleSelectAll() {
+  const allSelected = selectedStates.size === STATES.length;
+  if (allSelected) {
+    selectedStates.clear();
+    document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('active'));
+  } else {
+    STATES.forEach(s => selectedStates.add(s));
+    document.querySelectorAll('.state-btn').forEach(b => b.classList.add('active'));
+  }
+  updateSelectAllBtn();
+}
+
+function updateSelectAllBtn() {
+  const btn = document.getElementById('select-all-btn');
+  btn.classList.toggle('active', selectedStates.size === STATES.length);
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', (tab === 'keyword' && i===0) || (tab === 'radius' && i===1));
+  });
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById(`ctrl-${tab}`).classList.add('active');
+
+  if (tab === 'keyword') {
+    document.getElementById('day-plan-section').classList.add('hidden');
+    document.getElementById('detail-panel').style.display = '';
+  } else {
+    document.getElementById('detail-panel').style.display = '';
+  }
+}
+
+// ============================================================
+// KEYWORD SEARCH
+// ============================================================
+async function doKeywordSearch() {
+  const kw = document.getElementById('keyword-input').value.trim();
+  const countEl = document.getElementById('results-count');
+
+  countEl.innerHTML = '<span class="loading-spinner"></span> Scanning...';
+  document.getElementById('results-list').innerHTML = '';
+
+  try {
+    // Always fetch /data and filter client-side (/search doesn't exist on backend)
+    if (!allData.length) {
+      const res = await fetch(`${API}/data`);
+      allData = await res.json();
+      document.getElementById('stat-loaded').textContent =
+        allData.length.toLocaleString() + ' prospects loaded';
+    }
+
+    let data = [...allData];
+
+    // Keyword filter
+    if (kw) {
+      const kwl = kw.toLowerCase();
+      data = data.filter(p =>
+        Object.values(p).some(v => v && String(v).toLowerCase().includes(kwl))
+      );
+    }
+
+    // State filter — only apply if some but not all states selected
+    if (selectedStates.size > 0 && selectedStates.size < STATES.length) {
+      data = data.filter(p => selectedStates.has(p.State) || selectedStates.has(p['State Tag']));
+    }
+
+    filteredData = data;
+    applyPipelineFilter();
+  } catch(e) {
+    countEl.textContent = 'Error connecting to backend — ' + e.message;
+  }
+}
+
+function filterPipeline(stage) {
+  pipelineFilter = stage;
+  // Update filter button styles
+  document.querySelectorAll('[id^="pf-"]').forEach(b => {
+    b.style.opacity = '0.5';
+    b.style.fontWeight = '600';
+  });
+  const activeBtn = document.getElementById('pf-' + (stage === 'all' ? 'all' : stage.replace(' ','').replace(/\s+/g,'')));
+  if (activeBtn) { activeBtn.style.opacity = '1'; activeBtn.style.outline = '1px solid var(--green)'; }
+  applyPipelineFilter();
+}
+
+function applyPipelineFilter() {
+  let data = [...filteredData];
+
+  if (pipelineFilter !== 'all') {
+    data = data.filter(p => {
+      const crm = getCRM(p);
+      if (pipelineFilter === 'called') return !!crm.called;
+      if (pipelineFilter === 'followup') return !!crm.followup;
+      return (crm.pipeline || 'New') === pipelineFilter;
+    });
+  }
+
+  renderResults(data);
+}
+
+// ============================================================
+// RADIUS SEARCH
+// ============================================================
+async function doRadiusSearch() {
+  const loc  = document.getElementById('location-input').value.trim();
+  const mi   = parseFloat(document.getElementById('radius-input').value) || 25;
+  const kw   = document.getElementById('radius-keyword').value.trim();
+  const countEl = document.getElementById('results-count');
+
+  if (!loc) { showToast('Enter a location first'); return; }
+
+  countEl.innerHTML = '<span class="loading-spinner"></span> Geocoding...';
+
+  try {
+    // Geocode
+    const geo = await fetch(`${API}/geocode?q=${encodeURIComponent(loc)}`);
+    const geoData = await geo.json();
+    if (!geoData.lat) { countEl.textContent = 'Location not found.'; return; }
+
+    countEl.innerHTML = '<span class="loading-spinner"></span> Searching radius...';
+
+    let url = `${API}/radius?lat=${geoData.lat}&lon=${geoData.lon}&miles=${mi}`;
+    if (kw) url += `&keyword=${encodeURIComponent(kw)}`;
+    const res = await fetch(url);
+    let data = await res.json();
+
+    filteredData = data;
+    renderResults(data);
+
+    // Show day plan
+    buildDayPlan(data.slice(0,10), loc, geoData);
+
+    document.getElementById('day-plan-section').classList.remove('hidden');
+    document.getElementById('detail-panel').style.display = 'none';
+
+  } catch(e) {
+    countEl.textContent = 'Search error — check connection.';
+  }
+}
+
+// ============================================================
+// RENDER RESULTS
+// ============================================================
+function renderResults(data) {
+  const list    = document.getElementById('results-list');
+  const countEl = document.getElementById('results-count');
+
+  list.innerHTML = '';
+  countEl.textContent = `${data.length.toLocaleString()} results`;
+
+  if (!data.length) {
+    list.innerHTML = '<div style="padding:20px;color:var(--text-dim);font-size:0.82rem;text-align:center;">No results found</div>';
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  data.forEach((p, i) => {
+    const crm   = getCRM(p);
+    const isActive = activeResultKey === crmKey(p.Company, p.City, p.State);
+
+    const div = document.createElement('div');
+    div.className = 'result-item' + (isActive ? ' active' : '');
+    div.style.animationDelay = Math.min(i * 18, 300) + 'ms';
+
+    // CRM badge HTML
+    let badges = '';
+    if (crm.called) badges += `<span class="crm-badge badge-called">Called</span>`;
+    const stage = crm.pipeline || '';
+    if (stage && stage !== 'New') badges += `<span class="crm-badge badge-${stage.toLowerCase().replace(' ','-')}">${stage}</span>`;
+    if (crm.heat) badges += `<span class="crm-badge badge-${crm.heat}">${crm.heat}</span>`;
+    if (crm.followup) {
+      const today = new Date().toISOString().split('T')[0];
+      if (crm.followup >= today) badges += `<span class="crm-badge badge-followup">📅 ${crm.followup}</span>`;
+    }
+
+    div.innerHTML = `
+      <div class="result-name">${isActive ? '<span class="result-beacon"></span>' : ''}${esc(p.Company)}</div>
+      <div class="result-meta">${esc(p.City)}, ${esc(p.State)} ${p.Score !== undefined ? '· ' + p.Score + '/' + MAX_SCORE : ''}</div>
+      ${badges ? `<div class="crm-indicators">${badges}</div>` : ''}
+      <div class="result-score">${p._dist ? p._dist.toFixed(1) + ' mi' : ''}</div>
+    `;
+
+    div.onclick = () => selectProspect(p, div);
+    frag.appendChild(div);
+  });
+
+  list.appendChild(frag);
+}
+
+// ============================================================
+// SELECT PROSPECT
+// ============================================================
+function selectProspect(p, el) {
+  // Deactivate old
+  document.querySelectorAll('.result-item.active').forEach(r => r.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  activeResultKey = crmKey(p.Company, p.City, p.State);
+  currentProspect = p;
+
+  // Show card
+  document.getElementById('detail-empty').style.display = 'none';
+  const card = document.getElementById('detail-card');
+  card.style.display = 'block';
+
+  // Populate static fields
+  document.getElementById('d-company').textContent   = p.Company || '—';
+  document.getElementById('d-address').textContent   = [p.Address, p.City, p.State].filter(Boolean).join(', ');
+  document.getElementById('d-state').textContent     = p.State || '—';
+  document.getElementById('d-phone').textContent     = p.Phone || '—';
+  document.getElementById('d-email').textContent     = p['Company Email'] || '—';
+  document.getElementById('d-employees').textContent = p['Employees on Site'] || '—';
+  document.getElementById('d-year').textContent      = p['Year Established'] || '—';
+
+  const site = p.Website ? p.Website.trim() : '';
+  document.getElementById('d-website').innerHTML = site
+    ? `<a href="${ensureHttp(site)}" target="_blank" style="color:var(--green-dim)">${site}</a>`
+    : '—';
+
+  // Score
+  const score = parseInt(p.Score) || 0;
+  document.getElementById('d-score-bar').style.width = (score / MAX_SCORE * 100) + '%';
+  document.getElementById('d-score-val').textContent = `${score} / ${MAX_SCORE}`;
+
+  // Action buttons
+  const addr = encodeURIComponent([p.Address, p.City, p.State].filter(Boolean).join(', '));
+  document.getElementById('act-call').href    = p.Phone ? `tel:${p.Phone.replace(/\D/g,'')}` : '#';
+  document.getElementById('act-email').href   = p['Company Email'] ? `mailto:${p['Company Email']}` : '#';
+  document.getElementById('act-dir').href     = `https://www.google.com/maps/dir/?api=1&destination=${addr}`;
+  document.getElementById('act-web').href     = site ? ensureHttp(site) : '#';
+  document.getElementById('act-mymaps').href  = `https://www.google.com/maps/search/?api=1&query=${addr}`;
+  document.getElementById('act-route').href   = `https://www.google.com/maps/dir/?api=1&destination=${addr}`;
+
+  // Load CRM data
+  loadCRMPanel(p);
+
+  // Mobile: show detail
+  if (window.innerWidth <= 680) mobileShowPanel('detail');
+
+  // Visual Pan Update
+  updateMapLocation(p);
+}
+
+// ============================================================
+// CRM PANEL LOAD
+// ============================================================
+function loadCRMPanel(p) {
+  const crm = getCRM(p);
+
+  // Pipeline
+  document.querySelectorAll('.pipeline-btn').forEach(btn => {
+    const stage = btn.dataset.stage;
+    const active = (crm.pipeline || 'New') === stage;
+    btn.className = 'pipeline-btn' + (active ? ` active-${stage.toLowerCase().replace(' ','-')}` : '');
+  });
+
+  // Heat
+  document.querySelectorAll('.heat-btn').forEach(btn => {
+    btn.classList.toggle('active', crm.heat === btn.dataset.heat);
+  });
+
+  // Called toggle
+  const toggle = document.getElementById('called-toggle');
+  const label  = document.getElementById('called-label');
+  toggle.classList.toggle('on', !!crm.called);
+  label.textContent = crm.called ? 'Already Called ✓' : 'Already Called';
+
+  // Follow-up
+  document.getElementById('followup-date').value = crm.followup || '';
+
+  // Notes
+  renderNotes(crm.notes || []);
+}
+
+// ============================================================
+// PIPELINE
+// ============================================================
+function setPipeline(stage) {
+  if (!currentProspect) return;
+  const crm = getCRM(currentProspect);
+  crm.pipeline = stage;
+  saveCRM(currentProspect, crm);
+
+  // Update button styles
+  document.querySelectorAll('.pipeline-btn').forEach(btn => {
+    const s = btn.dataset.stage;
+    const active = s === stage;
+    btn.className = 'pipeline-btn' + (active ? ` active-${s.toLowerCase().replace(' ','-')}` : '');
+  });
+
+  // Refresh badge in list
+  refreshResultItem(currentProspect);
+  showToast(`Stage: ${stage}`);
+}
+
+// ============================================================
+// HEAT
+// ============================================================
+function setHeat(heat) {
+  if (!currentProspect) return;
+  const crm = getCRM(currentProspect);
+  crm.heat = crm.heat === heat ? null : heat; // toggle off if same
+  saveCRM(currentProspect, crm);
+
+  document.querySelectorAll('.heat-btn').forEach(btn => {
+    btn.classList.toggle('active', crm.heat === btn.dataset.heat);
+  });
+
+  refreshResultItem(currentProspect);
+  showToast(crm.heat ? `Priority: ${crm.heat}` : 'Priority cleared');
+}
+
+// ============================================================
+// CALLED TOGGLE
+// ============================================================
+function toggleCalled() {
+  if (!currentProspect) return;
+  const crm = getCRM(currentProspect);
+  crm.called = !crm.called;
+  saveCRM(currentProspect, crm);
+
+  const toggle = document.getElementById('called-toggle');
+  const label  = document.getElementById('called-label');
+  toggle.classList.toggle('on', crm.called);
+  label.textContent = crm.called ? 'Already Called ✓' : 'Already Called';
+
+  refreshResultItem(currentProspect);
+  showToast(crm.called ? 'Marked as Called' : 'Unmarked as Called');
+}
+
+// ============================================================
+// FOLLOW-UP
+// ============================================================
+function saveFollowup() {
+  if (!currentProspect) return;
+  const date = document.getElementById('followup-date').value;
+  updateCRMField('followup', date);
+  refreshResultItem(currentProspect);
+  showToast(date ? `Follow-up set: ${date}` : 'Follow-up cleared');
+}
+
+// ============================================================
+// NOTES
+// ============================================================
+function addTagNote(text) {
+  addNote(text, true);
+}
+
+function addCustomNote() {
+  const input = document.getElementById('note-input');
+  const text = input.value.trim();
+  if (!text) return;
+  addNote(text, false);
+  input.value = '';
+}
+
+function addNote(text, isTag) {
+  if (!currentProspect) return;
+  const crm = getCRM(currentProspect);
+  if (!crm.notes) crm.notes = [];
+
+  const note = {
+    id:        Date.now(),
+    text:      text,
+    tag:       isTag,
+    timestamp: new Date().toLocaleString('en-US', {
+      month:'short', day:'numeric', year:'numeric',
+      hour:'numeric', minute:'2-digit', hour12:true
+    })
+  };
+
+  crm.notes.unshift(note); // newest first
+  saveCRM(currentProspect, crm);
+  renderNotes(crm.notes);
+  showToast('Note added');
+}
+
+function deleteNote(id) {
+  if (!currentProspect) return;
+  const crm = getCRM(currentProspect);
+  crm.notes = (crm.notes || []).filter(n => n.id !== id);
+  saveCRM(currentProspect, crm);
+  renderNotes(crm.notes);
+}
+
+function renderNotes(notes) {
+  const list = document.getElementById('notes-list');
+  if (!notes || !notes.length) {
+    list.innerHTML = '<div style="color:var(--text-dim);font-size:0.78rem;padding:8px 0;">No notes yet</div>';
+    return;
+  }
+
+  list.innerHTML = notes.map(n => `
+    <div class="note-item${n.tag ? ' tag-note' : ''}">
+      <div class="note-timestamp">${n.timestamp}</div>
+      <div class="note-text">${esc(n.text)}</div>
+      <button class="note-delete" onclick="deleteNote(${n.id})" title="Delete note">✕</button>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// REFRESH RESULT ITEM IN LIST (after CRM change)
+// ============================================================
+function refreshResultItem(p) {
+  // Re-render full list to reflect badge changes
+  applyPipelineFilter();
+  // Re-select the current item
+  setTimeout(() => {
+    const items = document.querySelectorAll('.result-item');
+    items.forEach(item => {
+      if (item.querySelector('.result-name')?.textContent?.includes(p.Company)) {
+        item.classList.add('active');
+      }
+    });
+  }, 50);
+}
+
+// ============================================================
+// DAY PLAN
+// ============================================================
+function buildDayPlan(stops, originLabel, originGeo) {
+  const container = document.getElementById('dp-stops');
+  const titleEl   = document.getElementById('dp-title');
+  const mapsLink  = document.getElementById('dp-maps-link');
+
+  titleEl.textContent = `Day Plan — ${stops.length} stops near ${originLabel}`;
+  container.innerHTML = '';
+
+  if (!stops.length) {
+    container.innerHTML = '<div style="padding:20px;color:var(--text-dim)">No results in radius</div>';
+    return;
+  }
+
+  let totalDist = 0;
+  const waypoints = [];
+
+  stops.forEach((p, i) => {
+    const dist = p._dist || 0;
+    totalDist += dist;
+    const addr = [p.Address, p.City, p.State].filter(Boolean).join(', ');
+    waypoints.push(encodeURIComponent(addr));
+
+    const row = document.createElement('div');
+    row.className = 'day-plan-stop';
+    row.innerHTML = `
+      <div class="stop-num">${i+1}</div>
+      <div class="stop-info">
+        <div class="stop-name">${esc(p.Company)}</div>
+        <div class="stop-meta">${esc(p.City)}, ${esc(p.State)} — Score: ${p.Score||'—'}/${MAX_SCORE}</div>
+      </div>
+      <div class="stop-dist">${dist.toFixed(1)} mi</div>
+    `;
+    row.onclick = () => selectProspect(p, null);
+    row.style.cursor = 'pointer';
+    container.appendChild(row);
+  });
+
+  // Summary row
+  const summary = document.createElement('div');
+  summary.className = 'day-plan-stop';
+  summary.innerHTML = `
+    <div class="stop-num" style="color:var(--green)">∑</div>
+    <div class="stop-info">
+      <div class="stop-name" style="font-size:0.85rem">Est. ${totalDist.toFixed(0)} miles · ~${Math.round(totalDist/35*60)} min drive time</div>
+    </div>
+  `;
+  container.appendChild(summary);
+
+  // Google Maps route link
+  const origin = encodeURIComponent(originLabel);
+  const dest = waypoints[waypoints.length - 1];
+  const wps = waypoints.slice(0, -1).join('|');
+  const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${wps}&travelmode=driving`;
+  mapsLink.href = mapsUrl;
+}
+
+// ============================================================
+// EXPORT
+// ============================================================
+function openExport()  { document.getElementById('export-modal').classList.add('open'); }
+function closeExport() { document.getElementById('export-modal').classList.remove('open'); document.getElementById('export-err').style.display='none'; }
+
+function doExport() {
+  const pw = document.getElementById('export-pw').value;
+  if (pw !== EXPORT_PASSWORD) {
+    document.getElementById('export-err').style.display = 'block';
+    return;
+  }
+
+  const data = filteredData.length ? filteredData : allData;
+  const headers = ['Company','Address','City','State','Phone','Company Email','Website','Year Established','Employees on Site','Score','Lat','Lon'];
+  const rows = [headers.join(',')];
+
+  data.forEach(p => {
+    rows.push(headers.map(h => `"${(p[h]||'').toString().replace(/"/g,'""')}"`).join(','));
+  });
+
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `RadarPRO_Export_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  closeExport();
+  showToast(`Exported ${data.length.toLocaleString()} records`);
+}
+
+// ============================================================
+// MOBILE NAV
+// ============================================================
+function mobileShowPanel(which) {
+  const right = document.getElementById('right-panel');
+  const btns  = document.querySelectorAll('.bottom-nav-btn');
+
+  if (which === 'detail') {
+    right.classList.add('mobile-show');
+    btns[0].classList.remove('active');
+    btns[1].classList.add('active');
+  } else {
+    right.classList.remove('mobile-show');
+    btns[0].classList.add('active');
+    btns[1].classList.remove('active');
+  }
+}
+
+// ============================================================
+// UTILITY
+// ============================================================
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function ensureHttp(url) {
+  if (!url) return '#';
+  return /^https?:\/\//i.test(url) ? url : 'https://' + url;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// Enter key support
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('keyword-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doKeywordSearch();
+  });
+  document.getElementById('location-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doRadiusSearch();
+  });
+  document.getElementById('note-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addCustomNote();
+  });
+  document.getElementById('export-pw').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doExport();
+  });
+
+  // Start splash
+  runSplash();
+
+  // Keep backend alive — ping every 9 minutes silently
+  setInterval(() => {
+    fetch(`${API}/health`).catch(() => {});
+  }, 9 * 60 * 1000);
+
+  // Initialize maps system load
+  loadGoogleMapsScript();
+});
+
+// ============================================================
+// VISUAL INTELLIGENCE ENGINE Implementation
+// ============================================================
+function loadGoogleMapsScript() {
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=geometry&callback=initMap`;
+  script.async = true; script.defer = true;
+  document.head.appendChild(script);
+}
+
+window.initMap = function() {
+  const cbus = { lat: 39.9612, lng: -82.9988 };
+  geocoder = new google.maps.Geocoder();
+
+  const visualTheme = [
+    {"elementType":"geometry","stylers":[{"color":"#0f1a0f"}]},
+    {"elementType":"labels.text.stroke","stylers":[{"color":"#0f1a0f"},{"weight":3}]},
+    {"elementType":"labels.text.fill","stylers":[{"color":"#00ff41"}]},
+    {"featureType":"administrative","elementType":"geometry","stylers":[{"color":"#1c331c"}]},
+    {"featureType":"water","elementType":"geometry","stylers":[{"color":"#030a03"}]},
+    {"featureType":"road","elementType":"geometry","stylers":[{"color":"#1f301f"}]},
+    {"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#0c140c"}]},
+    {"featureType":"road","elementType":"labels.text.fill","stylers":[{"color":"#6da36d"}]},
+    {"featureType":"poi","elementType":"labels.text.fill","stylers":[{"color":"#3c6b3c"}]},
+    {"featureType":"poi","elementType":"geometry","stylers":[{"color":"#091209"}]}
+  ];
+
+  map = new google.maps.Map(document.getElementById('google-map'), {
+    center: cbus, zoom: 6, styles: visualTheme,
+    disableDefaultUI: false, zoomControl: true, mapTypeControl: false, streetViewControl: false,
+  });
+
+  panorama = new google.maps.StreetViewPanorama(document.getElementById('street-view-pano'), {
+    position: cbus, visible: false, disableDefaultUI: true, zoomControl: true
+  });
+
+  marker = new google.maps.Marker({
+    position: cbus, map: map, animation: google.maps.Animation.DROP,
+    icon: { path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW, fillColor: '#00ff41', fillOpacity: 1, strokeWeight: 2, strokeColor: '#fff', scale: 7 }
+  });
+};
+
+function updateMapLocation(p) {
+  if (!window.google || !google.maps) return;
+
+  const statusEl = document.getElementById('pano-msg');
+  if (statusEl) {
+    statusEl.style.display = 'flex';
+    const span = statusEl.querySelector('span');
+    if (span) span.textContent = 'STREAMING...';
+  }
+
+  const processLocation = (loc) => {
+    if (!map || !marker) return;
+    map.panTo(loc); map.setZoom(17);
+    marker.setPosition(loc); marker.setAnimation(google.maps.Animation.DROP);
+
+    const sv = new google.maps.StreetViewService();
+    sv.getPanorama({ location: loc, radius: 65 }, (data, svstat) => {
+      if (svstat === 'OK') {
+        if (statusEl) statusEl.style.display = 'none';
+        panorama.setPano(data.location.pano);
+        panorama.setVisible(true);
+        const head = google.maps.geometry.spherical.computeHeading(data.location.latLng, loc);
+        panorama.setPov({ heading: head, pitch: 0 });
+      } else {
+        panorama.setVisible(false);
+        if (statusEl) {
+          statusEl.style.display = 'flex';
+          const span = statusEl.querySelector('span');
+          if (span) span.textContent = 'NO FAÇADE DATA';
         }
+      }
+    });
+  };
 
-        function loadGoogleMapsScript() {
-            const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=onMapsLoaded&libraries=marker`;
-            script.async = true;
-            script.defer = true;
-            document.head.appendChild(script);
-        }
+  // ATTEMPT 1: Use hardcoded dataset coordinates if available
+  if (p.Lat && p.Lon) {
+    const latVal = parseFloat(p.Lat);
+    const lonVal = parseFloat(p.Lon);
+    if (!isNaN(latVal) && !isNaN(lonVal) && latVal !== 0 && lonVal !== 0) {
+      processLocation({ lat: latVal, lng: lonVal });
+      return;
+    }
+  }
 
-        function setupFilters() {
-            const container = document.getElementById('state-pill-container');
-            STATE_POOL.forEach(s => {
-                const pill = document.createElement('div');
-                pill.className = 'state-pill';
-                pill.textContent = s;
-                pill.onclick = () => {
-                    pill.classList.toggle('active');
-                    if (activeStates.includes(s)) {
-                        activeStates = activeStates.filter(x => x !== s);
-                    } else {
-                        activeStates.push(s);
-                    }
-                };
-                container.appendChild(pill);
-            });
-        }
+  // ATTEMPT 2: Fallback to Geocoder service
+  if (!geocoder) {
+    if (statusEl) statusEl.querySelector('span').textContent = 'COORDS NOT FOUND';
+    return;
+  }
 
-        async function loadProspectData() {
-            try {
-                const response = await fetch('https://radarpro-api.onrender.com/data');
-                const raw = await response.json();
-                
-                masterData = raw.map(row => {
-                    let obj = {};
-                    Object.keys(row).forEach(k => obj[k.trim()] = row[k]);
-                    obj.Score = Number(obj.Score || 0);
-                    
-                    // Standardize specific common field variants used in display
-                    obj.DispState = obj.State || obj["        State"] || "";
-                    obj.DispAddress = obj.Address || obj.FullAddress || "";
-                    return obj;
-                });
+  const fullAddr = [p.Address, p.City, p.State].filter(Boolean).join(', ');
+  if (fullAddr.length < 4) {
+    if (statusEl) statusEl.querySelector('span').textContent = 'COORDS NOT FOUND';
+    return;
+  }
 
-                // Sort by match score descending by default
-                masterData.sort((a,b) => b.Score - a.Score);
-                applyFilters();
-
-            } catch (err) {
-                console.error("Fetch error", err);
-                document.getElementById('results-list').innerHTML = '<div style="padding:20px;color:red;">API connection failed.</div>';
-            }
-        }
-
-        // 2. RENDER LIST & INTERACTION
-        function applyFilters() {
-            const kw = document.getElementById('search-box').value.toLowerCase();
-            
-            filteredData = masterData.filter(p => {
-                const matchState = activeStates.length === 0 || activeStates.includes(p.DispState);
-                const matchText = !kw || Object.values(p).some(val => String(val).toLowerCase().includes(kw));
-                return matchState && matchText;
-            });
-
-            renderList();
-            
-            // If map is ready, batch plot visible results
-            if (window.google && map) {
-                plotResultsOnMap();
-            }
-        }
-
-        function renderList() {
-            const listDiv = document.getElementById('results-list');
-            if (filteredData.length === 0) {
-                listDiv.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">No prospects found.</div>';
-                return;
-            }
-
-            listDiv.innerHTML = filteredData.map((p, idx) => `
-                <div class="result-card" id="card-${idx}" onclick="selectProspect(${idx})">
-                    <div class="score-badge" style="background:${getScoreColor(p.Score)}">${p.Score}</div>
-                    <div class="company-name">${p.Company || 'Unknown Entity'}</div>
-                    <div class="location">${p.City || ''}, ${p.DispState}</div>
-                </div>
-            `).join('');
-        }
-
-        function getScoreColor(score) {
-            if (score >= 15) return '#1a7f37'; // high
-            if (score >= 10) return '#d29922'; // med
-            return '#6e7681'; // low
-        }
-
-        // 3. MAPS INTEGRATION HANDLERS
-        window.onMapsLoaded = function() {
-            geocoder = new google.maps.Geocoder();
-            
-            // Premium Dark Mode Style Definition for Maps JS API
-            const darkStyle = [
-                { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-                { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-                { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
-                { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
-                { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
-                { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }] },
-                { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#6b9a76" }] },
-                { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
-                { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
-                { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
-                { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }] },
-                { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
-                { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] }
-            ];
-
-            map = new google.maps.Map(document.getElementById("map"), {
-                zoom: 6,
-                center: { lat: 39.9612, lng: -82.9988 }, // Midwest Center
-                styles: darkStyle,
-                mapTypeControl: false,
-                streetViewControl: true,
-                fullscreenControl: false
-            });
-
-            // After load, plot the default results
-            plotResultsOnMap();
-        };
-
-        function clearMarkers() {
-            markers.forEach(m => m.setMap(null));
-            markers = [];
-        }
-
-        // Batch plotting visible results (Top 50 limit for performance w/ Geocoding API quotas)
-        function plotResultsOnMap() {
-            clearMarkers();
-            if (!filteredData.length) return;
-
-            // Note: Ideally coordinates are pre-generated in database/CSV for zero latency.
-            // For runtime display, we will only dynamically Geocode the top visible records, or rely on selection.
-            // As best-practice, we will plot the Active Selection immediately.
-        }
-
-        // Main action trigger
-        async function selectProspect(idx) {
-            // UI Styling updates
-            document.querySelectorAll('.result-card').forEach(c => c.classList.remove('selected'));
-            const card = document.getElementById(`card-${idx}`);
-            if (card) card.classList.add('selected');
-
-            const p = filteredData[idx];
-            
-            // Render details in the side overlay
-            renderDetailCard(p);
-            
-            // Scroll selection to top of panel context
-            document.getElementById('detail-panel').style.display = 'flex';
-
-            // Trigger advanced Maps functionalities if active
-            const fullAddress = `${p.DispAddress}, ${p.City}, ${p.DispState}`;
-            
-            // Dynamic Streetview using Static Maps/Streetview API if enabled
-            if (GOOGLE_MAPS_API_KEY && GOOGLE_MAPS_API_KEY !== 'YOUR_API_KEY_HERE') {
-                const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=400x200&location=${encodeURIComponent(fullAddress)}&fov=90&heading=235&pitch=10&key=${GOOGLE_MAPS_API_KEY}`;
-                document.getElementById('streetview-thumb').style.backgroundImage = `url('${streetViewUrl}')`;
-
-                // Perform on-the-fly geocoding to center interactive map on facility
-                geocoder.geocode({ address: fullAddress }, (results, status) => {
-                    if (status === "OK" && results[0]) {
-                        const loc = results[0].geometry.location;
-                        map.setCenter(loc);
-                        map.setZoom(16);
-                        
-                        clearMarkers();
-                        const marker = new google.maps.Marker({
-                            map: map,
-                            position: loc,
-                            title: p.Company,
-                            animation: google.maps.Animation.DROP
-                        });
-                        markers.push(marker);
-                    }
-                });
-            } else {
-                 document.getElementById('streetview-thumb').style.backgroundImage = 'linear-gradient(45deg, #242f3e, #0d1117)';
-            }
-        }
-
-        function renderDetailCard(p) {
-            const body = document.getElementById('detail-content');
-            const fullAddress = `${p.DispAddress}, ${p.City}, ${p.DispState}`;
-
-            body.innerHTML = `
-                <h2>${p.Company || 'Unknown'}</h2>
-                
-                <div class="detail-info-row">
-                    <div class="info-icon">📍</div>
-                    <div class="info-text">
-                        <strong>Physical Location</strong>
-                        ${fullAddress}
-                    </div>
-                </div>
-
-                <div class="detail-info-row">
-                    <div class="info-icon">📞</div>
-                    <div class="info-text">
-                        <strong>Office Phone</strong>
-                        ${p.Phone || 'Not Listed'}
-                    </div>
-                </div>
-
-                <div class="detail-info-row">
-                    <div class="info-icon">✉️</div>
-                    <div class="info-text">
-                        <strong>Company Contact</strong>
-                        ${p["Company Email"] || 'No Email Available'}
-                    </div>
-                </div>
-
-                <div class="detail-info-row">
-                    <div class="info-icon">👥</div>
-                    <div class="info-text">
-                        <strong>Facility Size</strong>
-                        ${p["Employees on Site"] || 'Unknown'} Employees
-                    </div>
-                </div>
-
-                <div class="action-bar">
-                    <a href="tel:${p.Phone || ''}" class="action-btn">Call Now</a>
-                    <a href="mailto:${p["Company Email"] || ''}" class="action-btn">Send Email</a>
-                    <a href="${formatWeb(p.Website)}" target="_blank" class="action-btn">Visit Website</a>
-                    <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}" target="_blank" class="action-btn primary">View Directions</a>
-                </div>
-            `;
-        }
-
-        function formatWeb(url) {
-            if(!url) return '#';
-            return url.startsWith('http') ? url : 'https://' + url;
-        }
-
-        function closeDetail() {
-            document.getElementById('detail-panel').style.display = 'none';
-            document.querySelectorAll('.result-card').forEach(c => c.classList.remove('selected'));
-        }
-
-        // Initialize lifecycle
-        window.onload = init;
-    </script>
+  geocoder.geocode({ address: fullAddr }, (res, stat) => {
+    if (stat === 'OK' && res[0]) {
+      processLocation(res[0].geometry.location);
+    } else {
+      if (statusEl) statusEl.querySelector('span').textContent = 'COORDS NOT FOUND';
+    }
+  });
+}
+</script>
 </body>
 </html>
