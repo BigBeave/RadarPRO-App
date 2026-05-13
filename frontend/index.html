@@ -1513,6 +1513,23 @@ a { color: var(--green); }
 <div id="flash"></div>
 
 <!-- ============================================================
+     GATEKEEPER PROTOCOL (SECURITY LOCK)
+     ============================================================ -->
+<div class="modal-overlay" id="gatekeeper-modal">
+  <div class="modal-box" style="max-width: 360px; text-align: center; border-color: var(--green);">
+    <h3>🔒 GATEKEEPER SECURITY</h3>
+    <div style="color: var(--text-dim); font-size: 0.82rem; line-height: 1.5; margin-bottom: 18px; font-family:'DM Sans',sans-serif; letter-spacing:0.2px;">
+      Enter Workspace Access Key to unlock the private RadarPRO intelligence suite.
+    </div>
+    <input type="password" id="gatekeeper-pw" placeholder="••••••••" style="text-align: center; font-size: 1.1rem;" autocomplete="off"/>
+    <div class="modal-btns" style="justify-content: center;">
+      <button class="btn-primary" style="flex: 1;" onclick="submitGatekeeper()">UNLOCK WORKSPACE</button>
+    </div>
+    <div id="gatekeeper-err" style="color:#ff4444;font-size:0.78rem;margin-top:12px;display:none;font-family:'Rajdhani';font-weight:600;letter-spacing:1.5px;">ACCESS DENIED - UNRECOGNIZED KEY</div>
+  </div>
+</div>
+
+<!-- ============================================================
      EXPORT MODAL
      ============================================================ -->
 <div class="modal-overlay" id="export-modal">
@@ -1843,6 +1860,41 @@ let pipelineFilter = 'all';
 let map, panorama, marker, geocoder;
 const GOOGLE_MAPS_API_KEY = 'AIzaSyBkVk_B6cBwC9k4S7CL0nCPhsY75euyYoM';
 
+// ============================================================
+// SECURITY (GATEKEEPER)
+// ============================================================
+async function securedFetch(url, options = {}) {
+  options.headers = {
+    ...options.headers,
+    'x-access-key': localStorage.getItem('radar_access_key') || ''
+  };
+  const response = await fetch(url, options);
+  if (response.status === 401) {
+    handleUnauthorized();
+    throw new Error('Unauthorized — GATEKEEPER protocol engaged');
+  }
+  return response;
+}
+
+function handleUnauthorized() {
+  document.getElementById('gatekeeper-modal').classList.add('open');
+  const pw = document.getElementById('gatekeeper-pw');
+  pw.focus();
+  // If key exists but fails, show ACCESS DENIED
+  if (localStorage.getItem('radar_access_key')) {
+    document.getElementById('gatekeeper-err').style.display = 'block';
+    localStorage.removeItem('radar_access_key');
+  }
+}
+
+function submitGatekeeper() {
+  const key = document.getElementById('gatekeeper-pw').value.trim();
+  if (!key) return;
+  localStorage.setItem('radar_access_key', key);
+  document.getElementById('gatekeeper-modal').classList.remove('open');
+  window.location.reload(); // Reload app to boot with valid access key
+}
+
 // CRM storage key helpers
 const crmKey = (company, city, state) => `crm_${company}_${city}_${state}`.replace(/[^a-zA-Z0-9_]/g,'_').substring(0,80);
 
@@ -1896,7 +1948,7 @@ async function runSplash() {
     try {
       status.textContent = attempt === 1 ? 'Connecting to backend...' : `Waking API backend... attempt ${attempt}/${MAX_ATTEMPTS}`;
       fill.style.width = (70 + (attempt * 3)) + '%';
-      const res = await fetch(`${API}/data`);
+      const res = await securedFetch(`${API}/data`);
       allData = await res.json();
       loaded = true;
       break;
@@ -2008,7 +2060,7 @@ async function doKeywordSearch() {
   try {
     // Always fetch /data and filter client-side (/search doesn't exist on backend)
     if (!allData.length) {
-      const res = await fetch(`${API}/data`);
+      const res = await securedFetch(`${API}/data`);
       allData = await res.json();
       document.getElementById('stat-loaded').textContent =
         allData.length.toLocaleString() + ' prospects loaded';
@@ -2078,7 +2130,7 @@ async function doRadiusSearch() {
 
   try {
     // Geocode
-    const geo = await fetch(`${API}/geocode?q=${encodeURIComponent(loc)}`);
+    const geo = await securedFetch(`${API}/geocode?q=${encodeURIComponent(loc)}`);
     const geoData = await geo.json();
     if (!geoData.lat) { countEl.textContent = 'Location not found.'; return; }
 
@@ -2086,7 +2138,7 @@ async function doRadiusSearch() {
 
     let url = `${API}/radius?lat=${geoData.lat}&lon=${geoData.lon}&miles=${mi}`;
     if (kw) url += `&keyword=${encodeURIComponent(kw)}`;
-    const res = await fetch(url);
+    const res = await securedFetch(url);
     let rawData = await res.json();
     let data = rawData.results || []; // Extract the array of prospects from the backend response wrapper
 
@@ -2557,6 +2609,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('export-pw').addEventListener('keydown', e => {
     if (e.key === 'Enter') doExport();
+  });
+  document.getElementById('gatekeeper-pw').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitGatekeeper();
   });
 
   // Start splash
