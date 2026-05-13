@@ -157,6 +157,53 @@ async function main() {
   fs.appendFileSync(CSV_PATH, newRowStr, 'utf-8');
   console.log('✅ CSV Saved locally.');
 
+  // HubSpot CRM Bridge
+  const envPath = path.join(__dirname, '..', 'sales_automation', 'config', '.env');
+  let hubToken = '';
+  
+  if (fs.existsSync(envPath)) {
+    const envFile = fs.readFileSync(envPath, 'utf-8');
+    const match = envFile.match(/HUBSPOT_ACCESS_TOKEN=(.+)/);
+    if (match && match[1]) {
+      hubToken = match[1].trim();
+    }
+  }
+
+  if (hubToken) {
+    console.log('\n🔗 SYNCING TO HUBSPOT CRM...');
+    try {
+      const hsResp = await fetch('https://api.hubapi.com/crm/v3/objects/companies', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${hubToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          properties: {
+            name: company,
+            address: street || '',
+            city: city || '',
+            state: state || '',
+            zip: zip || '',
+            phone: phone || '',
+            website: website || '',
+            description: `RadarPRO Desktop Added. ${description || ''}`.trim()
+          }
+        })
+      });
+
+      if (hsResp.ok) {
+        const hsData = await hsResp.json();
+        console.log(`✅ HubSpot Connected: Registered "${company}" in Sales CRM (ID: ${hsData.id})`);
+      } else {
+        const hsErr = await hsResp.text();
+        console.log('⚠️ HubSpot sync failed:', hsErr);
+      }
+    } catch (hsErr) {
+      console.log('⚠️ Could not reach HubSpot API:', hsErr.message);
+    }
+  }
+
   // Deploy changes!
   console.log('\n🚀 DEPLOYING TO RENDER CLOUD...');
   try {

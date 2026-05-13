@@ -238,22 +238,58 @@ app.post("/api/prospect", checkAuth, async (req, res) => {
       company: Company
     });
 
-    // 6. Perform GitHub commit in the background if API key is present
+    // 6. Perform Background Cloud Operations (GitHub & HubSpot Sync)
     const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
     const GITHUB_OWNER = process.env.REPO_OWNER || "BigBeave";
     const GITHUB_REPO  = process.env.REPO_NAME || "RadarPRO-App";
     const BRANCH       = process.env.BRANCH    || "phase7-radar-vision";
+    const HUBSPOT_TOKEN = process.env.HUBSPOT_ACCESS_TOKEN;
 
-    if (GITHUB_TOKEN) {
-      console.log("📤 Initiating Cloud Write-Back to GitHub...");
-      
-      // Run in background asynchronous process to keep response fast for client
-      (async () => {
+    // Execute all external APIs asynchronously in the background
+    (async () => {
+      // --- A. HUBSPOT CRM BRIDGE ---
+      if (HUBSPOT_TOKEN) {
+        console.log("🔗 Initiating CRM Sync to HubSpot...");
+        try {
+          const hubspotResp = await fetch("https://api.hubapi.com/crm/v3/objects/companies", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${HUBSPOT_TOKEN}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              properties: {
+                name: Company,
+                address: Address || "",
+                city: City || "",
+                state: State || "",
+                zip: Zip || "",
+                phone: Phone || "",
+                website: Website || "",
+                description: `RadarPRO System Created (ID: ${newId}). ${Description || ""}`.trim()
+              }
+            })
+          });
+
+          if (hubspotResp.ok) {
+            const hubData = await hubspotResp.json();
+            console.log(`✅ SUCCESS! Registered "${Company}" in HubSpot CRM. (ID: ${hubData.id})`);
+          } else {
+            const hubErr = await hubspotResp.text();
+            console.error("❌ HubSpot API Sync Failed:", hubErr);
+          }
+        } catch (hsErr) {
+          console.error("❌ HubSpot Bridge encountered an error:", hsErr.message);
+        }
+      }
+
+      // --- B. GITHUB CLOUD WRITE-BACK ---
+      if (GITHUB_TOKEN) {
+        console.log("📤 Initiating Cloud Write-Back to GitHub...");
         try {
           const filePath = "data/Radar_PRO_WITH_COORDS.csv";
           const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`;
           
-          // A. Get the current SHA of the file from GitHub
           const getResp = await fetch(apiUrl + `?ref=${BRANCH}`, {
             headers: {
               "Authorization": `Bearer ${GITHUB_TOKEN}`,
@@ -261,18 +297,13 @@ app.post("/api/prospect", checkAuth, async (req, res) => {
             }
           });
           
-          if (!getResp.ok) {
-            throw new Error(`Failed to fetch SHA: ${getResp.status} ${getResp.statusText}`);
-          }
-          
+          if (!getResp.ok) throw new Error(`Failed to fetch SHA: ${getResp.status}`);
           const fileMeta = await getResp.json();
           const currentSha = fileMeta.sha;
           
-          // B. Read full local updated CSV content
           const updatedCsvContent = fs.readFileSync(CSV_PATH, "utf-8");
           const base64Content = Buffer.from(updatedCsvContent).toString("base64");
           
-          // C. Push updated file to GitHub
           const putResp = await fetch(apiUrl, {
             method: "PUT",
             headers: {
@@ -281,7 +312,7 @@ app.post("/api/prospect", checkAuth, async (req, res) => {
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              message: `Added prospect via Web UI: ${Company}`,
+              message: `Added prospect via Web UI: ${Company} [HubSpot Sync]`,
               content: base64Content,
               sha: currentSha,
               branch: BRANCH
@@ -291,16 +322,15 @@ app.post("/api/prospect", checkAuth, async (req, res) => {
           if (putResp.ok) {
             console.log("🎉 SUCCESS! Pushed CSV changes to GitHub Repository.");
           } else {
-            const errText = await putResp.text();
-            console.error("❌ GitHub API Commit Failed:", errText);
+            console.error("❌ GitHub API Commit Failed.");
           }
         } catch (bgErr) {
           console.error("❌ Background GitHub synchronization failed:", bgErr.message);
         }
-      })();
-    } else {
-      console.warn("⚠️ GitHub integration skipped (No GITHUB_TOKEN configured in environment). Data saved locally on server disk only.");
-    }
+      } else {
+        console.warn("⚠️ GitHub integration skipped (No GITHUB_TOKEN configured).");
+      }
+    })();
 
   } catch (err) {
     console.error("❌ [API WRITE ERROR]:", err);
