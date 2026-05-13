@@ -19,6 +19,17 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+/* ✅ ACCESS CONTROL PROTOCOL (GATEKEEPER) */
+const ACCESS_KEY = process.env.ACCESS_KEY || "radar2026";
+const checkAuth = (req, res, next) => {
+  const clientKey = req.headers["x-access-key"];
+  if (clientKey === ACCESS_KEY) {
+    return next();
+  }
+  console.warn(`[Security Warning] Unauthorized access attempt from IP: ${req.ip}`);
+  res.status(401).json({ error: "Access Denied. Invalid or missing access key." });
+};
+
 /* ✅ UPDATED CSV PATH - NOW WITH COORDINATES */
 const CSV_PATH = path.join(__dirname, "../data/Radar_PRO_WITH_COORDS.csv");
 
@@ -41,7 +52,7 @@ app.get("/health", (req, res) => {
 });
 
 /* ✅ MAIN DATA ENDPOINT */
-app.get("/data", (req, res) => {
+app.get("/data", checkAuth, (req, res) => {
   if (cachedData) {
     console.log("Serving from cache:", cachedData.length, "records");
     return res.json(cachedData);
@@ -77,7 +88,7 @@ app.get("/data", (req, res) => {
    GET /radius?lat=41.5&lon=-81.7&miles=35&keyword=metal
    Returns all prospects within X miles of a point
 */
-app.get("/radius", (req, res) => {
+app.get("/radius", checkAuth, (req, res) => {
   const lat     = parseFloat(req.query.lat);
   const lon     = parseFloat(req.query.lon);
   const miles   = Math.min(parseFloat(req.query.miles) || 35, 200);
@@ -131,7 +142,7 @@ app.get("/radius", (req, res) => {
 let lastGeocodeAt = 0;
 const GEOCODE_MIN_MS = 1100;
 
-app.get("/geocode", async (req, res) => {
+app.get("/geocode", checkAuth, async (req, res) => {
   try {
     const q = String(req.query.q || "").trim();
     if (!q) return res.status(400).json({ error: "Missing query param: q" });
@@ -175,7 +186,7 @@ app.get("/geocode", async (req, res) => {
 });
 
 /* ✅ CACHE BUST - hit this after updating CSV */
-app.get("/refresh", (req, res) => {
+app.get("/refresh", checkAuth, (req, res) => {
   cachedData = null;
   res.json({ message: "Cache cleared. Next /data request reloads CSV." });
 });
