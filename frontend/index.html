@@ -1836,19 +1836,20 @@ async function runSplash() {
     if (i % 20 === 0) status.textContent = statuses[Math.floor(i/20)];
   }
 
-  // Load data — auto retry up to 4 times (backend may be sleeping)
+  // Load data — auto retry up to 10 times (backend may be sleeping on Render cold-start)
   let loaded = false;
-  for (let attempt = 1; attempt <= 4; attempt++) {
+  const MAX_ATTEMPTS = 10;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      status.textContent = attempt === 1 ? 'Connecting to backend...' : `Waking backend... attempt ${attempt}/4`;
-      fill.style.width = (70 + attempt * 5) + '%';
+      status.textContent = attempt === 1 ? 'Connecting to backend...' : `Waking API backend... attempt ${attempt}/${MAX_ATTEMPTS}`;
+      fill.style.width = (70 + (attempt * 3)) + '%';
       const res = await fetch(`${API}/data`);
       allData = await res.json();
       loaded = true;
       break;
     } catch(e) {
-      if (attempt < 4) {
-        status.textContent = `Backend sleeping — retrying in 8s... (${attempt}/4)`;
+      if (attempt < MAX_ATTEMPTS) {
+        status.textContent = `Backend sleeping — retrying in 8s... (${attempt}/${MAX_ATTEMPTS})`;
         await new Promise(r => setTimeout(r, 8000));
       }
     }
