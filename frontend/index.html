@@ -1530,6 +1530,64 @@ a { color: var(--green); }
 </div>
 
 <!-- ============================================================
+     ADD COMPANY MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="add-company-modal">
+  <div class="modal-box" style="max-width: 460px; min-width: 360px;">
+    <h3>➕ Add New Prospect</h3>
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+      <div>
+        <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing:1px;">Company Name *</label>
+        <input type="text" id="add-c-name" placeholder="Acme Corp" autocomplete="off" style="margin-bottom:0; font-family:'DM Sans'; letter-spacing:normal; font-size:0.85rem;">
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <div style="flex: 1;">
+          <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing:1px;">Street Address</label>
+          <input type="text" id="add-c-address" placeholder="123 Main St" autocomplete="off" style="margin-bottom:0; font-family:'DM Sans'; letter-spacing:normal; font-size:0.85rem;">
+        </div>
+        <div style="width: 120px;">
+          <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing:1px;">City</label>
+          <input type="text" id="add-c-city" placeholder="Detroit" autocomplete="off" style="margin-bottom:0; font-family:'DM Sans'; letter-spacing:normal; font-size:0.85rem;">
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <div style="flex: 1;">
+          <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing:1px;">State</label>
+          <input type="text" id="add-c-state" placeholder="MI" maxlength="2" autocomplete="off" style="margin-bottom:0; font-family:'DM Sans'; letter-spacing:normal; font-size:0.85rem;">
+        </div>
+        <div style="flex: 1;">
+          <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing:1px;">Zip</label>
+          <input type="text" id="add-c-zip" placeholder="48201" autocomplete="off" style="margin-bottom:0; font-family:'DM Sans'; letter-spacing:normal; font-size:0.85rem;">
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <div style="flex: 1;">
+          <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing:1px;">Phone</label>
+          <input type="text" id="add-c-phone" placeholder="(555) 123-4567" autocomplete="off" style="margin-bottom:0; font-family:'DM Sans'; letter-spacing:normal; font-size:0.85rem;">
+        </div>
+        <div style="flex: 1;">
+          <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing:1px;">Email</label>
+          <input type="email" id="add-c-email" placeholder="info@acme.com" autocomplete="off" style="margin-bottom:0; font-family:'DM Sans'; letter-spacing:normal; font-size:0.85rem;">
+        </div>
+      </div>
+      <div>
+        <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing:1px;">Website</label>
+        <input type="text" id="add-c-website" placeholder="www.acme.com" autocomplete="off" style="margin-bottom:0; font-family:'DM Sans'; letter-spacing:normal; font-size:0.85rem;">
+      </div>
+      <div>
+        <label style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing:1px;">Notes / Description</label>
+        <input type="text" id="add-c-desc" placeholder="Added from app..." autocomplete="off" style="margin-bottom:0; font-family:'DM Sans'; letter-spacing:normal; font-size:0.85rem;">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-primary" style="flex: 2;" id="add-btn-save" onclick="submitAddCompany()">💾 SAVE PROSPECT</button>
+      <button class="action-btn" style="flex: 1;" onclick="closeAddCompanyModal()">Cancel</button>
+    </div>
+    <div id="add-company-status" style="color: var(--green); font-size:0.78rem; margin-top:10px; display:none; font-family:'Rajdhani'; font-weight:600; letter-spacing:1px; text-align: center;"></div>
+  </div>
+</div>
+
+<!-- ============================================================
      EXPORT MODAL
      ============================================================ -->
 <div class="modal-overlay" id="export-modal">
@@ -1574,6 +1632,7 @@ a { color: var(--green); }
       <span id="stat-loaded">Loading...</span><br>
       <span id="stat-states">8 States</span>
     </div>
+    <button class="btn-primary" style="margin-left:12px; padding: 4px 10px; font-size:0.75rem; background:var(--green-dark); border-color:var(--green);" onclick="openAddCompanyModal()">➕ ADD COMPANY</button>
     <button class="action-btn" style="margin-left:8px" onclick="openExport()">⬇ CSV</button>
   </div>
 
@@ -1813,7 +1872,7 @@ a { color: var(--green); }
 
         <!-- Container 2: Embedded Work Map -->
         <div id="work-map-view" style="display: none; flex: 1; width: 100%; background: #000; overflow: hidden;">
-          <iframe src="https://www.google.com/maps/d/embed?mid=1jFfPrcVRq70dNlGne3blgJ4N2NNqfnM&ehbc=2E312F" style="width: 100%; height: 100%; border: none; background: #000;" allowfullscreen></iframe>
+          <iframe src="https://www.google.com/maps/d/embed?mid=1gDlMA1E7dkpxQzACQ8sZAnsuP73LE1A&ehbc=2E312F" style="width: 100%; height: 100%; border: none; background: #000;" allowfullscreen></iframe>
         </div>
       </div>
 
@@ -1893,6 +1952,107 @@ function submitGatekeeper() {
   localStorage.setItem('radar_access_key', key);
   document.getElementById('gatekeeper-modal').classList.remove('open');
   window.location.reload(); // Reload app to boot with valid access key
+}
+
+// ============================================================
+// ADD NEW COMPANY
+// ============================================================
+function openAddCompanyModal() {
+  document.getElementById('add-company-modal').classList.add('open');
+  document.getElementById('add-c-name').focus();
+}
+
+function closeAddCompanyModal() {
+  document.getElementById('add-company-modal').classList.remove('open');
+  document.getElementById('add-company-status').style.display = 'none';
+  
+  // Clear fields
+  const inputs = ['add-c-name', 'add-c-address', 'add-c-city', 'add-c-state', 'add-c-zip', 'add-c-phone', 'add-c-email', 'add-c-website', 'add-c-desc'];
+  inputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+async function submitAddCompany() {
+  const name = document.getElementById('add-c-name').value.trim();
+  if (!name) {
+    showToast('Company Name is required!');
+    return;
+  }
+
+  const statusEl = document.getElementById('add-company-status');
+  const saveBtn = document.getElementById('add-btn-save');
+  
+  statusEl.innerHTML = '<span class="loading-spinner"></span> Saving to Cloud DB...';
+  statusEl.style.color = 'var(--green)';
+  statusEl.style.display = 'block';
+  saveBtn.disabled = true;
+
+  const payload = {
+    Company: name,
+    Address: document.getElementById('add-c-address').value.trim(),
+    City: document.getElementById('add-c-city').value.trim(),
+    State: document.getElementById('add-c-state').value.trim().toUpperCase(),
+    Zip: document.getElementById('add-c-zip').value.trim(),
+    Phone: document.getElementById('add-c-phone').value.trim(),
+    Email: document.getElementById('add-c-email').value.trim(),
+    Website: document.getElementById('add-c-website').value.trim(),
+    Description: document.getElementById('add-c-desc').value.trim()
+  };
+
+  try {
+    const resp = await securedFetch(`${API}/api/prospect`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await resp.json();
+
+    if (!resp.ok) {
+      throw new Error(result.error || 'Failed to add prospect.');
+    }
+
+    statusEl.textContent = '🎉 SUCCESS! PROSPECT ADDED AND DEPLOYED!';
+    showToast('Company added successfully!');
+
+    // Construct exact object for immediate UI hydration
+    const newObj = {
+      'Company': payload.Company,
+      'Address': payload.Address,
+      'City': payload.City,
+      'State': payload.State,
+      'State Tag': payload.State,
+      'Zip': payload.Zip,
+      'Phone': payload.Phone,
+      'Company Email': payload.Email,
+      'Website': payload.Website,
+      'Business Description': payload.Description,
+      'Score': 15,
+      'Company ID': result.id,
+      'Lat': result.lat,
+      'Lon': result.lon
+    };
+
+    allData.unshift(newObj); // Add to beginning of records
+    document.getElementById('stat-loaded').textContent = allData.length.toLocaleString() + ' prospects loaded';
+
+    setTimeout(() => {
+      closeAddCompanyModal();
+      saveBtn.disabled = false;
+      // Clear query, input search, scan, and show the new result
+      document.getElementById('keyword-input').value = name;
+      switchTab('keyword');
+      doKeywordSearch();
+    }, 1400);
+
+  } catch (err) {
+    statusEl.textContent = '❌ ERROR: ' + err.message;
+    statusEl.style.color = '#ff4444';
+    saveBtn.disabled = false;
+    console.error(err);
+  }
 }
 
 // CRM storage key helpers
