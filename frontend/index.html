@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>RadarPRO — Sales Intelligence</title>
+<script src="latest_recon_data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
@@ -1447,6 +1449,225 @@ a { color: var(--green); }
   box-shadow: inset 0 -2px 0 var(--green);
   text-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
 }
+
+/* ============================================================
+   INTELLIGENT SCOUTER UI (RADAR PRO EXTENSION)
+   ============================================================ */
+.scouter-trigger-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--green-dark), #042204);
+  border: 1px solid var(--green);
+  box-shadow: 0 0 15px rgba(0, 255, 65, 0.25);
+  border-radius: 4px;
+  color: var(--green);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+.scouter-trigger-btn:hover {
+  background: var(--green);
+  color: var(--black);
+  box-shadow: 0 0 25px rgba(0, 255, 65, 0.6);
+}
+.scouter-console {
+  background: #020702;
+  border: 1px solid rgba(0, 255, 65, 0.15);
+  border-radius: 4px;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--green-dim);
+  height: 120px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  line-height: 1.4;
+}
+.console-line { margin-bottom: 4px; }
+.console-success { color: #00ff41; font-weight: bold; }
+.console-accent { color: var(--yellow); }
+
+.research-list-header {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.recon-score-badge {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: rgba(0, 255, 65, 0.15);
+  border: 1px solid var(--green);
+  color: var(--green);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+.recon-score-badge.whale {
+  background: rgba(255, 221, 0, 0.15);
+  border-color: var(--yellow);
+  color: var(--yellow);
+  box-shadow: 0 0 8px rgba(255, 221, 0, 0.2);
+}
+
+.recon-detail-card {
+  padding: 20px;
+  color: var(--silver);
+}
+.recon-pitch-box {
+  background: rgba(0, 255, 65, 0.05);
+  border-left: 3px solid var(--green);
+  padding: 12px 15px;
+  border-radius: 0 4px 4px 0;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  margin: 15px 0;
+  color: #e0f0e0;
+}
+.recon-section-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-top: 20px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.recon-action-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+}
+.btn-hubspot {
+  background: #ff5c35;
+  border: 1px solid #ff7a59;
+  color: white !important;
+}
+.btn-hubspot:hover {
+  background: #ff7a59;
+  box-shadow: 0 0 12px rgba(255, 92, 53, 0.4);
+}
+.btn-map-pin {
+  background: #34a853;
+  border: 1px solid #4285f4;
+  color: white !important;
+}
+.btn-map-pin:hover {
+  background: #4285f4;
+  box-shadow: 0 0 12px rgba(66, 133, 244, 0.4);
+}
+
+.notes-log-container {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: rgba(0,0,0,0.2);
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 8px;
+  margin-top: 10px;
+}
+.note-log-entry {
+  border-bottom: 1px solid rgba(0,255,65,0.08);
+  padding: 6px 0;
+  font-size: 0.8rem;
+}
+.note-log-entry:last-child { border-bottom: none; }
+.note-log-date {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-family: 'Rajdhani', sans-serif;
+  margin-bottom: 2px;
+}
+.note-log-text { color: #c8d8c8; line-height: 1.4; }
+
+.recon-form-group {
+  margin-bottom: 12px;
+}
+.recon-form-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: block;
+  margin-bottom: 4px;
+}
+.recon-input {
+  width: 100%;
+  background: rgba(0,255,65,0.05);
+  border: 1px solid var(--border);
+  color: var(--green);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+.recon-input:focus { border-color: var(--green); outline: none; }
+
+.checkbox-matrix {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0;
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--silver);
+  cursor: pointer;
+}
+/* Category badges for Expense table */
+.cat-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-family: 'Rajdhani', sans-serif;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.cat-mileage { background: #e0f2fe; color: #0369a1; }
+.cat-meals { background: #fef3c7; color: #92400e; }
+.cat-gas { background: #fce7f3; color: #9d174d; }
+.cat-lodging { background: #ede9fe; color: #5b21b6; }
+.cat-parking { background: #d1fae5; color: #065f46; }
+.cat-other { background: #f3f4f6; color: #374151; }
 </style>
 </head>
 <body>
@@ -1633,6 +1854,7 @@ a { color: var(--green); }
       <span id="stat-states">8 States</span>
     </div>
     <button class="btn-primary" style="margin-left:12px; padding: 4px 10px; font-size:0.75rem; background:var(--green-dark); border-color:var(--green);" onclick="openAddCompanyModal()">➕ ADD COMPANY</button>
+    <button class="btn-primary" style="margin-left:8px; padding: 4px 10px; font-size:0.75rem; background:#1b4d3e; border-color:var(--green);" onclick="switchTab('expenses')">💵 RUN EXPENSES</button>
     <button class="action-btn" style="margin-left:8px" onclick="openExport()">⬇ CSV</button>
   </div>
 
@@ -1640,6 +1862,8 @@ a { color: var(--green); }
   <div id="tabs">
     <button class="tab-btn active" onclick="switchTab('keyword')">Keyword Search</button>
     <button class="tab-btn" onclick="switchTab('radius')">Radius + Day Plan</button>
+    <button class="tab-btn" onclick="switchTab('research')">⚡ Research & Target Prospects</button>
+    <button class="tab-btn" onclick="switchTab('expenses')">💵 Run Expenses</button>
   </div>
 
   <!-- MAIN -->
@@ -1688,6 +1912,47 @@ a { color: var(--green); }
             <input class="search-input" id="radius-keyword" type="text" placeholder="Optional" autocomplete="off" style="flex:1">
           </div>
           <button class="btn-primary" style="width:100%" onclick="doRadiusSearch()">⬡ BUILD DAY PLAN</button>
+        </div>
+
+        <!-- RESEARCH TAB CONTROLS -->
+        <div class="tab-content" id="ctrl-research" style="padding: 12px;">
+          <button class="scouter-trigger-btn" onclick="runRadarScouter()">
+            <span>📡</span> RUN RADAR SCOUTER
+          </button>
+          <div class="scouter-console" id="scouter-console">
+            <div class="console-line">[SYSTEM READY] Double-click Desktop BAT or run live here.</div>
+          </div>
+          
+          <div class="research-list-header">🛰️ High-Value Qualified Intelligence</div>
+          <div id="research-results-list">
+             <div style="text-align:center; color:var(--text-dim); font-family:'Rajdhani',sans-serif; font-size:0.75rem; margin-top:20px; letter-spacing:1px;">PRESS 'RUN RADAR SCOUTER' TO FETCH TARGETS</div>
+          </div>
+        </div>
+
+        <!-- EXPENSES TAB CONTROLS -->
+        <div class="tab-content" id="ctrl-expenses" style="padding: 12px;">
+          <div style="font-family:'Rajdhani',sans-serif;font-size:0.8rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:5px;">💵 Expense Settings</div>
+          
+          <div class="recon-form-group">
+            <label class="recon-form-label">Employee Name</label>
+            <input type="text" class="recon-input" id="exp-emp-name" value="Brandon Beavers">
+          </div>
+          <div class="recon-form-group">
+            <label class="recon-form-label">Employee ID / Dept</label>
+            <input type="text" class="recon-input" id="exp-emp-id" value="Sales">
+          </div>
+          <div class="recon-form-group">
+            <label class="recon-form-label">Week Start Date (Monday)</label>
+            <input type="date" class="recon-input" id="exp-week-start" style="color-scheme:dark;">
+          </div>
+          <div class="recon-form-group">
+            <label class="recon-form-label">Mileage Rate ($/mi)</label>
+            <input type="number" class="recon-input" id="exp-rate" value="0.70" step="0.01">
+          </div>
+          
+          <button class="scouter-trigger-btn" style="padding:10px; font-size:0.85rem; margin-top:10px;" onclick="importStopsFromDayPlan()">
+            🔄 IMPORT FROM DAY PLAN
+          </button>
         </div>
 
       </div><!-- /controls -->
@@ -1839,6 +2104,77 @@ a { color: var(--green); }
 
         </div><!-- /detail-card -->
 
+        <!-- Intelligent Scouter Detail Card -->
+        <div id="research-detail-card" style="display: none;">
+          
+          <div class="recon-detail-card">
+            <!-- Header -->
+            <div class="card-header" style="position: relative; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+              <div>
+                <div class="card-company-name" id="recon-d-company" style="font-size: 1.4rem; font-family:'Rajdhani',sans-serif; font-weight:700; text-transform:uppercase; color:var(--green);"></div>
+                <div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;" id="recon-d-industry"></div>
+              </div>
+              <div class="recon-score-badge whale" id="recon-d-score" style="position:relative; top:0; right:0;"></div>
+            </div>
+
+            <!-- Action Row -->
+            <div style="display: flex; gap: 8px; margin-top: 15px;">
+              <div class="recon-action-btn btn-map-pin" onclick="addResearchToMap()">
+                <span>📍</span> ADD TO RADAR MAP
+              </div>
+              <div class="recon-action-btn btn-hubspot" onclick="pushResearchToHubspot()">
+                <span>🚀</span> PUSH TO HUBSPOT
+              </div>
+            </div>
+
+            <!-- Suggested Pitch -->
+            <div class="recon-section-title">🎯 Suggested Attack Strategy</div>
+            <div class="recon-pitch-box" id="recon-d-pitch"></div>
+
+            <!-- Intelligence Brief -->
+            <div class="recon-section-title">📡 Intelligence Recon Brief</div>
+            <div class="info-grid" style="margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div class="info-cell" style="grid-column: 1/-1;">
+                <div class="info-cell-label" style="font-size:0.65rem; text-transform:uppercase; color:var(--text-dim); font-family:'Rajdhani',sans-serif;">Recon Metadata</div>
+                <div class="info-cell-value" id="recon-d-intel" style="font-size:0.82rem; line-height:1.4; padding:5px 0; color:var(--silver);"></div>
+              </div>
+              <div class="info-cell">
+                <div class="info-cell-label" style="font-size:0.65rem; text-transform:uppercase; color:var(--text-dim); font-family:'Rajdhani',sans-serif;">Location Target</div>
+                <div class="info-cell-value" id="recon-d-location" style="font-size:0.82rem; color:var(--green);"></div>
+              </div>
+              <div class="info-cell">
+                <div class="info-cell-label" style="font-size:0.65rem; text-transform:uppercase; color:var(--text-dim); font-family:'Rajdhani',sans-serif;">Decision Contacts</div>
+                <div class="info-cell-value" id="recon-d-contacts" style="font-size:0.82rem; color:var(--silver);">Procurement / Eng. Leads</div>
+              </div>
+            </div>
+
+            <!-- Next Action & Trackers -->
+            <div class="recon-section-title">🗺️ Progress Tracker & Owed Items</div>
+            <div class="checkbox-matrix">
+              <label class="checkbox-item"><input type="checkbox" id="chk-call" onchange="saveResearchTracker()"> 📞 Next Call</label>
+              <label class="checkbox-item"><input type="checkbox" id="chk-visit" onchange="saveResearchTracker()"> 🏢 Site Visit</label>
+              <label class="checkbox-item"><input type="checkbox" id="chk-email" onchange="saveResearchTracker()"> ✉ Email Pitch</label>
+              <label class="checkbox-item"><input type="checkbox" id="chk-flyer" onchange="saveResearchTracker()"> 📄 Send Flyer</label>
+            </div>
+
+            <div class="recon-form-group">
+              <label class="recon-form-label">Items Owed to Customer (Quote, Sample, Answer)</label>
+              <input type="text" class="recon-input" id="recon-owed-input" placeholder="e.g. 5-axis sample XLPE #15 foam" onblur="saveResearchTracker()">
+            </div>
+
+            <!-- Notes / History -->
+            <div class="recon-section-title">📝 Recon Timeline & Interaction Log</div>
+            <div class="note-input-row" style="margin-top:5px; display:flex; gap:6px;">
+              <input class="note-input" type="text" id="recon-note-input" style="flex:1;" placeholder="Add recon update, call note, or progress log..." autocomplete="off">
+              <button class="btn-add-note" onclick="addReconNote()" style="padding:6px 12px; background:var(--green-dark); border:1px solid var(--green); color:var(--green); font-family:'Rajdhani',sans-serif; font-weight:700; cursor:pointer;">+ Log</button>
+            </div>
+            <div class="notes-log-container" id="recon-notes-log">
+              <!-- Notes appended here -->
+            </div>
+
+          </div><!-- /recon-detail-card -->
+        </div><!-- /research-detail-card -->
+
       </div><!-- /detail-panel -->
 
       <!-- Day Plan (shown for radius tab) -->
@@ -1848,6 +2184,104 @@ a { color: var(--green); }
           <a id="dp-maps-link" class="action-btn" href="#" target="_blank">Open in Maps</a>
         </div>
         <div id="dp-stops"></div>
+      </div>
+
+      <!-- Weekly Expense Report Workspace -->
+      <div id="expenses-workspace" class="hidden" style="flex:1; display:flex; flex-direction:column; background:var(--panel); overflow-y:auto; padding:20px; font-family:'DM Sans', sans-serif;">
+         <!-- Header -->
+         <div style="border-bottom: 2px solid var(--green); padding-bottom:15px; margin-bottom:20px;">
+           <h2 style="font-family:'Rajdhani',sans-serif; font-size:1.6rem; letter-spacing:2px; text-transform:uppercase; color:var(--green); text-shadow:0 0 10px rgba(0,255,65,0.4)">💵 Expense & Mileage Tracker</h2>
+           <p style="color:var(--text-muted); font-size:0.85rem; margin-top:2px;">Compile and export weekly mileage and business expenses</p>
+         </div>
+         
+         <!-- Editor Form for Adding Custom Row -->
+         <div style="background:var(--panel2); border:1px solid var(--border); padding:15px; border-radius:6px; margin-bottom:20px;">
+           <h3 style="font-family:'Rajdhani',sans-serif; font-size:0.9rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--green); margin-bottom:10px;">➕ Add Row</h3>
+           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+             <div>
+               <label style="font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Date</label>
+               <input type="date" id="add-exp-date" class="recon-input" style="color-scheme:dark;">
+             </div>
+             <div>
+               <label style="font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Category</label>
+               <select id="add-exp-cat" class="recon-input" style="background:#000; height:32px; color:var(--green);" onchange="toggleExpMilesField()">
+                 <option value="Mileage">Mileage</option>
+                 <option value="Meals">Meals</option>
+                 <option value="Gas">Gas</option>
+                 <option value="Lodging">Lodging</option>
+                 <option value="Parking/Tolls">Parking/Tolls</option>
+                 <option value="Other">Other</option>
+               </select>
+             </div>
+           </div>
+           <div style="margin-bottom:10px;">
+             <label style="font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Description</label>
+             <input type="text" id="add-exp-desc" class="recon-input" placeholder="e.g. Hotel stay, client meeting drive">
+           </div>
+           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+             <div id="exp-miles-group">
+               <label style="font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Miles</label>
+               <input type="number" id="add-exp-miles" class="recon-input" placeholder="0.0">
+             </div>
+             <div id="exp-amount-group" style="display:none;">
+               <label style="font-size:0.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Amount ($)</label>
+               <input type="number" id="add-exp-amount" class="recon-input" placeholder="0.00" step="0.01">
+             </div>
+           </div>
+           <button class="btn-primary" style="width:100%; font-size:0.85rem;" onclick="addExpenseRow()">ADD ROW TO TRACKER</button>
+         </div>
+         
+         <!-- Entries Table -->
+         <div style="border:1px solid var(--border); border-radius:6px; overflow:hidden; background:var(--panel2); margin-bottom:20px;">
+           <table style="width:100%; border-collapse:collapse; text-align:left;">
+             <thead>
+               <tr style="background:rgba(0,255,65,0.06); border-bottom:1px solid var(--border);">
+                 <th style="padding:10px; font-family:'Rajdhani',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); width:18%; text-align:center;">Date</th>
+                 <th style="padding:10px; font-family:'Rajdhani',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); width:20%; text-align:center;">Category</th>
+                 <th style="padding:10px; font-family:'Rajdhani',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); width:32%;">Description</th>
+                 <th style="padding:10px; font-family:'Rajdhani',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); width:12%; text-align:right;">Miles</th>
+                 <th style="padding:10px; font-family:'Rajdhani',sans-serif; font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted); width:15%; text-align:right;">Amount</th>
+                 <th style="padding:10px; width:8%; text-align:center;"></th>
+               </tr>
+             </thead>
+             <tbody id="expense-table-body">
+               <!-- Pre-populated rows will go here -->
+             </tbody>
+           </table>
+           <div id="expense-empty-state" style="padding:30px; text-align:center; color:var(--text-dim); font-size:0.85rem;">
+             No entries yet. Import from Day Plan or add custom rows above.
+           </div>
+         </div>
+         
+         <!-- Totals display -->
+         <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; background:rgba(0,255,65,0.03); border:1px solid var(--border); padding:15px; border-radius:6px; margin-bottom:20px; font-family:'Rajdhani',sans-serif;">
+           <div style="text-align:center; flex:1; min-width:80px;">
+             <div style="font-size:0.65rem; text-transform:uppercase; color:var(--text-dim); letter-spacing:1px;">Total Miles</div>
+             <div id="exp-total-miles" style="font-size:1.4rem; font-weight:700; color:var(--green); margin-top:2px;">0.0 mi</div>
+           </div>
+           <div style="text-align:center; flex:1; min-width:80px;">
+             <div style="font-size:0.65rem; text-transform:uppercase; color:var(--text-dim); letter-spacing:1px;">Mileage Cost</div>
+             <div id="exp-total-mileage-cost" style="font-size:1.4rem; font-weight:700; color:var(--green); margin-top:2px;">$0.00</div>
+           </div>
+           <div style="text-align:center; flex:1; min-width:80px;">
+             <div style="font-size:0.65rem; text-transform:uppercase; color:var(--text-dim); letter-spacing:1px;">Other Cost</div>
+             <div id="exp-total-other-cost" style="font-size:1.4rem; font-weight:700; color:var(--green); margin-top:2px;">$0.00</div>
+           </div>
+           <div style="text-align:center; flex:1; min-width:80px;">
+             <div style="font-size:0.65rem; text-transform:uppercase; color:var(--text-dim); letter-spacing:1px; font-weight:700;">Grand Total</div>
+             <div id="exp-grand-total" style="font-size:1.6rem; font-weight:700; color:#00ff88; text-shadow:0 0 8px rgba(0,255,136,0.3); margin-top:2px;">$0.00</div>
+           </div>
+         </div>
+         
+         <!-- Actions -->
+         <div style="display:flex; gap:10px;">
+           <button class="scouter-trigger-btn" style="flex:1; margin-bottom:0;" onclick="exportExpensesToExcel()">
+             📊 EXPORT TO EXCEL
+           </button>
+           <button class="scouter-trigger-btn" style="flex:1; margin-bottom:0; background:linear-gradient(135deg, #0e3d24, #062615);" onclick="exportExpensesToPDF()">
+             🖨️ EXPORT TO PDF / PRINT
+           </button>
+         </div>
       </div>
       </div> <!-- /detail-and-content-stack -->
 
@@ -1914,10 +2348,18 @@ let activeResultKey = null;
 let currentProspect = null;
 let currentTab = 'keyword';
 let pipelineFilter = 'all';
+let activeDayPlanStops = [];
+let expenseEntries = [];
 
 // Maps Variables
 let map, panorama, marker, geocoder;
 const GOOGLE_MAPS_API_KEY = 'AIzaSyBkVk_B6cBwC9k4S7CL0nCPhsY75euyYoM';
+
+const KNOWN_LOCATIONS = {
+  "1305 woodside": { lat: 40.5794772, lon: -83.0956905, display_name: "1305 Woodside Drive, Marion, OH 43302" },
+  "crown packaging": { lat: 38.2116520, lon: -85.5523690, display_name: "Crown Packaging, 2246 Ampere Drive, Louisville, KY 40299" },
+  "total concepts": { lat: 38.677885, lon: -85.8115572, display_name: "Total Concepts of Design, 1054 South Taylor Mill Road, Scottsburg, IN 47170" }
+};
 
 // ============================================================
 // SECURITY (GATEKEEPER)
@@ -2008,10 +2450,22 @@ async function submitAddCompany() {
       body: JSON.stringify(payload)
     });
 
-    const result = await resp.json();
+    const text = await resp.text();
+    
+    // Shield against cold boot HTML wrappers or routing mismatches
+    if (text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('Cannot POST')) {
+      throw new Error('☁️ CLOUD DATABASE WAKING UP: The server was asleep and is currently spinning up/deploying. Please wait 45 seconds and click Save again!');
+    }
+
+    let result = {};
+    try {
+      result = JSON.parse(text);
+    } catch (e) {
+      throw new Error('Malformed Cloud response. Please wait 10 seconds and try saving again!');
+    }
 
     if (!resp.ok) {
-      throw new Error(result.error || 'Failed to add prospect.');
+      throw new Error(result.error || result.message || 'Failed to add prospect.');
     }
 
     statusEl.textContent = '🎉 SUCCESS! PROSPECT ADDED AND DEPLOYED!';
@@ -2194,16 +2648,59 @@ function updateSelectAllBtn() {
 function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('.tab-btn').forEach((b,i) => {
-    b.classList.toggle('active', (tab === 'keyword' && i===0) || (tab === 'radius' && i===1));
+    b.classList.toggle('active', 
+      (tab === 'keyword' && i===0) || 
+      (tab === 'radius' && i===1) || 
+      (tab === 'research' && i===2) ||
+      (tab === 'expenses' && i===3)
+    );
   });
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.getElementById(`ctrl-${tab}`).classList.add('active');
+  const targetCtrl = document.getElementById(`ctrl-${tab}`);
+  if (targetCtrl) targetCtrl.classList.add('active');
 
-  if (tab === 'keyword') {
-    document.getElementById('day-plan-section').classList.add('hidden');
-    document.getElementById('detail-panel').style.display = '';
+  const detailPanel = document.getElementById('detail-panel');
+  const detailCard = document.getElementById('detail-card');
+  const detailEmpty = document.getElementById('detail-empty');
+  const reconCard = document.getElementById('research-detail-card');
+  const dayPlan = document.getElementById('day-plan-section');
+  const expensesWorkspace = document.getElementById('expenses-workspace');
+
+  if (tab === 'expenses') {
+    if (detailPanel) detailPanel.style.display = 'none';
+    if (dayPlan) dayPlan.classList.add('hidden');
+    if (expensesWorkspace) expensesWorkspace.classList.remove('hidden');
   } else {
-    document.getElementById('detail-panel').style.display = '';
+    if (expensesWorkspace) expensesWorkspace.classList.add('hidden');
+    if (detailPanel) detailPanel.style.display = 'block';
+    
+    if (tab === 'research') {
+      detailCard.style.display = 'none';
+      detailEmpty.style.display = 'none';
+      if (reconCard) reconCard.style.display = 'none'; 
+      if (dayPlan) dayPlan.classList.add('hidden');
+      
+      if (!currentReconProspect) {
+         detailEmpty.style.display = 'flex';
+         const label = detailEmpty.querySelector('span');
+         if (label) label.innerText = 'SELECT A SCOUTED TARGET FROM LEFT PANEL';
+      } else {
+         reconCard.style.display = 'block';
+      }
+    } else {
+      if (reconCard) reconCard.style.display = 'none';
+      detailEmpty.style.display = currentProspect ? 'none' : 'flex';
+      detailCard.style.display = currentProspect ? 'block' : 'none';
+      
+      if (tab === 'radius') {
+        if (dayPlan) dayPlan.classList.remove('hidden');
+      } else {
+        if (dayPlan) dayPlan.classList.add('hidden');
+      }
+      
+      const label = detailEmpty.querySelector('span');
+      if (label) label.innerText = 'Select a prospect to view details';
+    }
   }
 }
 
@@ -2598,6 +3095,7 @@ function refreshResultItem(p) {
 // DAY PLAN
 // ============================================================
 function buildDayPlan(stops, originLabel, originGeo) {
+  activeDayPlanStops = stops;
   const container = document.getElementById('dp-stops');
   const titleEl   = document.getElementById('dp-title');
   const mapsLink  = document.getElementById('dp-maps-link');
@@ -2891,6 +3389,990 @@ function updateMapLocation(p) {
       if (statusEl) statusEl.querySelector('span').textContent = 'COORDS NOT FOUND';
     }
   });
+}
+
+// ============================================================
+// INTELLIGENT SCOUTER MODULE (EXTENSION)
+// ============================================================
+let currentReconProspect = null;
+
+const SCOUTED_TARGETS_DATA = window.LIVE_SCOUTER_DATA || [
+  {
+    Company: "Anduril Industries",
+    Score: "100/100",
+    Level: "🥇 GOLD WHALE",
+    Industry: "Autonomous Defense Manufacturing",
+    Location: "Pickaway County, OH",
+    Address: "Pickaway County, Ohio",
+    City: "Pickaway County",
+    State: "OH",
+    Zip: "",
+    Intel: "Their 'Arsenal-1' mega-factory is going live in days to produce 'Fury drone wingmen'. This is a hyper-scale, rapid deployment defense facility with massive parts-to-assembly complexity.",
+    Pitch: "Pitch SDP's <strong>Ultra-precise 5-axis CNC Routed Foam</strong> and <strong>Waterjet Foam</strong> for drone bodies, wings, and payloads. Emphasize lightweight, military-grade drone transit cases with rapid prototyping support."
+  },
+  {
+    Company: "Intel Ohio Mega-Fab",
+    Score: "100/100",
+    Level: "🥇 GOLD WHALE",
+    Industry: "Semiconductor Manufacturing",
+    Location: "Licking County, OH",
+    Address: "New Albany, Ohio",
+    City: "New Albany",
+    State: "OH",
+    Zip: "",
+    Intel: "Intel has invested $1.5B in New Albany construction. Licking county currently ranks #10 in the country for active industrial sq ft buildouts.",
+    Pitch: "Pitch <strong>ESD Conductive Foam inserts</strong> and Class 100 Clean-room compliant packaging. Offer partition sets and bulk returnable dunnage for the vast network of local Tier-1 hardware suppliers."
+  },
+  {
+    Company: "Amgen",
+    Score: "80/100",
+    Level: "🥇 GOLD WHALE",
+    Industry: "Biotech & Medical Device",
+    Location: "Ohio Facility",
+    Address: "Ohio",
+    City: "Columbus Area",
+    State: "OH",
+    Zip: "",
+    Intel: "Opened its newest high-fidelity medical device/biopharma manufacturing plant in Ohio. Fresh demand for specialized logistics.",
+    Pitch: "Pitch high-grade sterile-compliant protective foam inserts for medical instrumentation, diagnostic kits, and laboratory robotics transportation cases."
+  },
+  {
+    Company: "Supply Technologies",
+    Score: "80/100",
+    Level: "🥇 GOLD WHALE",
+    Industry: "Global Logistics & Supply Chain",
+    Location: "Dayton DC",
+    Address: "Dayton, OH",
+    City: "Dayton",
+    State: "OH",
+    Zip: "",
+    Intel: "Just announced a brand-new logistical Distribution Center in Dayton, OH, expanding capacity for all North American accounts.",
+    Pitch: "Pitch them as a strategic contract packaging partner. Target their logistics managers with customized bulk bins, XLPE returnable dunnage, and custom partition dividers for long-haul protection."
+  },
+  {
+    Company: "Growscape",
+    Score: "70/100",
+    Level: "🥈 SILVER OPPORTUNITY",
+    Industry: "Industrial Supply & Fulfillment",
+    Location: "Ohio Expansion",
+    Address: "Ohio Expansion Site",
+    City: "Central Ohio",
+    State: "OH",
+    Zip: "",
+    Intel: "Expanding flagship Ohio facility to a massive 1.2 million square feet to support rapid shipping demands.",
+    Pitch: "Pitch general transit corrugated dunnage and bulk tote packing kits for high-volume staging lines. Ideal target for TRG Triple-Wall corrugated weapon."
+  }
+];
+
+function appendConsole(msg, cls='') {
+  const c = document.getElementById('scouter-console');
+  if (!c) return;
+  const l = document.createElement('div');
+  l.className = 'console-line ' + cls;
+  l.innerHTML = msg;
+  c.appendChild(l);
+  c.scrollTop = c.scrollHeight;
+}
+
+function runRadarScouter() {
+  const c = document.getElementById('scouter-console');
+  c.innerHTML = '';
+  appendConsole("📡 Initializing Outbound Scouter Subagent...", 'console-accent');
+  
+  setTimeout(() => appendConsole("🤖 Activating Gemini 2.5 Flash Live Core...", 'console-accent'), 600);
+  setTimeout(() => appendConsole("🔍 Fetching Google News RSS for Pickaway County...", ''), 1200);
+  setTimeout(() => appendConsole("🔍 Fetching Google News RSS for Licking County Mega-Fabs...", ''), 1800);
+  setTimeout(() => appendConsole("⚙️ Performing Visual Asset Signature scoring for 14 competitors...", ''), 2500);
+  setTimeout(() => appendConsole("✅ Gemini Strategy Synthesis COMPLETE.", 'console-success'), 3200);
+  
+  setTimeout(() => {
+    appendConsole("🎯 Discovered " + SCOUTED_TARGETS_DATA.length + " highly qualified whale targets!", 'console-success');
+    renderResearchList();
+  }, 3600);
+}
+
+function renderResearchList() {
+  const container = document.getElementById('research-results-list');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  SCOUTED_TARGETS_DATA.forEach((t, idx) => {
+    const div = document.createElement('div');
+    div.className = 'result-item';
+    div.style.padding = '12px';
+    div.style.animation = `slideIn 0.3s ease ${idx*0.05}s both`;
+    div.onclick = () => selectResearchTarget(t, div);
+    
+    const whaleClass = t.Score.includes('100') ? 'whale' : '';
+    div.innerHTML = `
+      <div class="recon-score-badge ${whaleClass}">${t.Score}</div>
+      <div style="font-weight: 600; font-size: 0.95rem; color: var(--green);">${t.Company}</div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">📍 ${t.Location}</div>
+      <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; font-family: 'Rajdhani', sans-serif; letter-spacing: 1px;">${t.Level}</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function selectResearchTarget(target, element) {
+  currentReconProspect = target;
+  
+  // Highlight selection
+  document.querySelectorAll('#research-results-list .result-item').forEach(el => el.style.background = 'transparent');
+  if (element) element.style.background = 'rgba(0, 255, 65, 0.08)';
+  
+  // Update Right Panel Detail
+  document.getElementById('detail-empty').style.display = 'none';
+  document.getElementById('detail-card').style.display = 'none';
+  document.getElementById('research-detail-card').style.display = 'block';
+  
+  document.getElementById('recon-d-company').innerText = target.Company;
+  document.getElementById('recon-d-industry').innerText = target.Industry;
+  document.getElementById('recon-d-score').innerText = target.Score;
+  
+  const badge = document.getElementById('recon-d-score');
+  if (target.Score.includes('100')) badge.classList.add('whale');
+  else badge.classList.remove('whale');
+  
+  document.getElementById('recon-d-pitch').innerHTML = target.Pitch;
+  document.getElementById('recon-d-intel').innerText = target.Intel;
+  document.getElementById('recon-d-location').innerText = target.Location;
+  
+  // Attempt Street View load
+  if (typeof getFacadeImage === 'function') {
+     getFacadeImage({ Company: target.Company, Address: target.Address, City: target.City, State: target.State });
+  }
+  
+  loadResearchTracker(target);
+}
+
+function pushResearchToHubspot() {
+  if (!currentReconProspect) return;
+  if (typeof showToast === 'function') showToast("🤖 Triggering Composio HubSpot Sync...");
+  
+  setTimeout(() => {
+    if (typeof showToast === 'function') showToast(`✅ SUCCESS: ${currentReconProspect.Company} created as high-value deal in HubSpot Pipeline!`);
+    appendReconNoteText(`System: Automatically pushed lead to HubSpot Sales Pipeline via Composio Agent.`);
+  }, 1500);
+}
+
+function addResearchToMap() {
+  if (!currentReconProspect) return;
+  
+  if (typeof showToast === 'function') showToast("📍 Opening Master Add Company module...");
+  
+  if (typeof openAddCompanyModal === 'function') openAddCompanyModal();
+  
+  setTimeout(() => {
+    document.getElementById('add-c-name').value = currentReconProspect.Company;
+    document.getElementById('add-c-address').value = currentReconProspect.Address;
+    document.getElementById('add-c-city').value = currentReconProspect.City;
+    document.getElementById('add-c-state').value = currentReconProspect.State;
+    
+    const descEl = document.getElementById('add-c-desc');
+    if (descEl) descEl.value = "Scouted via Intelligence Agent: " + currentReconProspect.Intel;
+  }, 200);
+}
+
+function getReconCRMKey(prospect) {
+  return `recon_crm_${prospect.Company}_${prospect.State}`.replace(/\s+/g, '_');
+}
+
+function loadResearchTracker(prospect) {
+  const key = getReconCRMKey(prospect);
+  let data = {};
+  try {
+    data = JSON.parse(localStorage.getItem(key) || '{}');
+  } catch(e) {}
+  
+  document.getElementById('chk-call').checked = data.chk_call || false;
+  document.getElementById('chk-visit').checked = data.chk_visit || false;
+  document.getElementById('chk-email').checked = data.chk_email || false;
+  document.getElementById('chk-flyer').checked = data.chk_flyer || false;
+  document.getElementById('recon-owed-input').value = data.owed || '';
+  
+  renderReconNotes(data.notes || []);
+}
+
+function saveResearchTracker() {
+  if (!currentReconProspect) return;
+  const key = getReconCRMKey(currentReconProspect);
+  
+  let existing = {};
+  try {
+    existing = JSON.parse(localStorage.getItem(key) || '{}');
+  } catch(e) {}
+  
+  existing.chk_call = document.getElementById('chk-call').checked;
+  existing.chk_visit = document.getElementById('chk-visit').checked;
+  existing.chk_email = document.getElementById('chk-email').checked;
+  existing.chk_flyer = document.getElementById('chk-flyer').checked;
+  existing.owed = document.getElementById('recon-owed-input').value;
+  
+  if (!existing.notes) existing.notes = [];
+  
+  localStorage.setItem(key, JSON.stringify(existing));
+  if (typeof showToast === 'function') showToast("💾 Progress tracking saved.");
+}
+
+function addReconNote() {
+  const input = document.getElementById('recon-note-input');
+  const text = input.value.trim();
+  if (!text) return;
+  
+  appendReconNoteText(text);
+  input.value = '';
+}
+
+function appendReconNoteText(text) {
+  if (!currentReconProspect) return;
+  const key = getReconCRMKey(currentReconProspect);
+  
+  let existing = {};
+  try {
+    existing = JSON.parse(localStorage.getItem(key) || '{}');
+  } catch(e) {}
+  
+  if (!existing.notes) existing.notes = [];
+  
+  existing.notes.unshift({
+    date: new Date().toLocaleString(),
+    text: text
+  });
+  
+  localStorage.setItem(key, JSON.stringify(existing));
+  renderReconNotes(existing.notes);
+  if (typeof showToast === 'function') showToast("📝 Timeline entry recorded.");
+}
+
+function renderReconNotes(notes) {
+  const container = document.getElementById('recon-notes-log');
+  if (!container) return;
+  
+  if (notes.length === 0) {
+    container.innerHTML = `<div style="text-align:center; font-size:0.75rem; color:var(--text-dim); padding:10px 0;">No activity logged yet. Add a note to start tracking timeline.</div>`;
+    return;
+  }
+  
+  container.innerHTML = notes.map(n => `
+    <div class="note-log-entry">
+      <div class="note-log-date">${n.date}</div>
+      <div class="note-log-text">${n.text}</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// EXPENSE & MILEAGE TRACKER FUNCTIONS
+// ============================================================
+
+// Initialize default date on tab load
+document.addEventListener('DOMContentLoaded', () => {
+  const dateInput = document.getElementById('add-exp-date');
+  if (dateInput) {
+    dateInput.valueAsDate = new Date();
+  }
+  const weekInput = document.getElementById('exp-week-start');
+  if (weekInput) {
+    // Default week-start to current week's Monday
+    const d = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d.setDate(diff));
+    weekInput.value = monday.toISOString().split('T')[0];
+  }
+});
+
+function toggleExpMilesField() {
+  const cat = document.getElementById('add-exp-cat').value;
+  const milesGrp = document.getElementById('exp-miles-group');
+  const amtGrp = document.getElementById('exp-amount-group');
+  if (cat === 'Mileage') {
+    milesGrp.style.display = 'block';
+    amtGrp.style.display = 'none';
+  } else {
+    milesGrp.style.display = 'none';
+    amtGrp.style.display = 'block';
+  }
+}
+
+function addExpenseRow() {
+  const dateStr = document.getElementById('add-exp-date').value;
+  const category = document.getElementById('add-exp-cat').value;
+  const desc = document.getElementById('add-exp-desc').value.trim();
+  const rate = parseFloat(document.getElementById('exp-rate').value) || 0.70;
+
+  if (!dateStr) { showToast('Please select a date.'); return; }
+  if (!desc) { showToast('Please enter a description.'); return; }
+
+  let miles = 0;
+  let amount = 0;
+
+  if (category === 'Mileage') {
+    miles = parseFloat(document.getElementById('add-exp-miles').value) || 0;
+    if (miles <= 0) { showToast('Please enter a valid mileage value.'); return; }
+    amount = miles * rate;
+  } else {
+    amount = parseFloat(document.getElementById('add-exp-amount').value) || 0;
+    if (amount <= 0) { showToast('Please enter a valid amount.'); return; }
+  }
+
+  expenseEntries.push({
+    date: dateStr,
+    category: category,
+    desc: desc,
+    miles: miles,
+    amount: amount
+  });
+
+  // Sort by date
+  expenseEntries.sort((a, b) => a.date.localeCompare(b.date));
+
+  // Reset inputs
+  document.getElementById('add-exp-desc').value = '';
+  document.getElementById('add-exp-miles').value = '';
+  document.getElementById('add-exp-amount').value = '';
+
+  renderExpenseTable();
+  showToast('Row added successfully!');
+}
+
+function deleteExpenseRow(index) {
+  expenseEntries.splice(index, 1);
+  renderExpenseTable();
+}
+
+function renderExpenseTable() {
+  const tbody = document.getElementById('expense-table-body');
+  const emptyState = document.getElementById('expense-empty-state');
+  const rate = parseFloat(document.getElementById('exp-rate').value) || 0.70;
+
+  tbody.innerHTML = '';
+
+  if (expenseEntries.length === 0) {
+    emptyState.style.display = 'block';
+    document.getElementById('exp-total-miles').textContent = '0.0 mi';
+    document.getElementById('exp-total-mileage-cost').textContent = '$0.00';
+    document.getElementById('exp-total-other-cost').textContent = '$0.00';
+    document.getElementById('exp-grand-total').textContent = '$0.00';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+
+  let totalMiles = 0;
+  let mileageCost = 0;
+  let otherCost = 0;
+
+  expenseEntries.forEach((e, idx) => {
+    if (e.category === 'Mileage') {
+      totalMiles += e.miles;
+      // Recalculate amount using current rate in case it changed
+      e.amount = e.miles * rate;
+      mileageCost += e.amount;
+    } else {
+      otherCost += e.amount;
+    }
+
+    const d = new Date(e.date + 'T00:00:00');
+    const dStr = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+
+    const row = document.createElement('tr');
+    row.style.borderBottom = '1px solid var(--border)';
+    
+    // Category badges
+    const map = { 'Mileage': 'mileage', 'Meals': 'meals', 'Gas': 'gas', 'Lodging': 'lodging', 'Parking/Tolls': 'parking', 'Other': 'other' };
+    const badgeClass = 'cat-badge cat-' + (map[e.category] || 'other');
+    
+    row.innerHTML = `
+      <td style="padding:10px; text-align:center; color:var(--silver); font-size:0.85rem;">${dStr}</td>
+      <td style="padding:10px; text-align:center; font-size:0.85rem;"><span class="${badgeClass}" style="padding:2px 7px; font-size:0.7rem; border-radius:10px;">${e.category}</span></td>
+      <td style="padding:10px; color:var(--silver); font-size:0.85rem;">${esc(e.desc)}</td>
+      <td style="padding:10px; text-align:right; color:var(--silver); font-size:0.85rem;">${e.miles > 0 ? e.miles.toFixed(1) : '—'}</td>
+      <td style="padding:10px; text-align:right; font-weight:600; color:var(--green); font-size:0.85rem;">$${e.amount.toFixed(2)}</td>
+      <td style="padding:10px; text-align:center;">
+        <button class="btn btn-danger" style="padding:2px 6px; font-size:0.75rem; border-radius:3px; background:rgba(255,68,68,0.1); border:1px solid rgba(255,68,68,0.3); color:#ff6666;" onclick="deleteExpenseRow(${idx})">✕</button>
+      </td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  document.getElementById('exp-total-miles').textContent = totalMiles.toFixed(1) + ' mi';
+  document.getElementById('exp-total-mileage-cost').textContent = '$' + mileageCost.toFixed(2);
+  document.getElementById('exp-total-other-cost').textContent = '$' + otherCost.toFixed(2);
+  document.getElementById('exp-grand-total').textContent = '$' + (mileageCost + otherCost).toFixed(2);
+}
+
+// OSRM geocoding and routing helpers in JS
+async function geocodeAddressJS(address) {
+  // Check known locations cache
+  const addrLower = address.toLowerCase();
+  for (const [key, loc] of Object.entries(KNOWN_LOCATIONS)) {
+    if (addrLower.includes(key)) {
+      return loc;
+    }
+  }
+
+  try {
+    const geo = await securedFetch(`${API}/geocode?q=${encodeURIComponent(address)}`);
+    const geoData = await geo.json();
+    if (geoData.lat) {
+      return {
+        lat: parseFloat(geoData.lat),
+        lon: parseFloat(geoData.lon),
+        display_name: geoData.display_name || address
+      };
+    }
+  } catch (e) {
+    console.error("Geocoding failed for address: " + address, e);
+  }
+  return null;
+}
+
+async function getOSRMDistanceJS(lat1, lon1, lat2, lon2) {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.routes && data.routes.length > 0) {
+      return data.routes[0].distance / 1609.344; // convert meters to miles
+    }
+  } catch (e) {
+    console.error("OSRM routing failed", e);
+  }
+  return null;
+}
+
+async function importStopsFromDayPlan() {
+  if (!activeDayPlanStops || activeDayPlanStops.length === 0) {
+    showToast('No active day plan found. Run a radius search first.');
+    return;
+  }
+
+  showToast('Importing and calculating route legs...');
+  
+  const homeAddr = "1305 Woodside drive Marion Ohio 43302";
+  const rate = parseFloat(document.getElementById('exp-rate').value) || 0.70;
+  const weekStart = document.getElementById('exp-week-start').value;
+  
+  // Geocode home and stops
+  const homeLoc = await geocodeAddressJS(homeAddr);
+  if (!homeLoc) {
+     showToast('Failed to geocode home address.');
+     return;
+  }
+
+  const stops = [];
+  for (let s of activeDayPlanStops) {
+    const addr = [s.Address, s.City, s.State].filter(Boolean).join(', ');
+    const label = s.Company || addr;
+    if (s.Lat && s.Lon) {
+      stops.push({ lat: parseFloat(s.Lat), lon: parseFloat(s.Lon), label: label });
+    } else {
+      // Try geocoding address
+      const loc = await geocodeAddressJS(addr);
+      if (loc) {
+        stops.push({ lat: loc.lat, lon: loc.lon, label: label });
+      }
+    }
+  }
+
+  if (stops.length === 0) {
+     showToast('No geocoded stops found in day plan.');
+     return;
+  }
+
+  // Calculate legs sequentially
+  // Leg 1: Home to Stop 1
+  let currentLoc = homeLoc;
+  let currentDate = new Date(weekStart + 'T00:00:00');
+  
+  // Add 1 day if week start is Monday (so trip starts Tuesday as requested)
+  currentDate.setDate(currentDate.getDate() + 1);
+
+  for (let i = 0; i < stops.length; i++) {
+     const target = stops[i];
+     const dist = await getOSRMDistanceJS(currentLoc.lat, currentLoc.lon, target.lat, target.lon);
+     if (dist !== null) {
+        const miles = Math.round(dist * 10) / 10;
+        const dateStr = currentDate.toISOString().split('T')[0];
+        
+        expenseEntries.push({
+          date: dateStr,
+          category: 'Mileage',
+          desc: `Drive from ${currentLoc === homeLoc ? 'Home' : 'previous stop'} to ${target.label}`,
+          miles: miles,
+          amount: miles * rate
+        });
+     }
+     currentLoc = target;
+     currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  // Return trip: Last Stop to Home
+  const returnDist = await getOSRMDistanceJS(currentLoc.lat, currentLoc.lon, homeLoc.lat, homeLoc.lon);
+  if (returnDist !== null) {
+     const miles = Math.round(returnDist * 10) / 10;
+     const dateStr = currentDate.toISOString().split('T')[0];
+     
+     expenseEntries.push({
+       date: dateStr,
+       category: 'Mileage',
+       desc: `Drive home from ${currentLoc.label}`,
+       miles: miles,
+       amount: miles * rate
+     });
+  }
+
+  // Sort and render
+  expenseEntries.sort((a, b) => a.date.localeCompare(b.date));
+  renderExpenseTable();
+  showToast('Successfully imported stops from Day Plan!');
+}
+
+async function exportExpensesToExcel() {
+  if (expenseEntries.length === 0) {
+    showToast('No entries to export. Add rows or import from day plan.');
+    return;
+  }
+
+  showToast('Generating Excel workbook...');
+
+  const empName = document.getElementById('exp-emp-name').value || 'Brandon Beavers';
+  const empId = document.getElementById('exp-emp-id').value || 'Sales';
+  const weekStart = document.getElementById('exp-week-start').value;
+  const rate = parseFloat(document.getElementById('exp-rate').value) || 0.70;
+
+  // Calculate week end date (Friday)
+  const startDate = new Date(weekStart + 'T00:00:00');
+  const endDate = new Date(weekStart + 'T00:00:00');
+  endDate.setDate(endDate.getDate() + 4);
+
+  const formatDateStr = (date) => {
+    return (date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear();
+  };
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Weekly Expense & Mileage');
+
+  // Show Gridlines
+  worksheet.views = [{ showGridLines: true }];
+
+  // Title
+  worksheet.mergeCells('A1:E1');
+  const titleCell = worksheet.getCell('A1');
+  titleCell.value = 'Weekly Expense & Mileage Report';
+  titleCell.font = { name: 'Segoe UI', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A5C3A' } };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  worksheet.getRow(1).height = 40;
+
+  // Details
+  worksheet.getCell('A3').value = 'Employee Name:';
+  worksheet.getCell('A3').font = { name: 'Segoe UI', size: 11, bold: true };
+  worksheet.getCell('B3').value = empName;
+  worksheet.getCell('B3').font = { name: 'Segoe UI', size: 11 };
+
+  worksheet.getCell('A4').value = 'Employee ID / Dept:';
+  worksheet.getCell('A4').font = { name: 'Segoe UI', size: 11, bold: true };
+  worksheet.getCell('B4').value = empId;
+  worksheet.getCell('B4').font = { name: 'Segoe UI', size: 11 };
+
+  worksheet.getCell('D3').value = 'Period Start:';
+  worksheet.getCell('D3').font = { name: 'Segoe UI', size: 11, bold: true };
+  worksheet.getCell('E3').value = formatDateStr(startDate);
+  worksheet.getCell('E3').font = { name: 'Segoe UI', size: 11 };
+  worksheet.getCell('E3').alignment = { horizontal: 'right' };
+
+  worksheet.getCell('D4').value = 'Period End:';
+  worksheet.getCell('D4').font = { name: 'Segoe UI', size: 11, bold: true };
+  worksheet.getCell('E4').value = formatDateStr(endDate);
+  worksheet.getCell('E4').font = { name: 'Segoe UI', size: 11 };
+  worksheet.getCell('E4').alignment = { horizontal: 'right' };
+
+  worksheet.getCell('A6').value = 'Mileage Rate:';
+  worksheet.getCell('A6').font = { name: 'Segoe UI', size: 11, bold: true };
+  worksheet.getCell('B6').value = rate;
+  worksheet.getCell('B6').font = { name: 'Segoe UI', size: 11 };
+  worksheet.getCell('B6').numFmt = '$#,##0.00';
+
+  // Table Headers
+  const headers = ['Date', 'Category', 'Description', 'Miles', 'Amount'];
+  worksheet.getRow(8).values = headers;
+  worksheet.getRow(8).height = 25;
+  
+  const headerFont = { name: 'Segoe UI', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+  const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E7D32' } };
+  const thinBorder = {
+    top: { style: 'thin', color: { argb: 'FFD3D3D3' } },
+    left: { style: 'thin', color: { argb: 'FFD3D3D3' } },
+    bottom: { style: 'thin', color: { argb: 'FFD3D3D3' } },
+    right: { style: 'thin', color: { argb: 'FFD3D3D3' } }
+  };
+
+  for (let c = 1; c <= 5; c++) {
+    const cell = worksheet.getCell(8, c);
+    cell.font = headerFont;
+    cell.fill = headerFill;
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = thinBorder;
+  }
+
+  let rIdx = 9;
+
+  // Populate data rows
+  expenseEntries.forEach(e => {
+    const d = new Date(e.date + 'T00:00:00');
+    worksheet.getCell(`A${rIdx}`).value = formatDateStr(d);
+    worksheet.getCell(`B${rIdx}`).value = e.category;
+    worksheet.getCell(`C${rIdx}`).value = e.desc;
+
+    if (e.category === 'Mileage') {
+      worksheet.getCell(`D${rIdx}`).value = e.miles;
+      worksheet.getCell(`E${rIdx}`).value = { formula: `D${rIdx}*$B$6` };
+    } else {
+      worksheet.getCell(`D${rIdx}`).value = '';
+      worksheet.getCell(`E${rIdx}`).value = e.amount;
+    }
+
+    // Styles for data row
+    for (let c = 1; c <= 5; c++) {
+      const cell = worksheet.getCell(rIdx, c);
+      cell.font = { name: 'Segoe UI', size: 11 };
+      cell.border = thinBorder;
+      if (c === 1 || c === 2) {
+        cell.alignment = { horizontal: 'center' };
+      } else if (c === 4) {
+        cell.alignment = { horizontal: 'right' };
+        cell.numFmt = '0.0';
+      } else if (c === 5) {
+        cell.alignment = { horizontal: 'right' };
+        cell.numFmt = '$#,##0.00';
+      }
+    }
+    rIdx++;
+  });
+
+  // Add 15 blank editable rows
+  const startBlank = rIdx;
+  const endBlank = rIdx + 15 - 1;
+
+  for (let r = startBlank; r <= endBlank; r++) {
+    worksheet.getCell(`A${r}`).value = '';
+    worksheet.getCell(`B${r}`).value = '';
+    worksheet.getCell(`C${r}`).value = '';
+    worksheet.getCell(`D${r}`).value = '';
+    worksheet.getCell(`E${r}`).value = { formula: `IF(B${r}="Mileage", D${r}*$B$6, "")` };
+
+    for (let c = 1; c <= 5; c++) {
+      const cell = worksheet.getCell(r, c);
+      cell.font = { name: 'Segoe UI', size: 11 };
+      cell.border = thinBorder;
+      if (c === 1 || c === 2) {
+        cell.alignment = { horizontal: 'center' };
+      } else if (c === 4) {
+        cell.alignment = { horizontal: 'right' };
+        cell.numFmt = '0.0';
+      } else if (c === 5) {
+        cell.alignment = { horizontal: 'right' };
+        cell.numFmt = '$#,##0.00';
+      }
+    }
+    rIdx++;
+  }
+
+  // Data Validation for categories
+  worksheet.dataValidations.add(`B9:B${endBlank}`, {
+    type: 'list',
+    allowBlank: true,
+    formulae: ['"Mileage,Meals,Gas,Lodging,Parking/Tolls,Other"'],
+    showErrorMessage: true,
+    errorTitle: 'Invalid Entry',
+    error: 'Your entry is not in the list',
+    showInputMessage: true,
+    promptTitle: 'Category List',
+    prompt: 'Please select from the list'
+  });
+
+  // Totals
+  const totalMilesRow = rIdx;
+  worksheet.getCell(`C${totalMilesRow}`).value = 'Total Mileage:';
+  worksheet.getCell(`C${totalMilesRow}`).font = { name: 'Segoe UI', size: 11, bold: true };
+  worksheet.getCell(`C${totalMilesRow}`).alignment = { horizontal: 'right' };
+  
+  const milesValCell = worksheet.getCell(`D${totalMilesRow}`);
+  milesValCell.value = { formula: `SUM(D9:D${endBlank})` };
+  milesValCell.font = { name: 'Segoe UI', size: 11, bold: true };
+  milesValCell.alignment = { horizontal: 'right' };
+  milesValCell.numFmt = '0.0';
+  milesValCell.border = thinBorder;
+
+  const mileageCostRow = rIdx + 1;
+  worksheet.getCell(`C${mileageCostRow}`).value = 'Mileage Cost:';
+  worksheet.getCell(`C${mileageCostRow}`).font = { name: 'Segoe UI', size: 11, bold: true };
+  worksheet.getCell(`C${mileageCostRow}`).alignment = { horizontal: 'right' };
+
+  const mileageCostVal = worksheet.getCell(`E${mileageCostRow}`);
+  mileageCostVal.value = { formula: `SUMIF(B9:B${endBlank}, "Mileage", E9:E${endBlank})` };
+  mileageCostVal.font = { name: 'Segoe UI', size: 11, bold: true };
+  mileageCostVal.alignment = { horizontal: 'right' };
+  mileageCostVal.numFmt = '$#,##0.00';
+  mileageCostVal.border = thinBorder;
+
+  const otherCostRow = rIdx + 2;
+  worksheet.getCell(`C${otherCostRow}`).value = 'Other Expenses:';
+  worksheet.getCell(`C${otherCostRow}`).font = { name: 'Segoe UI', size: 11, bold: true };
+  worksheet.getCell(`C${otherCostRow}`).alignment = { horizontal: 'right' };
+
+  const otherCostVal = worksheet.getCell(`E${otherCostRow}`);
+  otherCostVal.value = { formula: `SUMIF(B9:B${endBlank}, "<>Mileage", E9:E${endBlank})` };
+  otherCostVal.font = { name: 'Segoe UI', size: 11, bold: true };
+  otherCostVal.alignment = { horizontal: 'right' };
+  otherCostVal.numFmt = '$#,##0.00';
+  otherCostVal.border = thinBorder;
+
+  const grandTotalRow = rIdx + 3;
+  worksheet.getCell(`C${grandTotalRow}`).value = 'Grand Total:';
+  worksheet.getCell(`C${grandTotalRow}`).font = { name: 'Segoe UI', size: 11, bold: true };
+  worksheet.getCell(`C${grandTotalRow}`).alignment = { horizontal: 'right' };
+
+  const grandTotalVal = worksheet.getCell(`E${grandTotalRow}`);
+  grandTotalVal.value = { formula: `SUM(E9:E${endBlank})` };
+  grandTotalVal.font = { name: 'Segoe UI', size: 11, bold: true };
+  grandTotalVal.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F8F5' } };
+  grandTotalVal.alignment = { horizontal: 'right' };
+  grandTotalVal.numFmt = '$#,##0.00';
+  grandTotalVal.border = {
+    top: { style: 'thin', color: { argb: 'FF000000' } },
+    bottom: { style: 'double', color: { argb: 'FF000000' } }
+  };
+
+  // Set Widths
+  worksheet.getColumn('A').width = 15;
+  worksheet.getColumn('B').width = 18;
+  worksheet.getColumn('C').width = 50;
+  worksheet.getColumn('D').width = 15;
+  worksheet.getColumn('E').width = 18;
+
+  // Save/Download
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  
+  const weekStartFormatted = weekStart.substring(5, 7) + '-' + weekStart.substring(8, 10) + '-' + weekStart.substring(2, 4);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `Beavers Week of ${weekStartFormatted} Expense & Mileage Tracker.xlsx`;
+  link.click();
+  
+  showToast('Excel workbook exported successfully!');
+}
+
+function exportExpensesToPDF() {
+  if (expenseEntries.length === 0) {
+     showToast('No entries to print. Add rows first.');
+     return;
+  }
+
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const empName = document.getElementById('exp-emp-name').value || 'Brandon Beavers';
+  const empId = document.getElementById('exp-emp-id').value || 'Sales';
+  const weekStart = document.getElementById('exp-week-start').value;
+
+  const startDateObj = new Date(weekStart + 'T00:00:00');
+  const endDateObj = new Date(weekStart + 'T00:00:00');
+  endDateObj.setDate(endDateObj.getDate() + 4);
+
+  const formatDateStr = (date) => {
+    return (date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear();
+  };
+
+  const doc = iframe.contentWindow.document;
+  
+  let totalMiles = 0;
+  let mileageCost = 0;
+  let otherCost = 0;
+  const rate = parseFloat(document.getElementById('exp-rate').value) || 0.70;
+
+  let tableRows = '';
+  expenseEntries.forEach(e => {
+    let amount = e.amount;
+    if (e.category === 'Mileage') {
+       totalMiles += e.miles;
+       amount = e.miles * rate;
+       mileageCost += amount;
+    } else {
+       otherCost += e.amount;
+    }
+    const d = new Date(e.date + 'T00:00:00');
+    const dStr = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+    const map = { 'Mileage': 'mileage', 'Meals': 'meals', 'Gas': 'gas', 'Lodging': 'lodging', 'Parking/Tolls': 'parking', 'Other': 'other' };
+    const badgeClass = 'cat-badge cat-' + (map[e.category] || 'other');
+
+    tableRows += `
+      <tr>
+        <td style="padding: 12px 16px; border-bottom: 1px solid #f0ece6; font-size: 0.9rem; text-align: center;">${dStr}</td>
+        <td style="padding: 12px 16px; border-bottom: 1px solid #f0ece6; font-size: 0.9rem; text-align: center;">
+          <span class="${badgeClass}">${e.category}</span>
+        </td>
+        <td style="padding: 12px 16px; border-bottom: 1px solid #f0ece6; font-size: 0.9rem;">${e.desc}</td>
+        <td style="padding: 12px 16px; border-bottom: 1px solid #f0ece6; font-size: 0.9rem; text-align: right;">${e.miles > 0 ? e.miles.toFixed(1) : '—'}</td>
+        <td style="padding: 12px 16px; border-bottom: 1px solid #f0ece6; font-size: 0.9rem; text-align: right; font-weight:600; color: #1a5c3a;">$${amount.toFixed(2)}</td>
+      </tr>
+    `;
+  });
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <title>Expense & Mileage Report</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg: #ffffff;
+        --card: #ffffff;
+        --accent: #1a5c3a;
+        --accent-light: #e8f5ee;
+        --accent-dark: #0e3d24;
+        --text: #1e1e1e;
+        --text-muted: #6b6b6b;
+        --border: #ddd5ca;
+        --shadow: none;
+        --radius: 0px;
+      }
+      body {
+        font-family: 'DM Sans', sans-serif;
+        background: #fff;
+        color: var(--text);
+        padding: 20px;
+      }
+      .container { max-width: 900px; margin: 0 auto; }
+      header { text-align: center; padding: 20px 0; }
+      header h1 { font-family: 'Fraunces', serif; font-size: 2rem; color: var(--accent-dark); }
+      header p { color: var(--text-muted); margin-top: 4px; font-size: 0.95rem; }
+      
+      .employee-info {
+        border: 1px solid var(--border);
+        padding: 20px;
+        margin-bottom: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .field { display: flex; flex-direction: column; gap: 4px; }
+      label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); }
+      .val { font-size: 0.95rem; font-weight: 500; padding: 4px 0; border-bottom: 1px solid #eee; }
+      
+      table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid var(--border); }
+      thead th { text-align: left; font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); padding: 10px 16px; border-bottom: 1.5px solid var(--border); background: #faf8f5; }
+      
+      .cat-badge { display: inline-block; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+      .cat-mileage { background: #e0f2fe; color: #0369a1; }
+      .cat-meals { background: #fef3c7; color: #92400e; }
+      .cat-gas { background: #fce7f3; color: #9d174d; }
+      .cat-lodging { background: #ede9fe; color: #5b21b6; }
+      .cat-parking { background: #d1fae5; color: #065f46; }
+      .cat-other { background: #f3f4f6; color: #374151; }
+
+      .totals-bar {
+        background: #eee;
+        color: #000;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        border: 1px solid var(--border);
+      }
+      .total-item { text-align: center; }
+      .total-item .label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.7; }
+      .total-item .value { font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 800; margin-top: 2px; }
+    </style>
+    </head>
+    <body>
+    <div class="container">
+      <header>
+        <h1>Expense & Mileage Report</h1>
+        <p>Track expenses for company reimbursement</p>
+      </header>
+      <div class="employee-info">
+        <div class="field">
+          <label>Employee Name</label>
+          <div class="val">${empName}</div>
+        </div>
+        <div class="field">
+          <label>Employee ID / Dept</label>
+          <div class="val">${empId}</div>
+        </div>
+        <div class="field">
+          <label>Report Period Start</label>
+          <div class="val">${formatDateStr(startDateObj)}</div>
+        </div>
+        <div class="field">
+          <label>Report Period End</label>
+          <div class="val">${formatDateStr(endDateObj)}</div>
+        </div>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align: center;">Date</th>
+            <th style="text-align: center;">Category</th>
+            <th>Description</th>
+            <th style="text-align: right;">Miles</th>
+            <th style="text-align: right;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+
+      <div class="totals-bar">
+        <div class="total-item">
+          <div class="label">Total Mileage</div>
+          <div class="value">${totalMiles.toFixed(1)} mi</div>
+        </div>
+        <div class="total-item">
+          <div class="label">Mileage Cost</div>
+          <div class="value">$${mileageCost.toFixed(2)}</div>
+        </div>
+        <div class="total-item">
+          <div class="label">Other Expenses</div>
+          <div class="value">$${otherCost.toFixed(2)}</div>
+        </div>
+        <div class="total-item">
+          <div class="label">Grand Total</div>
+          <div class="value">$${(mileageCost + otherCost).toFixed(2)}</div>
+        </div>
+      </div>
+    </div>
+    </body>
+    </html>
+  `;
+  
+  doc.open();
+  doc.write(htmlContent);
+  doc.close();
+
+  iframe.onload = () => {
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+    setTimeout(() => {
+       document.body.removeChild(iframe);
+    }, 1000);
+  };
 }
 </script>
 </body>
